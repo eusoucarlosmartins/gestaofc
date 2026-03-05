@@ -1,4 +1,4 @@
-const { useState, useEffect, useRef } = React;
+const { useState, useEffect, useRef } = React; // Sem a palavra 'import' antes
 
 const POSITIONS = ["GK", "DEF", "MID", "ATK"];
 const POSITION_LABELS = { GK: "Goleiro", DEF: "Defensor", MID: "Meia", ATK: "Atacante" };
