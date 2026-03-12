@@ -674,7 +674,23 @@ input, select, textarea, button { -webkit-tap-highlight-color: transparent; }
 </head>
 <body>
 
-<!-- ══ LANDING PAGE (sem slug) ══ -->
+<!-- ══ SUPER ADMIN LOGIN ══ -->
+<div class="login-overlay" id="saLoginOverlay">
+  <div class="login-box" style="position:relative;">
+    <div class="login-logo" style="color:var(--gold);border-top-color:var(--gold);">GESTÃO FC</div>
+    <div class="login-sub">Super Admin — Acesso Restrito</div>
+    <div class="login-error" id="saLoginError">Usuário ou senha incorretos</div>
+    <div class="form-group">
+      <label>Usuário</label>
+      <input type="text" id="saLoginUser" placeholder="superadmin" />
+    </div>
+    <div class="form-group">
+      <label>Senha</label>
+      <input type="password" id="saLoginPass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doSaLogin()" />
+    </div>
+    <button class="btn-red" onclick="doSaLogin()">ENTRAR</button>
+  </div>
+</div>
 <div id="view-landing" class="view landing-view">
   <div class="landing-hero">
     <div class="landing-title"><span>MEU</span>TIME</div>
@@ -4184,14 +4200,16 @@ function showViewRaw(v) {
 function doSaLogin() {
   const u = document.getElementById('saLoginUser')?.value.trim();
   const p = document.getElementById('saLoginPass')?.value;
+  const errEl = document.getElementById('saLoginError');
   if (u === SA_USER && p === SA_PASS) {
     isSuperAdmin = true;
     document.getElementById('saLoginOverlay')?.classList.remove('open');
+    if (errEl) errEl.style.display = 'none';
     showViewRaw('superadmin');
     document.getElementById('saUserLabel').textContent = 'Logado como: ' + SA_USER;
     renderSaPane('times');
   } else {
-    document.getElementById('saLoginError')?.style && (document.getElementById('saLoginError').style.display='block');
+    if (errEl) errEl.style.display = 'block';
   }
 }
 function doSaLogout() {
@@ -4552,8 +4570,8 @@ async function initSaaS() {
 
   // ── Super Admin ──
   if (slug === 'admin') {
-    // Esconde nav e site antes de mostrar o overlay
-    document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
+    showViewRaw('site');
+    renderPublicSite();
     if (!isSuperAdmin) {
       showSaLoginOverlay();
     } else {
@@ -4600,22 +4618,9 @@ async function initSaaS() {
   renderPublicSite();
 }
 function showSaLoginOverlay() {
-  let ov = document.getElementById('saLoginOverlay');
-  if (!ov) {
-    ov = document.createElement('div');
-    ov.id = 'saLoginOverlay';
-    ov.className = 'login-overlay open';
-    ov.innerHTML = `<div class="login-box" style="position:relative;">
-      <div class="login-logo" style="color:var(--gold);">SUPER ADMIN</div>
-      <div class="login-sub">Acesso Restrito — Dono da Plataforma</div>
-      <div class="login-error" id="saLoginError" style="display:none;">Credenciais inválidas</div>
-      <div class="form-group"><label>Usuário</label><input type="text" id="saLoginUser" placeholder="superadmin" /></div>
-      <div class="form-group"><label>Senha</label><input type="password" id="saLoginPass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doSaLogin()" /></div>
-      <button class="btn-red" onclick="doSaLogin()">ENTRAR</button>
-    </div>`;
-    document.body.appendChild(ov);
-  }
-  ov.classList.add('open');
+  const ov = document.getElementById('saLoginOverlay');
+  if (ov) ov.classList.add('open');
+  setTimeout(() => document.getElementById('saLoginUser')?.focus(), 100);
 }
 
 
