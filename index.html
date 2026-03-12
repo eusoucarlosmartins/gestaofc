@@ -1069,10 +1069,10 @@ function shadeColor(hex, pct) {
 
 // ── Carrega config do time pelo slug do Supabase ──
 async function loadTeamBySlug(slug) {
-  if (!SB_READY) return null;
+  if (!SB_READY || !slug) return null;
   try {
     const teams = await sbGet('teams', `?slug=eq.${encodeURIComponent(slug)}&limit=1`);
-    if (!teams.length) return null;
+    if (!teams || !teams.length) return null;
     const t = teams[0];
     return {
       id: t.id, slug: t.slug, name: t.name,
@@ -1086,7 +1086,7 @@ async function loadTeamBySlug(slug) {
       foundedYear: t.founded_year || 2000,
       instagram: t.instagram || '', whatsapp: t.whatsapp || '',
       slogan: t.slogan || '', tagline: t.tagline || '',
-      active: t.active !== false,
+      active: t.active === true, // só true se explicitamente true
       plan: t.plan || 'basic',
       billingDay: t.billing_day, lastPayment: t.last_payment,
       nextBilling: t.next_billing, notes: t.notes || '',
@@ -4572,11 +4572,11 @@ async function brandingSave() {
 // ══════════════════════════════════════════════
 async function initSaaS() {
   const slug = getSlugFromUrl();
-  console.log('[GestãoFC] slug detectado:', slug || '(vazio — site normal)');
+  console.log('[GestãoFC] slug detectado:', JSON.stringify(slug), '| search:', window.location.search);
 
-  // ── Super Admin — detecta ANTES de qualquer requisição ──
+  // ── Super Admin — SEMPRE antes de qualquer request ──
   if (slug === 'admin') {
-    console.log('[GestãoFC] → abrindo Super Admin');
+    console.log('[GestãoFC] → Super Admin detectado');
     applyTeamBranding(TEAM_CONFIG);
     showViewRaw('site');
     renderPublicSite();
@@ -4584,21 +4584,34 @@ async function initSaaS() {
     return;
   }
 
-  // ── Site normal ──
+  // ── Site normal — mostra imediatamente ──
   applyTeamBranding(TEAM_CONFIG);
   showViewRaw('site');
   renderPublicSite();
 
   if (!SB_READY) return;
 
-  // Tenta buscar config do time no Supabase (silencioso se tabela não existir)
-  const targetSlug = slug || TEAM_CONFIG.slug;
-  const teamCfg = await loadTeamBySlug(targetSlug).catch(() => null);
+  // Tenta buscar config do time no Supabase
+  // NUNCA bloqueia se: tabela não existe, erro de rede, ou time não encontrado
+  let teamCfg = null;
+  try {
+    teamCfg = await loadTeamBySlug(slug || TEAM_CONFIG.slug);
+  } catch(e) {
+    console.warn('[GestãoFC] loadTeamBySlug erro (ignorado):', e.message);
+  }
+
   if (teamCfg) {
-    if (teamCfg.active === false) { showViewRaw('blocked'); return; }
+    // Só bloqueia se explicitamente active === false E o time foi encontrado
+    if (teamCfg.active === false) {
+      console.log('[GestãoFC] Time bloqueado no Supabase');
+      showViewRaw('blocked');
+      return;
+    }
     Object.assign(TEAM_CONFIG, teamCfg);
     currentTeamId = teamCfg.id;
     applyTeamBranding(TEAM_CONFIG);
+  } else {
+    console.log('[GestãoFC] Time não encontrado no Supabase — usando config padrão');
   }
 
   await sbLoad();
