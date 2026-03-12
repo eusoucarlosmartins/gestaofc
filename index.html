@@ -942,6 +942,8 @@ input, select, textarea, button { -webkit-tap-highlight-color: transparent; }
     </div>
   </div>
   
+  <div id="adminStatusBadge" style="padding:4px 20px 0;"></div>
+  <div id="suspensionBanner" style="padding:0 20px;display:none;"></div>
   <div class="admin-tabs" id="adminTabs"></div>
   <div class="admin-content" id="adminContent"></div>
 </div>
@@ -994,6 +996,106 @@ let TEAM_CONFIG = {
 
 let currentTeamId = null; // UUID do time no Supabase
 let isSuperAdmin = false;
+
+// ══════════════════════════════════════════════
+// PLANOS — limites e preços
+// ══════════════════════════════════════════════
+const PLANS = {
+  trial: {
+    label: 'Trial',
+    limits: { players: 15, seasons: 1, gamesPerSeason: 10, admins: 1 },
+    features: ['agenda','checkin','resultados'],
+    prices: { monthly: 0, quarterly: 0, semiannual: 0, annual: 0 }
+  },
+  basic: {
+    label: 'Basic',
+    limits: { players: 15, seasons: 1, gamesPerSeason: 20, admins: 1 },
+    features: ['agenda','checkin','resultados','financeiro_basico'],
+    prices: { monthly: 49, quarterly: 44, semiannual: 39, annual: 35 }
+  },
+  pro: {
+    label: 'Pro',
+    limits: { players: 30, seasons: 3, gamesPerSeason: 50, admins: 3 },
+    features: ['agenda','checkin','resultados','financeiro','sumula','escalacao','ranking','votacao','timeline'],
+    prices: { monthly: 89, quarterly: 80, semiannual: 71, annual: 63 }
+  },
+  premium: {
+    label: 'Premium',
+    limits: { players: 9999, seasons: 9999, gamesPerSeason: 9999, admins: 9999 },
+    features: ['all'],
+    prices: { monthly: 149, quarterly: 134, semiannual: 119, annual: 104 }
+  }
+};
+
+const PERIOD_LABELS  = { monthly:'Mensal', quarterly:'Trimestral', semiannual:'Semestral', annual:'Anual' };
+const PERIOD_MONTHS  = { monthly: 1, quarterly: 3, semiannual: 6, annual: 12 };
+const PERIOD_DISCOUNT = { monthly: 0, quarterly: 10, semiannual: 20, annual: 30 };
+
+// Retorna o plano atual do time carregado
+function getPlan() { return PLANS[TEAM_CONFIG.plan] || PLANS.basic; }
+function getPeriod(){ return TEAM_CONFIG.billing_cycle || 'monthly'; }
+
+// Status do time: 'active' | 'trial' | 'suspended'
+function getTeamStatus() {
+  if (TEAM_CONFIG.status) return TEAM_CONFIG.status;
+  if (TEAM_CONFIG.active === false) return 'suspended';
+  return 'active';
+}
+
+// Verifica se o time pode usar um recurso
+function canUse(feature) {
+  const status = getTeamStatus();
+  if (status === 'suspended') return false;
+  const plan = getPlan();
+  if (plan.features.includes('all')) return true;
+  if (plan.features.includes(feature)) return true;
+  // trial tem acesso básico
+  if (status === 'trial') return PLANS.trial.features.includes(feature);
+  return false;
+}
+
+// Verifica se atingiu o limite do plano
+function checkLimit(type, currentCount) {
+  const plan = getPlan();
+  const limit = plan.limits[type] || 0;
+  return { ok: currentCount < limit, current: currentCount, limit, remaining: Math.max(0, limit - currentCount) };
+}
+
+// Bloco de aviso de plano — renderiza quando ação bloqueada
+function renderPlanBlock(message, feature) {
+  const status = getTeamStatus();
+  const plan = getPlan();
+  const isSuspended = status === 'suspended';
+  return \`<div style="background:rgba(204,26,26,0.08);border:1px solid rgba(204,26,26,0.25);border-left:3px solid var(--red);padding:16px 20px;margin:12px 0;text-align:center;">
+    <div style="font-size:24px;margin-bottom:8px;">\${isSuspended?'🔒':'⚡'}</div>
+    <div style="font-family:Oswald,sans-serif;font-size:14px;letter-spacing:2px;color:var(--red);margin-bottom:6px;">\${isSuspended?'ACESSO SUSPENSO':'LIMITE DO PLANO'}</div>
+    <div style="font-family:Barlow,sans-serif;font-size:13px;color:#888;margin-bottom:12px;">\${message}</div>
+    \${isSuspended
+      ? \`<a href="https://wa.me/5548996962910" target="_blank" style="font-family:Oswald,sans-serif;font-size:12px;letter-spacing:2px;color:var(--gold);text-decoration:none;border:1px solid rgba(200,150,62,0.3);padding:6px 16px;display:inline-block;">📱 REGULARIZAR PAGAMENTO</a>\`
+      : \`<div style="font-family:Oswald,sans-serif;font-size:11px;letter-spacing:2px;color:#555;margin-top:4px;">Plano atual: \${plan.label.toUpperCase()} · Fale com o suporte para fazer upgrade</div>\`
+    }
+  </div>\`;
+}
+
+// Badge de status do time
+function renderStatusBadge() {
+  const status = getTeamStatus();
+  const plan = getPlan();
+  const cfg = {
+    active:    { icon:'●', label:'ATIVO',     color:'#2ecc71' },
+    trial:     { icon:'◐', label:'TRIAL',     color:'var(--gold)' },
+    suspended: { icon:'✕', label:'SUSPENSO',  color:'var(--red)' }
+  }[status] || { icon:'?', label:'–', color:'#555' };
+
+  // Dias restantes do vencimento
+  let daysHtml = '';
+  if (TEAM_CONFIG.nextBilling) {
+    const days = Math.ceil((new Date(TEAM_CONFIG.nextBilling) - new Date()) / 86400000);
+    if (days <= 7 && days >= 0) daysHtml = \` <span style="color:var(--gold);font-size:10px;">· vence em \${days}d</span>\`;
+    else if (days < 0) daysHtml = \` <span style="color:var(--red);font-size:10px;">· \${Math.abs(days)}d vencido</span>\`;
+  }
+  return \`<span style="font-family:Oswald,sans-serif;font-size:10px;letter-spacing:1px;color:\${cfg.color};">\${cfg.icon} \${cfg.label} · \${plan.label.toUpperCase()}\${daysHtml}</span>\`;
+}
 
 // Templates de cores pré-definidos
 const COLOR_TEMPLATES = {
@@ -1121,9 +1223,13 @@ async function loadTeamBySlug(slug) {
       instagram: t.instagram || '', whatsapp: t.whatsapp || '',
       slogan: t.slogan || '', tagline: t.tagline || '',
       active: t.active !== false, // null ou true = ativo; só false = bloqueado
+      status: t.status || (t.active === false ? 'suspended' : 'active'),
+      billingCycle: t.billing_cycle || 'monthly',
       plan: t.plan || 'basic',
+      billing_cycle: t.billing_cycle || 'monthly',
       billingDay: t.billing_day, lastPayment: t.last_payment,
       nextBilling: t.next_billing, notes: t.notes || '',
+      status: t.status || (t.active===false ? 'suspended' : 'active'),
       adminUser: t.admin_user, adminPass: t.admin_pass,
       createdAt: t.created_at,
     };
@@ -1676,9 +1782,29 @@ function doLogin() {
   document.getElementById('loginError').style.display = 'none';
   document.getElementById('loginUser').value = '';
   document.getElementById('loginPass').value = '';
+
+  // Auto-suspend check: if billing is overdue, flag as suspended
+  checkAutoSuspension();
+
   buildAdminPanel();
   showView('admin');
   showNotif('Bem-vindo, ' + player.name + '! ✦');
+}
+
+function checkAutoSuspension() {
+  if (!TEAM_CONFIG.nextBilling) return;
+  const daysOverdue = Math.ceil((new Date() - new Date(TEAM_CONFIG.nextBilling)) / 86400000);
+  if (daysOverdue > 0 && TEAM_CONFIG.status !== 'suspended') {
+    TEAM_CONFIG.status = 'suspended';
+    TEAM_CONFIG._isBlocked = true;
+    // Persist to Supabase if we have the team id
+    if (currentTeamId) {
+      fetch(`${SUPABASE_URL}/rest/v1/teams?id=eq.${currentTeamId}`, {
+        method:'PATCH', headers: {'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},
+        body: JSON.stringify({ status:'suspended', active:false })
+      }).catch(()=>{});
+    }
+  }
 }
 
 function doLogout() {
@@ -1963,6 +2089,31 @@ function buildAdminPanel() {
     atleta:'Painel do Atleta', diretoria:'Painel da Diretoria', admin:'Controle Total — Administrador'
   }[u.role] || '';
   document.getElementById('navLoginBtn').textContent = 'Meu Painel';
+
+  // Show status badge in panel
+  const statusEl = document.getElementById('adminStatusBadge');
+  if (statusEl) statusEl.innerHTML = renderStatusBadge();
+
+  // Show suspension banner if team is suspended
+  const bannerEl = document.getElementById('suspensionBanner');
+  if (bannerEl) {
+    const status = getTeamStatus();
+    if (status === 'suspended') {
+      bannerEl.style.display = 'block';
+      bannerEl.innerHTML = `<div style="background:rgba(204,26,26,0.1);border:1px solid rgba(204,26,26,0.3);border-left:3px solid var(--red);padding:12px 20px;margin:0 0 16px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+        <span style="font-family:Oswald,sans-serif;font-size:12px;letter-spacing:2px;color:var(--red);">🔒 CONTA SUSPENSA — PAGAMENTO PENDENTE</span>
+        <a href="https://wa.me/5548996962910" target="_blank" style="font-family:Oswald,sans-serif;font-size:10px;letter-spacing:1px;color:var(--gold);text-decoration:none;border:1px solid rgba(200,150,62,0.3);padding:4px 12px;">📱 REGULARIZAR</a>
+      </div>`;
+    } else if (status === 'trial' && TEAM_CONFIG.nextBilling) {
+      const days = Math.ceil((new Date(TEAM_CONFIG.nextBilling) - new Date()) / 86400000);
+      if (days >= 0 && days <= 7) {
+        bannerEl.style.display = 'block';
+        bannerEl.innerHTML = `<div style="background:rgba(200,150,62,0.08);border:1px solid rgba(200,150,62,0.25);border-left:3px solid var(--gold);padding:12px 20px;margin:0 0 16px;">
+          <span style="font-family:Oswald,sans-serif;font-size:12px;letter-spacing:2px;color:var(--gold);">◐ TRIAL — ${days} DIA${days!==1?'S':''} RESTANTE${days!==1?'S':''} · ATIVE SEU PLANO PARA CONTINUAR</span>
+        </div>`;
+      } else bannerEl.style.display = 'none';
+    } else bannerEl.style.display = 'none';
+  }
   const seedBtn = document.getElementById('btnSeedDB');
   const localTag = document.getElementById('localModeTag');
   if (seedBtn) seedBtn.style.display = SB_READY ? 'inline-flex' : 'none';
@@ -2038,6 +2189,27 @@ function switchTab(id, btn) {
 function renderPane(id) {
   const el = document.getElementById('pane-' + id);
   if (!el) return;
+
+  // Mapa de feature por aba — verifica acesso antes de renderizar
+  const featureMap = {
+    votacao: 'votacao', sumula: 'sumula', escalacao: 'sumula',
+    jogo: 'sumula', financeiro: 'financeiro', patrocinadores: 'financeiro',
+    agenda: 'agenda', ranking: 'ranking', historia: 'timeline',
+  };
+  const requiredFeature = featureMap[id];
+  if (requiredFeature && !canUse(requiredFeature)) {
+    const msgs = {
+      votacao:    'Votação de MVP não está disponível no plano atual.',
+      sumula:     'Súmula e escalação requerem plano Pro ou superior.',
+      financeiro: 'Módulo financeiro requer plano Pro ou superior.',
+      agenda:     'Criação de agenda requer plano ativo.',
+      ranking:    'Ranking requer plano Pro ou superior.',
+      timeline:   'Linha do tempo requer plano Pro ou superior.',
+    };
+    el.innerHTML = renderPlanBlock(msgs[requiredFeature] || 'Este recurso não está disponível no plano atual.', requiredFeature);
+    return;
+  }
+
   const renders = {
     checkin: renderCheckin,
     votacao: renderVotacao,
@@ -2117,6 +2289,11 @@ function getLastGame() {
 }
 
 function renderVotacao(el) {
+  if (getTeamStatus() === 'suspended') {
+    el.innerHTML = renderPlanBlock('Votação bloqueada — pagamento pendente.', 'votacao');
+    return;
+  }
+
   const u = currentUser;
   const lastGame = getLastGame();
 
@@ -3387,6 +3564,11 @@ function deleteDossie(id) {
 
 // ─── AGENDA ───
 function renderAgenda(el) {
+  if (getTeamStatus() === 'suspended') {
+    el.innerHTML = renderPlanBlock('Agenda bloqueada — pagamento pendente.', 'agenda');
+    return;
+  }
+
 
   // Ensure scheduleAll exists
   if (!DB.scheduleAll) DB.scheduleAll = {};
@@ -3979,6 +4161,10 @@ function resetCards(pid) {
 
 // ─── USUÁRIOS ───
 function renderUsuarios(el) {
+  // Verifica limite de jogadores
+  const playerCount = DB.players.filter(p => p.role !== 'admin').length;
+  const lim = checkLimit('players', playerCount);
+
   const roleBadge = r => `<span class="badge ${r==='admin'?'badge-red':r==='diretoria'?'badge-gold':r==='convidado'?'badge-guest':'badge-blue'}">${r}</span>`;
   const roleOrder = ['convidado','atleta','diretoria','admin'];
 
@@ -4381,8 +4567,13 @@ async function renderSaTimes(el) {
       </tr></thead>
       <tbody>
         ${teams.map(t => {
-          const statusBadge = t.active ? '<span class="sa-badge-active">ATIVO</span>' : '<span class="sa-badge-blocked">BLOQUEADO</span>';
-          const planBadge = `<span class="sa-plan-badge">${(t.plan||'basic').toUpperCase()}</span>`;
+          const ts = t.status || (t.active===false ? 'suspended' : 'active');
+          const statusBadge = ts==='suspended' ? '<span class="sa-badge-blocked">SUSPENSO</span>'
+            : ts==='trial' ? '<span class="sa-badge-warn">TRIAL</span>'
+            : '<span class="sa-badge-active">ATIVO</span>';
+          const cycle = t.billing_cycle || 'monthly';
+          const cycleShort = {monthly:'Mensal',quarterly:'Trim.',semiannual:'Sem.',annual:'Anual'}[cycle]||'';
+          const planBadge = `<span class="sa-plan-badge">${(t.plan||'basic').toUpperCase()}</span> <span style="font-size:10px;color:#555;">${cycleShort}</span>`;
           const nb = t.next_billing ? new Date(t.next_billing).toLocaleDateString('pt-BR') : '–';
           const isOverdue  = t.next_billing && new Date(t.next_billing) < hoje;
           const isExpiring = !isOverdue && t.next_billing && new Date(t.next_billing) < new Date(Date.now()+7*86400000);
@@ -4398,7 +4589,8 @@ async function renderSaTimes(el) {
             <td>${nbHtml}</td>
             <td style="font-family:monospace;font-size:11px;color:#666;">${t.admin_user||'admin'}</td>
             <td style="white-space:nowrap;">
-              <button class="btn btn-sm" style="font-size:10px;padding:3px 8px;" onclick="saToggleTeam('${t.id}',${!t.active},this)">${t.active?'Bloquear':'Ativar'}</button>
+              <button class="btn btn-sm" style="font-size:10px;padding:3px 8px;" onclick="saChangeStatus('${t.id}','${ts}','${t.name}')">Status</button>
+              <button class="btn btn-sm btn-secondary" style="font-size:10px;padding:3px 8px;" onclick="saChangePlan('${t.id}','${t.plan||'basic'}','${cycle}','${t.name}')">Plano</button>
               <button class="btn btn-sm btn-secondary" style="font-size:10px;padding:3px 8px;" onclick="saEditTeam('${t.id}')">Editar</button>
               <button class="btn btn-sm btn-secondary" style="font-size:10px;padding:3px 8px;" onclick="saAccessTeam('${t.slug}')">Acessar</button>
             </td>
@@ -4418,7 +4610,8 @@ async function renderSaCobrancas(el) {
   const hoje = new Date();
   const sorted = [...teams].sort((a,b) => new Date(a.next_billing||'2099')-new Date(b.next_billing||'2099'));
 
-  const totalMrr = teams.filter(t=>t.active).reduce((s,t)=>s+({basic:49,pro:89,premium:149}[t.plan]||49),0);
+  const mrrBase = {basic:49,pro:89,premium:149};
+  const totalMrr = teams.filter(t=>t.active).reduce((s,t)=>s+(mrrBase[t.plan]||49),0);
   const totalVencido = teams.filter(t=>t.next_billing && new Date(t.next_billing)<hoje)
     .reduce((s,t)=>s+({basic:49,pro:89,premium:149}[t.plan]||49),0);
 
@@ -4433,25 +4626,32 @@ async function renderSaCobrancas(el) {
       <thead><tr><th>TIME</th><th>PLANO</th><th>VALOR</th><th>ÚLTIMO PGTO</th><th>PRÓX. VENC.</th><th>STATUS</th><th>AÇÕES</th></tr></thead>
       <tbody>
         ${sorted.map(t => {
-          const valor = {basic:49,pro:89,premium:149}[t.plan]||49;
-          const lp    = t.last_payment ? new Date(t.last_payment).toLocaleDateString('pt-BR') : '–';
-          const nb    = t.next_billing ? new Date(t.next_billing).toLocaleDateString('pt-BR') : '–';
-          const overdue   = t.next_billing && new Date(t.next_billing) < hoje;
-          const expiring  = t.next_billing && !overdue && new Date(t.next_billing) < new Date(Date.now()+7*86400000);
-          const badge = overdue   ? '<span class="sa-badge-blocked">VENCIDO</span>'
-                      : expiring  ? '<span class="sa-badge-warn">VENCE EM BREVE</span>'
-                      : !t.active ? '<span class="sa-badge-blocked">BLOQUEADO</span>'
-                      : '<span class="sa-badge-active">EM DIA</span>';
+          const cycle   = t.billing_cycle || 'monthly';
+          const months  = {monthly:1,quarterly:3,semiannual:6,annual:12}[cycle]||1;
+          const prices  = {basic:{monthly:49,quarterly:132,semiannual:234,annual:420},pro:{monthly:89,quarterly:240,semiannual:426,annual:756},premium:{monthly:149,quarterly:402,semiannual:714,annual:1248}};
+          const valor   = prices[t.plan]?.[cycle] || {basic:49,pro:89,premium:149}[t.plan]||49;
+          const cycleShort = {monthly:'Mensal',quarterly:'Trim.',semiannual:'Sem.',annual:'Anual'}[cycle]||'';
+          const lp      = t.last_payment ? new Date(t.last_payment).toLocaleDateString('pt-BR') : '–';
+          const nb      = t.next_billing ? new Date(t.next_billing).toLocaleDateString('pt-BR') : '–';
+          const ts      = t.status || (t.active===false ? 'suspended' : 'active');
+          const overdue = t.next_billing && new Date(t.next_billing) < hoje;
+          const expiring= t.next_billing && !overdue && new Date(t.next_billing) < new Date(Date.now()+7*86400000);
+          const badge   = ts==='suspended' ? '<span class="sa-badge-blocked">SUSPENSO</span>'
+                        : ts==='trial'     ? '<span class="sa-badge-warn">TRIAL</span>'
+                        : overdue          ? '<span class="sa-badge-blocked">VENCIDO</span>'
+                        : expiring         ? '<span class="sa-badge-warn">VENCE EM BREVE</span>'
+                        : '<span class="sa-badge-active">EM DIA</span>';
           return `<tr>
             <td><strong style="color:#fff;">${t.name}</strong><br><span style="font-size:11px;color:#555;">/${t.slug}</span></td>
-            <td><span class="sa-plan-badge">${(t.plan||'basic').toUpperCase()}</span></td>
-            <td style="color:var(--gold);font-weight:bold;">R$${valor}</td>
+            <td><span class="sa-plan-badge">${(t.plan||'basic').toUpperCase()}</span><br><span style="font-size:10px;color:#555;">${cycleShort}</span></td>
+            <td style="color:var(--gold);font-weight:bold;">R$${valor}<br><span style="font-size:10px;color:#555;">/${months>1?months+'m':'mês'}</span></td>
             <td style="font-size:12px;">${lp}</td>
             <td style="font-size:12px;">${nb}</td>
             <td>${badge}</td>
             <td style="white-space:nowrap;">
-              <button class="btn btn-sm" style="font-size:10px;padding:3px 8px;background:rgba(46,204,113,0.15);color:#2ecc71;border:1px solid rgba(46,204,113,0.3);" onclick="saRegisterPayment('${t.id}','${t.name}','${t.plan}')">✓ Pago</button>
-              <button class="btn btn-sm btn-secondary" style="font-size:10px;padding:3px 8px;" onclick="saChangePlan('${t.id}','${t.plan}','${t.name}')">Plano</button>
+              <button class="btn btn-sm" style="font-size:10px;padding:3px 8px;background:rgba(46,204,113,0.15);color:#2ecc71;border:1px solid rgba(46,204,113,0.3);" onclick="saRegisterPayment('${t.id}','${t.name}','${t.plan}','${cycle}')">✓ Pago</button>
+              <button class="btn btn-sm btn-secondary" style="font-size:10px;padding:3px 8px;" onclick="saChangePlan('${t.id}','${t.plan||'basic'}','${cycle}','${t.name}')">Plano</button>
+              <button class="btn btn-sm btn-secondary" style="font-size:10px;padding:3px 8px;" onclick="saChangeStatus('${t.id}','${ts}','${t.name}')">Status</button>
             </td>
           </tr>`;
         }).join('')}
@@ -4505,6 +4705,14 @@ function renderSaNovo(el) {
             <option value="basic">Basic — R$49/mês</option>
             <option value="pro">Pro — R$89/mês</option>
             <option value="premium" selected>Premium — R$149/mês</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Periodicidade</label>
+          <select id="saNewCycle" onchange="saUpdatePlanInfo(document.getElementById('saNewPlan').value)">
+            <option value="monthly">Mensal</option>
+            <option value="quarterly">Trimestral (10% off)</option>
+            <option value="semiannual">Semestral (20% off)</option>
+            <option value="annual">Anual (30% off)</option>
           </select>
         </div>
         <div class="form-group"><label>Data 1º Vencimento</label><input type="date" id="saNewNextBilling" value="${new Date(Date.now()+30*86400000).toISOString().split('T')[0]}"></div>
@@ -4679,6 +4887,8 @@ async function saCreateTeam() {
     instagram: (document.getElementById('saNewInsta')?.value||'').trim(),
     logo_url: (document.getElementById('saNewLogo')?.value||'').trim(),
     plan: document.getElementById('saNewPlan')?.value || 'basic',
+    billing_cycle: document.getElementById('saNewCycle')?.value || 'monthly',
+    status: 'trial',
     color_primary: colors.primary,
     color_secondary: colors.secondary,
     color_template: tpl,
@@ -4717,29 +4927,109 @@ async function saToggleTeam(id, activate, btnEl) {
   }
 }
 
-async function saRegisterPayment(id, name, plan) {
-  const today = new Date().toISOString().split('T')[0];
-  const next  = new Date(Date.now()+30*86400000).toISOString().split('T')[0];
-  const valor = {basic:49,pro:89,premium:149}[plan]||49;
-  if (!confirm(`Confirmar pagamento de R$${valor} para "${name}"?\nPróximo vencimento: ${new Date(next).toLocaleDateString('pt-BR')}`)) return;
+async function saChangeStatus(id, currentStatus, name) {
+  showModal(`
+    <div style="font-family:Oswald,sans-serif;font-size:14px;letter-spacing:2px;color:#fff;margin-bottom:20px;">STATUS — ${name}</div>
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      <button class="btn" style="padding:14px;text-align:left;${currentStatus==='active'?'border-color:var(--gold);color:var(--gold);':''}" onclick="saApplyStatus('${id}','active','${name}')">
+        <div style="font-family:Oswald,sans-serif;font-size:13px;letter-spacing:2px;">● ATIVO</div>
+        <div style="font-family:Barlow,sans-serif;font-size:12px;color:#666;margin-top:4px;">Acesso completo conforme plano</div>
+      </button>
+      <button class="btn" style="padding:14px;text-align:left;${currentStatus==='trial'?'border-color:var(--gold);color:var(--gold);':''}" onclick="saApplyStatus('${id}','trial','${name}')">
+        <div style="font-family:Oswald,sans-serif;font-size:13px;letter-spacing:2px;">◐ TRIAL</div>
+        <div style="font-family:Barlow,sans-serif;font-size:12px;color:#666;margin-top:4px;">7 dias grátis — recursos básicos</div>
+      </button>
+      <button class="btn" style="padding:14px;text-align:left;${currentStatus==='suspended'?'border-color:var(--red);color:var(--red);':''}" onclick="saApplyStatus('${id}','suspended','${name}')">
+        <div style="font-family:Oswald,sans-serif;font-size:13px;letter-spacing:2px;">✕ SUSPENSO</div>
+        <div style="font-family:Barlow,sans-serif;font-size:12px;color:#666;margin-top:4px;">Bloqueia edição, jogos e votação</div>
+      </button>
+    </div>
+    <button class="btn btn-secondary" onclick="closeModal()" style="width:100%;margin-top:16px;padding:10px;">CANCELAR</button>
+  `);
+}
+
+async function saApplyStatus(id, newStatus, name) {
+  const active = newStatus !== 'suspended';
   try {
-    await saPatchTeam(id, { last_payment: today, next_billing: next, active: true });
-    showNotif(`✅ Pagamento de R$${valor} registrado para "${name}"`);
+    await saPatchTeam(id, { status: newStatus, active });
+    closeModal();
+    const icons = { active:'✅', trial:'🟡', suspended:'🔒' };
+    showNotif(`${icons[newStatus]||''} "${name}" → ${newStatus.toUpperCase()}`);
+    renderSaPane('times');
+  } catch(e) { showNotif('Erro: '+e.message, true); }
+}
+
+async function saRegisterPayment(id, name, plan, cycle) {
+  const today  = new Date().toISOString().split('T')[0];
+  const months = {monthly:1,quarterly:3,semiannual:6,annual:12}[cycle||'monthly']||1;
+  const next   = new Date(Date.now()+months*30*86400000).toISOString().split('T')[0];
+  const prices = {basic:{monthly:49,quarterly:132,semiannual:234,annual:420},pro:{monthly:89,quarterly:240,semiannual:426,annual:756},premium:{monthly:149,quarterly:402,semiannual:714,annual:1248}};
+  const valor  = prices[plan]?.[cycle||'monthly'] || {basic:49,pro:89,premium:149}[plan]||49;
+  const cycleLabel = {monthly:'mensal',quarterly:'trimestral',semiannual:'semestral',annual:'anual'}[cycle||'monthly'];
+  if (!confirm(`Confirmar pagamento ${cycleLabel} de R$${valor} para "${name}"?\nPróximo vencimento: ${new Date(next).toLocaleDateString('pt-BR')}`)) return;
+  try {
+    await saPatchTeam(id, { last_payment: today, next_billing: next, active: true, status: 'active' });
+    showNotif(`✅ R$${valor} registrado para "${name}" — próx. ${new Date(next).toLocaleDateString('pt-BR')}`);
     renderSaPane('cobrancas');
   } catch(e) { showNotif('Erro: '+e.message, true); }
 }
 
-async function saChangePlan(id, currentPlan, name) {
-  const plans = ['basic','pro','premium'];
-  const labels = { basic:'Basic — R$49/mês', pro:'Pro — R$89/mês', premium:'Premium — R$149/mês' };
-  const options = plans.map(p => `${p === currentPlan ? '● ' : '○ '}${labels[p]}`).join('\n');
-  const input = prompt(`Alterar plano de "${name}":\n\n${options}\n\nDigite: basic, pro ou premium`);
-  if (!input || !plans.includes(input.toLowerCase().trim())) return;
-  const newPlan = input.toLowerCase().trim();
-  if (newPlan === currentPlan) { showNotif('Plano não alterado.'); return; }
+async function saChangePlan(id, currentPlan, currentCycle, name) {
+  showModal(`
+    <div style="font-family:Oswald,sans-serif;font-size:14px;letter-spacing:2px;color:#fff;margin-bottom:16px;">ALTERAR PLANO — ${name}</div>
+    <div class="form-group"><label>Plano</label>
+      <select id="cpPlan" onchange="saUpdatePlanPrices()" style="width:100%;">
+        <option value="basic"   ${currentPlan==='basic'   ?'selected':''}>Basic</option>
+        <option value="pro"     ${currentPlan==='pro'     ?'selected':''}>Pro</option>
+        <option value="premium" ${currentPlan==='premium' ?'selected':''}>Premium</option>
+      </select>
+    </div>
+    <div class="form-group"><label>Periodicidade</label>
+      <select id="cpCycle" onchange="saUpdatePlanPrices()" style="width:100%;">
+        <option value="monthly"    ${currentCycle==='monthly'   ?'selected':''}>Mensal</option>
+        <option value="quarterly"  ${currentCycle==='quarterly' ?'selected':''}>Trimestral (10% off)</option>
+        <option value="semiannual" ${currentCycle==='semiannual'?'selected':''}>Semestral (20% off)</option>
+        <option value="annual"     ${currentCycle==='annual'    ?'selected':''}>Anual (30% off)</option>
+      </select>
+    </div>
+    <div id="cpPriceInfo" style="font-family:Oswald,sans-serif;font-size:12px;letter-spacing:1px;color:var(--gold);padding:10px 14px;background:rgba(200,150,62,0.08);border:1px solid rgba(200,150,62,0.2);margin-bottom:16px;"></div>
+    <div class="form-group"><label>Próximo vencimento</label>
+      <input type="date" id="cpNextBilling" style="width:100%;" value="${new Date(Date.now()+30*86400000).toISOString().split('T')[0]}">
+    </div>
+    <div style="display:flex;gap:10px;margin-top:4px;">
+      <button class="btn-red" onclick="saApplyPlanChange('${id}','${name}')" style="flex:1;">SALVAR ALTERAÇÃO</button>
+      <button class="btn btn-secondary" onclick="closeModal()" style="padding:10px 20px;">CANCELAR</button>
+    </div>
+  `);
+  saUpdatePlanPrices();
+}
+
+function saUpdatePlanPrices() {
+  const plan  = document.getElementById('cpPlan')?.value;
+  const cycle = document.getElementById('cpCycle')?.value;
+  const el    = document.getElementById('cpPriceInfo');
+  if (!el || !plan || !cycle) return;
+  const prices = { basic:{monthly:49,quarterly:44,semiannual:39,annual:35}, pro:{monthly:89,quarterly:80,semiannual:71,annual:63}, premium:{monthly:149,quarterly:134,semiannual:119,annual:104} };
+  const periodMonths = { monthly:1, quarterly:3, semiannual:6, annual:12 };
+  const price = prices[plan]?.[cycle] || 0;
+  const months = periodMonths[cycle] || 1;
+  const total = price * months;
+  const discount = { monthly:0, quarterly:10, semiannual:20, annual:30 }[cycle] || 0;
+  el.innerHTML = `R$${price}/mês · cobrança de R$${total} a cada ${months} mês${months>1?'s':''}${discount ? ` · ${discount}% de desconto` : ''}`;
+  // Atualiza data de vencimento automaticamente
+  const nb = document.getElementById('cpNextBilling');
+  if (nb) nb.value = new Date(Date.now()+months*30*86400000).toISOString().split('T')[0];
+}
+
+async function saApplyPlanChange(id, name) {
+  const plan  = document.getElementById('cpPlan')?.value;
+  const cycle = document.getElementById('cpCycle')?.value;
+  const nb    = document.getElementById('cpNextBilling')?.value;
+  if (!plan || !cycle) return;
   try {
-    await saPatchTeam(id, { plan: newPlan });
-    showNotif(`✅ Plano de "${name}" alterado para ${newPlan.toUpperCase()}`);
+    await saPatchTeam(id, { plan, billing_cycle: cycle, next_billing: nb });
+    closeModal();
+    showNotif(`✅ Plano de "${name}" → ${plan.toUpperCase()} ${cycle}`);
     renderSaPane('cobrancas');
   } catch(e) { showNotif('Erro: '+e.message, true); }
 }
@@ -4952,7 +5242,9 @@ async function initSaaS() {
     applyTeamBranding(TEAM_CONFIG);
 
     // Guarda status para usar NO LOGIN DO ADMIN (não aqui)
-    TEAM_CONFIG._isBlocked = (teamCfg.active === false);
+    TEAM_CONFIG._isBlocked = (teamCfg.status === 'suspended');
+    TEAM_CONFIG.status = teamCfg.status || 'active';
+    TEAM_CONFIG.billing_cycle = teamCfg.billingCycle || 'monthly';
     if (TEAM_CONFIG._isBlocked) {
       console.log('[GestãoFC] Time bloqueado — site público ok, login admin bloqueado');
     }
