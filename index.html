@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Vira Copo FC — Portal Oficial</title>
+<title id="pageTitle">MeuTime — Portal de Futebol</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Oswald:wght@300;400;600;700&family=Barlow+Condensed:ital,wght@0,400;0,600;1,400&family=Barlow:wght@400;500&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -595,16 +595,119 @@ input, select, textarea, button { -webkit-tap-highlight-color: transparent; }
   .full-mobile { width:100% !important; justify-content:center; }
   .p-mobile { padding:10px !important; }
 }
+
+/* ══════════════════ LANDING PAGE ══════════════════ */
+.landing-view { min-height:100vh; background:var(--black); }
+.landing-hero {
+  min-height:60vh; display:flex; flex-direction:column;
+  align-items:center; justify-content:center; text-align:center;
+  padding:80px 24px 60px; position:relative; overflow:hidden;
+}
+.landing-hero::before {
+  content:''; position:absolute; inset:0;
+  background:radial-gradient(ellipse at 50% 0%, rgba(204,26,26,0.2) 0%, transparent 65%);
+}
+.landing-title { font-family:'Bebas Neue',sans-serif; font-size:clamp(52px,10vw,96px); color:#fff; letter-spacing:4px; line-height:1; position:relative; z-index:1; }
+.landing-title span { color:var(--red); }
+.landing-sub { font-family:'Oswald',sans-serif; font-size:clamp(13px,2.5vw,16px); letter-spacing:4px; color:var(--gold); margin:12px 0 32px; position:relative; z-index:1; }
+.landing-cta { display:inline-flex; gap:12px; flex-wrap:wrap; justify-content:center; position:relative; z-index:1; }
+.landing-cta a { font-family:'Oswald',sans-serif; font-size:13px; letter-spacing:3px; padding:12px 28px; cursor:pointer; text-decoration:none; transition:all .2s; }
+.landing-cta .btn-primary { background:var(--red); color:#fff; border:none; }
+.landing-cta .btn-primary:hover { background:#e02020; }
+.landing-cta .btn-outline { background:transparent; color:var(--cream); border:1px solid #444; }
+.landing-cta .btn-outline:hover { border-color:var(--gold); color:var(--gold); }
+.landing-teams-section { padding:60px 24px; max-width:1100px; margin:0 auto; }
+.landing-teams-section h2 { font-family:'Bebas Neue',sans-serif; font-size:36px; color:#fff; letter-spacing:3px; margin-bottom:6px; }
+.landing-teams-section .sub { font-family:'Oswald',sans-serif; font-size:12px; letter-spacing:3px; color:#555; margin-bottom:32px; }
+.teams-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:16px; }
+.team-card-landing {
+  background:var(--dark); border:1px solid #2a2a2a; padding:24px 16px;
+  text-align:center; cursor:pointer; transition:all .2s; text-decoration:none; display:block;
+}
+.team-card-landing:hover { border-color:var(--red); transform:translateY(-3px); }
+.team-card-logo { width:64px; height:64px; border-radius:50%; object-fit:contain; margin:0 auto 12px; background:#111; padding:6px; border:2px solid #333; display:block; }
+.team-card-logo-placeholder { width:64px; height:64px; border-radius:50%; background:rgba(204,26,26,0.1); border:2px solid rgba(204,26,26,0.3); display:flex; align-items:center; justify-content:center; margin:0 auto 12px; font-family:'Bebas Neue',sans-serif; font-size:20px; color:var(--red); }
+.team-card-name { font-family:'Oswald',sans-serif; font-size:14px; letter-spacing:2px; color:#fff; margin-bottom:4px; }
+.team-card-city { font-family:'Barlow',sans-serif; font-size:11px; color:#555; }
+.team-card-badge { display:inline-block; font-family:'Oswald',sans-serif; font-size:9px; letter-spacing:2px; padding:2px 8px; margin-top:8px; background:rgba(204,26,26,0.15); color:var(--red); border:1px solid rgba(204,26,26,0.3); }
+.landing-footer { text-align:center; padding:40px 24px; border-top:1px solid #1a1a1a; font-family:'Oswald',sans-serif; font-size:11px; letter-spacing:3px; color:#333; }
+
+/* ══════════════════ TELA BLOQUEADA ══════════════════ */
+.blocked-view { min-height:100vh; display:flex; align-items:center; justify-content:center; background:var(--black); padding:24px; }
+.blocked-box { max-width:480px; text-align:center; padding:48px 32px; background:var(--dark); border:1px solid #2a2a2a; border-top:3px solid var(--red); }
+.blocked-icon { font-size:48px; margin-bottom:16px; }
+.blocked-title { font-family:'Bebas Neue',sans-serif; font-size:36px; letter-spacing:3px; color:var(--red); margin-bottom:8px; }
+.blocked-msg { font-family:'Barlow',sans-serif; font-size:14px; color:#888; line-height:1.6; margin-bottom:24px; }
+.blocked-contact { font-family:'Oswald',sans-serif; font-size:12px; letter-spacing:2px; color:var(--gold); }
+
+/* ══════════════════ SUPER ADMIN ══════════════════ */
+.sa-view { min-height:100vh; background:var(--black); }
+.sa-header { background:var(--dark); border-bottom:2px solid var(--red); padding:16px 24px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; }
+.sa-header-title { font-family:'Bebas Neue',sans-serif; font-size:22px; letter-spacing:3px; color:#fff; }
+.sa-header-title span { color:var(--red); }
+.sa-tabs { display:flex; gap:2px; border-bottom:1px solid #222; padding:0 24px; background:var(--dark); overflow-x:auto; }
+.sa-tab { font-family:'Oswald',sans-serif; font-size:12px; letter-spacing:2px; color:#555; padding:12px 18px; border:none; background:transparent; cursor:pointer; border-bottom:2px solid transparent; white-space:nowrap; }
+.sa-tab:hover { color:var(--cream); }
+.sa-tab.active { color:var(--gold); border-bottom-color:var(--gold); }
+.sa-content { padding:24px; max-width:1200px; margin:0 auto; }
+.sa-stat-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:16px; margin-bottom:32px; }
+.sa-stat-card { background:var(--dark); border:1px solid #2a2a2a; padding:20px; text-align:center; }
+.sa-stat-number { font-family:'Bebas Neue',sans-serif; font-size:42px; color:var(--red); line-height:1; }
+.sa-stat-label { font-family:'Oswald',sans-serif; font-size:11px; letter-spacing:2px; color:#555; margin-top:4px; }
+.sa-teams-table { width:100%; border-collapse:collapse; }
+.sa-teams-table th { font-family:'Oswald',sans-serif; font-size:11px; letter-spacing:2px; color:#666; padding:10px 12px; text-align:left; border-bottom:1px solid #222; }
+.sa-teams-table td { padding:12px 12px; border-bottom:1px solid #1a1a1a; font-family:'Barlow',sans-serif; font-size:13px; }
+.sa-teams-table tr:hover td { background:rgba(255,255,255,0.02); }
+.sa-badge-active { display:inline-block; background:rgba(46,204,113,0.15); color:#2ecc71; border:1px solid rgba(46,204,113,0.3); font-family:'Oswald',sans-serif; font-size:10px; letter-spacing:1px; padding:2px 8px; }
+.sa-badge-blocked { display:inline-block; background:rgba(204,26,26,0.15); color:var(--red); border:1px solid rgba(204,26,26,0.3); font-family:'Oswald',sans-serif; font-size:10px; letter-spacing:1px; padding:2px 8px; }
+.sa-badge-warn { display:inline-block; background:rgba(200,150,62,0.15); color:var(--gold); border:1px solid rgba(200,150,62,0.3); font-family:'Oswald',sans-serif; font-size:10px; letter-spacing:1px; padding:2px 8px; }
+.sa-plan-badge { font-family:'Oswald',sans-serif; font-size:10px; letter-spacing:1px; padding:2px 8px; background:#222; color:#888; border:1px solid #333; }
+.color-swatch { width:20px; height:20px; border-radius:50%; display:inline-block; vertical-align:middle; border:2px solid rgba(255,255,255,0.1); }
+
+/* ══════════════════ BRANDING PANEL ══════════════════ */
+.branding-preview { border:1px solid #333; border-radius:2px; overflow:hidden; margin-top:12px; }
+.branding-preview-bar { height:8px; background:var(--red); }
+.branding-preview-content { padding:16px; background:var(--dark); display:flex; align-items:center; gap:12px; }
+.color-template-btn { padding:8px 14px; border:2px solid #333; background:transparent; color:#888; font-family:'Oswald',sans-serif; font-size:11px; letter-spacing:2px; cursor:pointer; transition:all .2s; }
+.color-template-btn.active, .color-template-btn:hover { border-color:var(--gold); color:var(--gold); }
 </style>
 </head>
 <body>
+
+<!-- ══ LANDING PAGE (sem slug) ══ -->
+<div id="view-landing" class="view landing-view">
+  <div class="landing-hero">
+    <div class="landing-title"><span>MEU</span>TIME</div>
+    <div class="landing-sub">A PLATAFORMA DOS TIMES DE FUTEBOL AMADOR</div>
+    <div class="landing-cta">
+      <a class="btn-primary" onclick="document.getElementById('landingTeamsSection').scrollIntoView({behavior:'smooth'})">VER TIMES</a>
+      <a class="btn-outline" href="/cdn-cgi/l/email-protection#086b67667c697c6748656d7d7c61656d266b6765266a7a">QUERO MEU TIME AQUI</a>
+    </div>
+  </div>
+  <div class="landing-teams-section" id="landingTeamsSection">
+    <h2>TIMES CADASTRADOS</h2>
+    <div class="sub">CLIQUE PARA ACESSAR O PORTAL DO TIME</div>
+    <div class="teams-grid" id="landingTeamsGrid"></div>
+  </div>
+  <div class="landing-footer">GESTAOFC.COM.BR · FUTEBOL AMADOR BRASILEIRO · 2026</div>
+</div>
+
+<!-- ══ TIME BLOQUEADO ══ -->
+<div id="view-blocked" class="view blocked-view">
+  <div class="blocked-box">
+    <div class="blocked-icon">🔒</div>
+    <div class="blocked-title">ACESSO SUSPENSO</div>
+    <div class="blocked-msg" id="blockedMsg">O acesso deste time está temporariamente suspenso. Entre em contato com a administração da plataforma para regularizar.</div>
+    <div class="blocked-contact" id="blockedContact"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="63000c0d1702170c230e0616170a0e064d000c0e4d0111">[email&#160;protected]</a></div>
+  </div>
+</div>
 
 <!-- ── UNIFORM BANNER ── -->
 <div class="uniform-banner" id="uniformBanner">⚽ UNIFORME DO PRÓXIMO JOGO: <span id="uniformText">VERMELHO</span></div>
 
 <!-- ── TOP NAV ── -->
 <nav class="top-nav">
-  <div class="nav-logo" onclick="showView('site')">VIRA COPO FC</div>
+  <div class="nav-logo" id="navLogo" onclick="showView('site')">VIRA COPO FC</div>
   <div class="nav-links">
     <a onclick="scrollToSection('proxjogo')">Próximo Jogo</a>
     <a onclick="scrollToSection('resultados')">Resultados</a>
@@ -636,7 +739,7 @@ input, select, textarea, button { -webkit-tap-highlight-color: transparent; }
 <div class="login-overlay" id="loginOverlay">
   <div class="login-box" style="position:relative;">
     <button class="login-close" onclick="toggleLogin()">✕</button>
-    <div class="login-logo">VIRA COPO FC</div>
+    <div class="login-logo" id="loginLogo">VIRA COPO FC</div>
     <div class="login-sub">Área Restrita</div>
     <div class="login-error" id="loginError">Usuário ou senha incorretos</div>
     <div class="form-group">
@@ -661,12 +764,12 @@ input, select, textarea, button { -webkit-tap-highlight-color: transparent; }
 <section class="hero">
   <div class="hero-year">1991</div>
   <div class="hero-inner">
-    <div class="club-tag">Futebol Raiz · Rio Grande · Palhoça — SC</div>
+    <div class="club-tag" id="heroTag">Futebol Raiz · Rio Grande · Palhoça — SC</div>
     <div class="crest">
-      <img src="./logo-viracopofc.png" alt="Escudo Vira Copo FC" onerror="this.style.display='none';this.parentElement.innerHTML='<div style=\'font-size:80px;line-height:200px\'>⚽</div>'"/>
-          </div>
-    <h1 class="club-name">Vira Copo<br>FC</h1>
-    <p class="club-sub">"A resenha começa no campo, mas nunca termina."</p>
+      <img id="heroLogo" src="./logo-viracopofc.png" alt="Escudo" onerror="this.style.display='none';this.parentElement.innerHTML='<div style=\'font-size:80px;line-height:200px\'>⚽</div>'"/>
+    </div>
+    <h1 class="club-name" id="heroName">Vira Copo<br>FC</h1>
+    <p class="club-sub" id="heroSub">"A resenha começa no campo, mas nunca termina."</p>
     <div class="hero-divider"></div>
     <div class="hero-stats">
       <div class="stat"><div class="stat-number">35</div><div class="stat-label">Anos de História</div></div>
@@ -692,7 +795,7 @@ input, select, textarea, button { -webkit-tap-highlight-color: transparent; }
   <div class="match-card" id="publicMatchCard">
     <div class="match-label">⚽ JOGO MARCADO</div>
     <div class="match-teams">
-      <div class="match-team">VIRA COPO FC</div>
+      <div class="match-team" id="matchTeamName">VIRA COPO FC</div>
       <div class="match-vs">VS</div>
       <div class="match-team" id="pubAdversary">ATLÉTICO DO MORRO</div>
     </div>
@@ -786,9 +889,9 @@ input, select, textarea, button { -webkit-tap-highlight-color: transparent; }
 
 <!-- FOOTER -->
 <footer class="site-footer">
-  <img src="logo-viracopofc.png" alt="Vira Copo FC" style="width:60px;height:60px;object-fit:contain;margin-bottom:12px;filter:drop-shadow(0 2px 8px rgba(204,26,26,0.5));" onerror="this.style.display='none'">
-  <div class="footer-logo">VIRA COPO FC</div>
-  <p class="footer-text">BAIRRO RIO GRANDE · PALHOÇA · SANTA CATARINA · DESDE <span>1991</span></p>
+  <img id="footerLogo" src="logo-viracopofc.png" alt="Logo" style="width:60px;height:60px;object-fit:contain;margin-bottom:12px;filter:drop-shadow(0 2px 8px rgba(204,26,26,0.5));" onerror="this.style.display='none'">
+  <div class="footer-logo" id="footerName">VIRA COPO FC</div>
+  <p class="footer-text" id="footerInfo">BAIRRO RIO GRANDE · PALHOÇA · SANTA CATARINA · DESDE <span>1991</span></p>
 </footer>
 
 </div><!-- /view-site -->
@@ -830,11 +933,177 @@ input, select, textarea, button { -webkit-tap-highlight-color: transparent; }
 <!-- ── NOTIFICATION ── -->
 <div class="notif" id="notif"></div>
 
-<script>
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
 // ══════════════════════════════════════════════
 // SUPABASE CONFIG — substitua pelos seus valores
 // ══════════════════════════════════════════════
-const SUPABASE_URL  = 'https://mxugrdwgancoxkgqlwen.supabase.co';       // ex: https://xyzxyz.supabase.co
+// ══════════════════════════════════════════════
+// SAAS — ROTEAMENTO E CONFIG DO TIME
+// ══════════════════════════════════════════════
+
+// Super Admin credentials (dono da plataforma)
+const SA_USER = 'superadmin';
+const SA_PASS = 'gestaofc@2026';
+
+// Config padrão do time (usada como fallback antes de carregar do Supabase)
+let TEAM_CONFIG = {
+  id: null,
+  slug: 'viracopo',
+  name: 'Vira Copo FC',
+  shortName: 'VIRA COPO FC',
+  logoUrl: './logo-viracopofc.png',
+  colorPrimary: '#CC1A1A',
+  colorSecondary: '#C8963E',
+  colorTemplate: 'rubro-negro',
+  city: 'Palhoça',
+  state: 'SC',
+  neighborhood: 'Bairro Rio Grande',
+  foundedYear: 1991,
+  instagram: 'viracopofc91',
+  whatsapp: '+55 48 98475-1343',
+  slogan: '"A resenha começa no campo, mas nunca termina."',
+  tagline: 'Futebol Raiz · Rio Grande · Palhoça — SC',
+  active: true,
+  plan: 'premium',
+};
+
+let currentTeamId = null; // UUID do time no Supabase
+let isSuperAdmin = false;
+
+// Templates de cores pré-definidos
+const COLOR_TEMPLATES = {
+  'rubro-negro':    { primary:'#CC1A1A', secondary:'#C8963E', label:'Rubro-Negro' },
+  'alvinegro':      { primary:'#1A1A1A', secondary:'#FFFFFF', label:'Alvinegro' },
+  'azul-branco':    { primary:'#1565C0', secondary:'#FFFFFF', label:'Azul e Branco' },
+  'verde-branco':   { primary:'#2E7D32', secondary:'#FFFFFF', label:'Verde e Branco' },
+  'azul-vermelho':  { primary:'#1565C0', secondary:'#CC1A1A', label:'Azul e Vermelho' },
+  'roxo-dourado':   { primary:'#6A1B9A', secondary:'#C8963E', label:'Roxo e Dourado' },
+  'personalizado':  { primary:'#CC1A1A', secondary:'#C8963E', label:'Personalizado' },
+};
+
+// ── Lê o slug da URL: /viracopo → "viracopo", /admin → "admin" ──
+function getSlugFromUrl() {
+  const path = window.location.pathname.replace(/^\//, '').split('/')[0].toLowerCase();
+  return path || '';
+}
+
+// ── Aplica as cores e dados do time no DOM ──
+function applyTeamBranding(cfg) {
+  const root = document.documentElement;
+  root.style.setProperty('--red',       cfg.colorPrimary);
+  root.style.setProperty('--red-dark',  shadeColor(cfg.colorPrimary, -30));
+  root.style.setProperty('--red-light', shadeColor(cfg.colorPrimary, 20));
+  root.style.setProperty('--gold',      cfg.colorSecondary);
+  root.style.setProperty('--gold-light',shadeColor(cfg.colorSecondary, 15));
+
+  const name = cfg.shortName || cfg.name || 'MEU TIME';
+  document.getElementById('pageTitle').textContent = cfg.name + ' — Portal Oficial';
+  const navLogo = document.getElementById('navLogo'); if (navLogo) navLogo.textContent = name;
+  const heroName = document.getElementById('heroName'); if (heroName) heroName.innerHTML = formatClubName(cfg.name);
+  const heroTag = document.getElementById('heroTag'); if (heroTag) heroTag.textContent = cfg.tagline || cfg.city + ' — ' + cfg.state;
+  const heroSub = document.getElementById('heroSub'); if (heroSub) heroSub.textContent = cfg.slogan || '';
+  const heroLogo = document.getElementById('heroLogo'); if (heroLogo && cfg.logoUrl) heroLogo.src = cfg.logoUrl;
+  const footerLogo = document.getElementById('footerLogo'); if (footerLogo && cfg.logoUrl) footerLogo.src = cfg.logoUrl;
+  const footerName = document.getElementById('footerName'); if (footerName) footerName.textContent = name;
+  const footerInfo = document.getElementById('footerInfo');
+  if (footerInfo) footerInfo.innerHTML = (cfg.neighborhood ? cfg.neighborhood.toUpperCase() + ' · ' : '') + cfg.city.toUpperCase() + ' · ' + cfg.state + ' · DESDE <span>' + cfg.foundedYear + '</span>';
+  const loginLogo = document.getElementById('loginLogo'); if (loginLogo) loginLogo.textContent = name;
+  const matchTeam = document.getElementById('matchTeamName'); if (matchTeam) matchTeam.textContent = name;
+  const mobileTitle = document.querySelector('#mobileMenuOverlay div div:first-child');
+  if (mobileTitle) mobileTitle.textContent = name;
+
+  // Marquee — atualiza texto
+  const marquee = document.querySelector('.marquee-track');
+  if (marquee && cfg.name) {
+    const t = (cfg.name + ' ✦ ' + cfg.city.toUpperCase() + ' · ' + cfg.state + ' ✦ FUTEBOL RAIZ ✦ DESDE ' + cfg.foundedYear + ' ✦ ').repeat(2);
+    marquee.innerHTML = t.split(' ✦ ').map((s,i) => i%2===0 ? '<span>'+s+'</span>' : '<span class="dot">✦</span>').join('');
+  }
+}
+
+function formatClubName(name) {
+  const words = name.split(' ');
+  if (words.length <= 2) return name;
+  const last = words.pop();
+  return words.join(' ') + '<br>' + last;
+}
+
+function shadeColor(hex, pct) {
+  const num = parseInt(hex.replace('#',''), 16);
+  const r = Math.min(255, Math.max(0, (num>>16) + Math.round(2.55*pct)));
+  const g = Math.min(255, Math.max(0, ((num>>8)&0xff) + Math.round(2.55*pct)));
+  const b = Math.min(255, Math.max(0, (num&0xff) + Math.round(2.55*pct)));
+  return '#' + ((1<<24)+(r<<16)+(g<<8)+b).toString(16).slice(1);
+}
+
+// ── Carrega config do time pelo slug do Supabase ──
+async function loadTeamBySlug(slug) {
+  if (!SB_READY) return null;
+  try {
+    const teams = await sbGet('teams', `?slug=eq.${encodeURIComponent(slug)}&limit=1`);
+    if (!teams.length) return null;
+    const t = teams[0];
+    return {
+      id: t.id, slug: t.slug, name: t.name,
+      shortName: t.short_name || t.name,
+      logoUrl: t.logo_url || './logo-viracopofc.png',
+      colorPrimary: t.color_primary || '#CC1A1A',
+      colorSecondary: t.color_secondary || '#C8963E',
+      colorTemplate: t.color_template || 'personalizado',
+      city: t.city || '', state: t.state || '',
+      neighborhood: t.neighborhood || '',
+      foundedYear: t.founded_year || 2000,
+      instagram: t.instagram || '', whatsapp: t.whatsapp || '',
+      slogan: t.slogan || '', tagline: t.tagline || '',
+      active: t.active !== false,
+      plan: t.plan || 'basic',
+      billingDay: t.billing_day, lastPayment: t.last_payment,
+      nextBilling: t.next_billing, notes: t.notes || '',
+      adminUser: t.admin_user, adminPass: t.admin_pass,
+      createdAt: t.created_at,
+    };
+  } catch(e) { console.warn('teams table not found — using local config'); return null; }
+}
+
+// ── Carrega todos os times para a landing page ──
+async function loadAllTeams() {
+  if (!SB_READY) return [];
+  try {
+    return await sbGet('teams', '?active=eq.true&order=name');
+  } catch(e) { return []; }
+}
+
+// ── Render landing page ──
+async function renderLanding() {
+  showViewRaw('landing');
+  const grid = document.getElementById('landingTeamsGrid');
+  if (!grid) return;
+  grid.innerHTML = '<div style="font-family:Oswald,sans-serif;font-size:12px;letter-spacing:2px;color:#555;grid-column:1/-1;padding:20px 0;">CARREGANDO TIMES...</div>';
+  const teams = await loadAllTeams();
+  if (!teams.length) {
+    grid.innerHTML = '<div style="font-family:Oswald,sans-serif;font-size:12px;letter-spacing:2px;color:#444;grid-column:1/-1;padding:20px 0;">NENHUM TIME CADASTRADO AINDA.</div>';
+    return;
+  }
+  grid.innerHTML = teams.map(t => {
+    const initials = (t.short_name || t.name || '').split(' ').map(w=>w[0]).join('').substring(0,3).toUpperCase();
+    const logoHtml = t.logo_url
+      ? `<img src="${t.logo_url}" class="team-card-logo" onerror="this.style.display='none';this.nextSibling.style.display='flex';">
+         <div class="team-card-logo-placeholder" style="display:none;">${initials}</div>`
+      : `<div class="team-card-logo-placeholder">${initials}</div>`;
+    return `<a class="team-card-landing" onclick="navigateToTeam('${t.slug}')">
+      ${logoHtml}
+      <div class="team-card-name">${t.name}</div>
+      <div class="team-card-city">${t.city || ''}${t.state ? ' · '+t.state : ''}</div>
+      <div class="team-card-badge">${(t.plan||'basic').toUpperCase()}</div>
+    </a>`;
+  }).join('');
+}
+
+function navigateToTeam(slug) {
+  window.history.pushState({}, '', '/' + slug);
+  initSaaS();
+}
+
+       // ex: https://xyzxyz.supabase.co
 const SUPABASE_KEY  = 'sb_publishable_KDL1chIiMGGQn896N3j8EQ_nuWL0hVt';  // chave anon/public
 
 const SB_READY = SUPABASE_URL !== 'COLE_SUA_URL_AQUI';
@@ -874,19 +1143,21 @@ async function sbLoad() {
   if (!SB_READY) return;
   try {
     showLoadingOverlay(true);
+    const tf = currentTeamId ? `&team_id=eq.${currentTeamId}` : '';
+    const tf0 = currentTeamId ? `?team_id=eq.${currentTeamId}` : '?';
 
     // ── Dispara TODAS as requests em paralelo ──────────────
     const [players, schedule, results, sumulas, checkins, votes, lineup, cfg, dossiesRaw] =
       await Promise.all([
-        sbGet('players',  '?order=id'),
-        sbGet('schedule', '?order=season,game_date'),
-        sbGet('results',  '?order=created_at.desc&limit=20'),
-        sbGet('sumulas',  '?order=created_at.desc'),
-        sbGet('checkins', ''),
-        sbGet('votes',    ''),
-        sbGet('lineup',   '?id=eq.1'),
-        sbGet('config',   ''),
-        sbGet('dossies',  '?order=id.desc').catch(() => []),  // tabela opcional
+        sbGet('players',  `?order=id${tf}`),
+        sbGet('schedule', `?order=season,game_date${tf}`),
+        sbGet('results',  `?order=created_at.desc&limit=20${tf}`),
+        sbGet('sumulas',  `?order=created_at.desc${tf}`),
+        sbGet('checkins', tf0),
+        sbGet('votes',    tf0),
+        sbGet('lineup',   currentTeamId ? `?team_id=eq.${currentTeamId}&limit=1` : '?id=eq.1'),
+        sbGet('config',   tf0),
+        sbGet('dossies',  `?order=id.desc${tf}`).catch(() => []),
       ]);
 
     // ── players ──────────────────────────────────────────
@@ -1005,12 +1276,14 @@ async function sbLoad() {
 async function sbSavePlayers(ids) {
   if (!SB_READY) return;
   const list = ids ? DB.players.filter(p => ids.includes(p.id)) : DB.players;
+  const tid = currentTeamId;
   await sbUpsert('players', list.map(p => ({
     id: p.id, name: p.name, pos: p.pos, num: p.num,
     games: p.games, goals: p.goals, assists: p.assists,
     attendance: p.attendance, mvp_pts: p.mvpPts,
     paid: p.paid, role: p.role, username: p.user, pass: p.pass,
-    trophies: p.trophies, monthly_payments: p.monthlyPayments || {}
+    trophies: p.trophies, monthly_payments: p.monthlyPayments || {},
+    ...(tid ? { team_id: tid } : {})
   })));
 }
 async function sbSaveScheduleRow(idx, season) {
@@ -1019,14 +1292,14 @@ async function sbSaveScheduleRow(idx, season) {
   const list = DB.scheduleAll[yr] || DB.schedule;
   const g = list[idx];
   if (!g) return;
-  // parse date DD/MM/YYYY -> YYYY-MM-DD for proper ordering
   let game_date = null;
   try { const [d,m,y] = g.date.split('/'); game_date = `${y}-${m.padStart(2,'0')}-${d.padStart(2,'0')}`; } catch(e) {}
   const row = {
     date: g.date, adversary: g.adversary || '', time: g.time || '16:00h',
     local: g.local || 'Campo do Rio Grande', fora: g.fora || false,
     maps_url: g.mapsUrl || '', adversary_logo: g.adversaryLogo || '',
-    season: yr, game_date
+    season: yr, game_date,
+    ...(currentTeamId ? { team_id: currentTeamId } : {})
   };
   if (g.id) row.id = g.id;
   await sbUpsert('schedule', [row]);
@@ -1039,19 +1312,20 @@ async function sbSaveCheckin(playerId) {
   if (!SB_READY) return;
   const status = DB.checkins[playerId] ?? null;
   if (status === null) {
-    await sbDelete('checkins', `player_id=eq.${playerId}`);
+    await sbDelete('checkins', `player_id=eq.${playerId}${currentTeamId?'&team_id=eq.'+currentTeamId:''}`);
   } else {
-    await sbUpsert('checkins', [{ player_id: playerId, status }]);
+    await sbUpsert('checkins', [{ player_id: playerId, status, ...(currentTeamId?{team_id:currentTeamId}:{}) }]);
   }
 }
 async function sbSaveVote(playerId) {
   if (!SB_READY) return;
-  await sbUpsert('votes', [{ player_id: playerId, choices: DB.votes[playerId] }]);
+  await sbUpsert('votes', [{ player_id: playerId, choices: DB.votes[playerId], ...(currentTeamId?{team_id:currentTeamId}:{}) }]);
 }
 async function sbSaveLineup() {
   if (!SB_READY) return;
   await sbUpsert('lineup', [{
-    id: 1, starting: DB.lineup.starting, bench: DB.lineup.bench,
+    ...(currentTeamId ? { team_id: currentTeamId } : { id: 1 }),
+    starting: DB.lineup.starting, bench: DB.lineup.bench,
     formation: DB.lineup.formation || '4-3-3',
     pos_slots: DB.lineup.posSlots || {},
     game_positions: DB.gamePositions || {}
@@ -1068,29 +1342,30 @@ async function sbSaveConfig(key) {
   else if (key === 'mensalidade_valor') val = String(DB.mensalidadeValor || 30);
   else if (key === 'elenco_seasons') val = JSON.stringify(DB.elencoSeasons || {});
   else val = null;
-  if (val !== null) await sbUpsert('config', [{ key, value: val }]);
+  if (val !== null) await sbUpsert('config', [{ key, value: val, ...(currentTeamId?{team_id:currentTeamId}:{}) }]);
 }
 async function sbSaveResult(result) {
   if (!SB_READY) return;
   await sbUpsert('results', [{
     id: result.id, adversary: result.adversary, score_us: result.score_us,
     score_them: result.score_them, date: result.date,
-    scorers: result.scorers, assists: result.assists
+    scorers: result.scorers, assists: result.assists,
+    ...(currentTeamId ? { team_id: currentTeamId } : {})
   }]);
 }
 async function sbDeleteResult(id) {
   if (!SB_READY) return;
   await sbDelete('results', `id=eq.${id}`);
 }
-// Remove duplicatas de results no Supabase — mantém o de maior id por date+adversary
 async function sbDeduplicateResults() {
   if (!SB_READY) return;
-  const all = await sbGet('results', '?order=id.asc');
+  const tf = currentTeamId ? `&team_id=eq.${currentTeamId}` : '';
+  const all = await sbGet('results', `?order=id.asc${tf}`);
   const seen = new Map();
   const toDelete = [];
   all.forEach(r => {
     const key = r.date + '|' + (r.adversary||'');
-    if (seen.has(key)) toDelete.push(r.id); // duplicata — deleta o mais antigo
+    if (seen.has(key)) toDelete.push(r.id);
     else seen.set(key, r.id);
   });
   if (!toDelete.length) { showNotif('Sem duplicatas encontradas ✓'); return; }
@@ -1103,7 +1378,8 @@ async function sbSaveSumula(s) {
   if (!SB_READY) return;
   await sbUpsert('sumulas', [{
     id: s.id, adversary: s.adversary, date: s.date,
-    us: s.us, them: s.them, scorers: s.scorers, assists: s.assists
+    us: s.us, them: s.them, scorers: s.scorers, assists: s.assists,
+    ...(currentTeamId ? { team_id: currentTeamId } : {})
   }]);
 }
 async function sbSaveDossie(d) {
@@ -1114,7 +1390,8 @@ async function sbSaveDossie(d) {
     pos_slots: d.posSlots||{}, player_ids: d.playerIds||[],
     scorers: d.scorers||[], assists: d.assists||[],
     mvp: d.mvp||null, obs: d.obs||'',
-    events: d.events||[]
+    events: d.events||[],
+    ...(currentTeamId ? { team_id: currentTeamId } : {})
   }]);
 }
 async function sbDeleteDossie(id) {
@@ -1642,6 +1919,7 @@ function buildAdminPanel() {
       { id:'ranking',   label:'Ranking' },
       { id:'financeiro',label:'Financeiro' },
       { id:'usuarios',  label:'Usuários' },
+      { id:'branding',  label:'🎨 Identidade' },
       { id:'uniforme',  label:'Uniforme' },
       { id:'patrocinadores', label:'Patrocinadores' },
       { id:'meuperfil', label:'Meu Perfil' }
@@ -1686,7 +1964,8 @@ function renderPane(id) {
     usuarios: renderUsuarios,
     convocacao: renderConvocacao,
     uniforme: renderUniforme,
-    patrocinadores: renderPatrocinadores
+    patrocinadores: renderPatrocinadores,
+    branding: renderBrandingPane
   };
   if (renders[id]) renders[id](el);
 }
@@ -3881,18 +4160,451 @@ function closeModal() { document.getElementById('modalOverlay').classList.remove
 
 
 // ══════════════════════════════════════════════
-// INIT
+// SUPER ADMIN
 // ══════════════════════════════════════════════
-(async () => {
-  showView('site');
-  renderPublicSite();          // ← site visível imediatamente com dados locais
-  if (!SB_READY) {
-    console.warn('Supabase não configurado — modo local.');
+function showViewRaw(v) {
+  document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
+  const el = document.getElementById('view-' + v);
+  if (el) el.classList.add('active');
+  window.scrollTo(0,0);
+}
+
+function doSaLogin() {
+  const u = document.getElementById('saLoginUser')?.value.trim();
+  const p = document.getElementById('saLoginPass')?.value;
+  if (u === SA_USER && p === SA_PASS) {
+    isSuperAdmin = true;
+    document.getElementById('saLoginOverlay')?.classList.remove('open');
+    showViewRaw('superadmin');
+    document.getElementById('saUserLabel').textContent = 'Logado como: ' + SA_USER;
+    renderSaPane('times');
+  } else {
+    document.getElementById('saLoginError')?.style && (document.getElementById('saLoginError').style.display='block');
+  }
+}
+function doSaLogout() {
+  isSuperAdmin = false;
+  showViewRaw('landing');
+  renderLanding();
+}
+function switchSaTab(id, btn) {
+  document.querySelectorAll('.sa-tab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('[id^="sa-pane-"]').forEach(p=>p.style.display='none');
+  const pane = document.getElementById('sa-pane-'+id);
+  if (pane) { pane.style.display='block'; renderSaPane(id); }
+}
+async function renderSaPane(id) {
+  const el = document.getElementById('sa-pane-'+id);
+  if (!el) return;
+  if (id === 'times')     await renderSaTimes(el);
+  if (id === 'cobrancas') await renderSaCobrancas(el);
+  if (id === 'novo')      renderSaNovo(el);
+  if (id === 'stats')     await renderSaStats(el);
+}
+async function getAllTeams() {
+  if (!SB_READY) return [];
+  try { return await sbGet('teams', '?order=name'); } catch(e) { return []; }
+}
+async function renderSaTimes(el) {
+  el.innerHTML = '<div style="font-family:Oswald,sans-serif;font-size:12px;letter-spacing:2px;color:#555;padding:20px 0;">CARREGANDO...</div>';
+  const teams = await getAllTeams();
+  const total = teams.length;
+  const active = teams.filter(t=>t.active).length;
+  const blocked = total - active;
+  const mrr = teams.filter(t=>t.active).reduce((s,t)=>{
+    return s + ({basic:49,pro:89,premium:149}[t.plan]||49);
+  },0);
+  document.getElementById('saMrrBadge').textContent = 'MRR: R$ ' + mrr.toLocaleString('pt-BR');
+  el.innerHTML = `
+    <div class="sa-stat-grid">
+      <div class="sa-stat-card"><div class="sa-stat-number">${total}</div><div class="sa-stat-label">TIMES CADASTRADOS</div></div>
+      <div class="sa-stat-card"><div class="sa-stat-number" style="color:var(--green);">${active}</div><div class="sa-stat-label">TIMES ATIVOS</div></div>
+      <div class="sa-stat-card"><div class="sa-stat-number" style="color:var(--red);">${blocked}</div><div class="sa-stat-label">BLOQUEADOS</div></div>
+      <div class="sa-stat-card"><div class="sa-stat-number" style="color:var(--gold);">R$${mrr.toLocaleString('pt-BR')}</div><div class="sa-stat-label">MRR ESTIMADO</div></div>
+    </div>
+    <div style="margin-bottom:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+      <span style="font-family:Oswald,sans-serif;font-size:13px;letter-spacing:2px;color:#fff;">TIMES CADASTRADOS</span>
+    </div>
+    <div style="overflow-x:auto;">
+    <table class="sa-teams-table">
+      <thead><tr>
+        <th>TIME</th><th>SLUG</th><th>PLANO</th><th>STATUS</th><th>VENCIMENTO</th><th>CORES</th><th>AÇÕES</th>
+      </tr></thead>
+      <tbody>
+        ${teams.map(t=>{
+          const statusBadge = t.active
+            ? '<span class="sa-badge-active">ATIVO</span>'
+            : '<span class="sa-badge-blocked">BLOQUEADO</span>';
+          const planBadge = `<span class="sa-plan-badge">${(t.plan||'basic').toUpperCase()}</span>`;
+          const swatch1 = `<span class="color-swatch" style="background:${t.color_primary||'#CC1A1A'}" title="${t.color_primary||'#CC1A1A'}"></span>`;
+          const swatch2 = `<span class="color-swatch" style="background:${t.color_secondary||'#C8963E'};margin-left:4px;" title="${t.color_secondary||'#C8963E'}"></span>`;
+          const nb = t.next_billing ? new Date(t.next_billing).toLocaleDateString('pt-BR') : '–';
+          const isExpiring = t.next_billing && new Date(t.next_billing) < new Date(Date.now()+7*86400000);
+          const nbHtml = isExpiring ? `<span class="sa-badge-warn">${nb}</span>` : nb;
+          return `<tr>
+            <td><strong style="color:#fff;">${t.name}</strong><br><span style="font-size:11px;color:#555;">${t.city||''}${t.state?' · '+t.state:''}</span></td>
+            <td style="font-family:monospace;color:var(--gold);">/${t.slug}</td>
+            <td>${planBadge}</td>
+            <td>${statusBadge}</td>
+            <td>${nbHtml}</td>
+            <td>${swatch1}${swatch2}</td>
+            <td>
+              <button class="btn btn-sm" style="font-size:10px;padding:4px 8px;" onclick="saToggleTeam('${t.id}',${!t.active})">${t.active?'Bloquear':'Ativar'}</button>
+              <button class="btn btn-sm btn-secondary" style="font-size:10px;padding:4px 8px;margin-left:4px;" onclick="saAccessTeam('${t.slug}')">Acessar</button>
+            </td>
+          </tr>`;
+        }).join('')}
+      </tbody>
+    </table>
+    </div>`;
+}
+async function renderSaCobrancas(el) {
+  const teams = await getAllTeams();
+  const sorted = [...teams].sort((a,b)=>new Date(a.next_billing||0)-new Date(b.next_billing||0));
+  el.innerHTML = `
+    <div style="margin-bottom:20px;font-family:Oswald,sans-serif;font-size:13px;letter-spacing:2px;color:#fff;">COBRANÇAS E VENCIMENTOS</div>
+    <div style="overflow-x:auto;">
+    <table class="sa-teams-table">
+      <thead><tr><th>TIME</th><th>PLANO</th><th>VALOR</th><th>ÚLTIMO PGTO</th><th>PRÓXIMO VENC.</th><th>STATUS</th><th>AÇÕES</th></tr></thead>
+      <tbody>
+        ${sorted.map(t=>{
+          const valor = {basic:49,pro:89,premium:149}[t.plan]||49;
+          const lp = t.last_payment ? new Date(t.last_payment).toLocaleDateString('pt-BR') : '–';
+          const nb = t.next_billing ? new Date(t.next_billing).toLocaleDateString('pt-BR') : '–';
+          const overdue = t.next_billing && new Date(t.next_billing) < new Date();
+          const expiring = t.next_billing && !overdue && new Date(t.next_billing) < new Date(Date.now()+7*86400000);
+          const badge = overdue ? '<span class="sa-badge-blocked">VENCIDO</span>'
+            : expiring ? '<span class="sa-badge-warn">VENCE EM BREVE</span>'
+            : '<span class="sa-badge-active">OK</span>';
+          return `<tr>
+            <td><strong style="color:#fff;">${t.name}</strong></td>
+            <td><span class="sa-plan-badge">${(t.plan||'basic').toUpperCase()}</span></td>
+            <td style="color:var(--gold);font-weight:bold;">R$${valor}/mês</td>
+            <td>${lp}</td>
+            <td>${nb}</td>
+            <td>${badge}</td>
+            <td><button class="btn btn-sm" style="font-size:10px;padding:4px 8px;background:rgba(46,204,113,0.15);color:#2ecc71;border:1px solid rgba(46,204,113,0.3);" onclick="saRegisterPayment('${t.id}','${t.slug}')">Registrar Pgto</button></td>
+          </tr>`;
+        }).join('')}
+      </tbody>
+    </table></div>`;
+}
+function renderSaNovo(el) {
+  el.innerHTML = `
+    <div style="max-width:560px;">
+      <div style="font-family:Oswald,sans-serif;font-size:16px;letter-spacing:3px;color:#fff;margin-bottom:24px;">CADASTRAR NOVO TIME</div>
+      <div class="form-group"><label>Slug (URL) *</label><input type="text" id="saNewSlug" placeholder="ex: novotime" style="font-family:monospace;" oninput="document.getElementById('saSlugPreview').textContent='/'+this.value.toLowerCase().replace(/[^a-z0-9]/g,'')"></div>
+      <div style="font-family:Oswald,sans-serif;font-size:11px;letter-spacing:2px;color:var(--gold);margin:-8px 0 16px;">URL: gestaofc.com.br<span id="saSlugPreview">/</span></div>
+      <div class="form-group"><label>Nome do Time *</label><input type="text" id="saNewName" placeholder="ex: Sotapa FC"></div>
+      <div class="grid-2col">
+        <div class="form-group"><label>Cidade</label><input type="text" id="saNewCity" placeholder="Palhoça"></div>
+        <div class="form-group"><label>Estado</label><input type="text" id="saNewState" placeholder="SC" maxlength="2"></div>
+      </div>
+      <div class="grid-2col">
+        <div class="form-group"><label>Ano de Fundação</label><input type="number" id="saNewYear" placeholder="1991"></div>
+        <div class="form-group"><label>Plano</label>
+          <select id="saNewPlan">
+            <option value="basic">Basic — R$49/mês</option>
+            <option value="pro">Pro — R$89/mês</option>
+            <option value="premium">Premium — R$149/mês</option>
+          </select>
+        </div>
+      </div>
+      <div class="grid-2col">
+        <div class="form-group"><label>Login Admin do Time</label><input type="text" id="saNewAdminUser" placeholder="admin"></div>
+        <div class="form-group"><label>Senha Admin</label><input type="password" id="saNewAdminPass" placeholder="senha segura"></div>
+      </div>
+      <div style="margin-bottom:16px;">
+        <div style="font-family:Oswald,sans-serif;font-size:11px;letter-spacing:2px;color:#555;margin-bottom:8px;">TEMPLATE DE CORES</div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;">
+          ${Object.entries(COLOR_TEMPLATES).map(([k,v])=>`
+            <button class="color-template-btn${k==='rubro-negro'?' active':''}" id="saColorBtn_${k}" onclick="saSelectTemplate('${k}')" style="border-color:${v.primary};">
+              <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${v.primary};margin-right:4px;vertical-align:middle;"></span>${v.label}
+            </button>`).join('')}
+        </div>
+        <input type="hidden" id="saNewTemplate" value="rubro-negro">
+        <div class="grid-2col" style="margin-top:12px;" id="saCustomColors" style="display:none;">
+          <div class="form-group"><label>Cor Principal</label><input type="color" id="saNewColor1" value="#CC1A1A" style="height:40px;"></div>
+          <div class="form-group"><label>Cor Secundária</label><input type="color" id="saNewColor2" value="#C8963E" style="height:40px;"></div>
+        </div>
+      </div>
+      <button class="btn-red" onclick="saCreateTeam()" style="width:100%;margin-top:8px;">CADASTRAR TIME</button>
+    </div>`;
+}
+function saSelectTemplate(key) {
+  document.querySelectorAll('.color-template-btn').forEach(b=>b.classList.remove('active'));
+  const btn = document.getElementById('saColorBtn_'+key);
+  if (btn) btn.classList.add('active');
+  document.getElementById('saNewTemplate').value = key;
+  const cc = document.getElementById('saCustomColors');
+  if (cc) cc.style.display = key === 'personalizado' ? 'grid' : 'none';
+  if (key !== 'personalizado') {
+    const t = COLOR_TEMPLATES[key];
+    if (t) { document.getElementById('saNewColor1').value=t.primary; document.getElementById('saNewColor2').value=t.secondary; }
+  }
+}
+async function saCreateTeam() {
+  const slug = document.getElementById('saNewSlug').value.trim().toLowerCase().replace(/[^a-z0-9]/g,'');
+  const name = document.getElementById('saNewName').value.trim();
+  if (!slug || !name) { showNotif('Slug e Nome são obrigatórios!', true); return; }
+  const tpl = document.getElementById('saNewTemplate').value;
+  const colors = tpl === 'personalizado' ? { primary: document.getElementById('saNewColor1').value, secondary: document.getElementById('saNewColor2').value } : COLOR_TEMPLATES[tpl];
+  const row = {
+    slug, name,
+    short_name: name,
+    city: document.getElementById('saNewCity').value.trim(),
+    state: document.getElementById('saNewState').value.trim().toUpperCase(),
+    founded_year: parseInt(document.getElementById('saNewYear').value)||new Date().getFullYear(),
+    plan: document.getElementById('saNewPlan').value,
+    color_primary: colors.primary,
+    color_secondary: colors.secondary,
+    color_template: tpl,
+    admin_user: document.getElementById('saNewAdminUser').value.trim() || 'admin',
+    admin_pass: document.getElementById('saNewAdminPass').value || 'admin123',
+    active: true,
+    billing_day: new Date().getDate(),
+    next_billing: new Date(Date.now()+30*86400000).toISOString().split('T')[0],
+  };
+  try {
+    await sbUpsert('teams', [row]);
+    showNotif('✅ Time "' + name + '" cadastrado! URL: /' + slug);
+    switchSaTab('times', document.querySelector('.sa-tab'));
+  } catch(e) { showNotif('Erro ao cadastrar: ' + e.message, true); }
+}
+async function saToggleTeam(id, activate) {
+  try {
+    await fetch(`${SUPABASE_URL}/rest/v1/teams?id=eq.${id}`, {
+      method:'PATCH',
+      headers:{ apikey:SUPABASE_KEY, Authorization:`Bearer ${SUPABASE_KEY}`, 'Content-Type':'application/json', Prefer:'return=minimal' },
+      body: JSON.stringify({ active: activate })
+    });
+    showNotif(activate ? '✅ Time ativado.' : '🔒 Time bloqueado.');
+    renderSaPane('times');
+  } catch(e) { showNotif('Erro: '+e.message, true); }
+}
+async function saRegisterPayment(id, slug) {
+  const today = new Date().toISOString().split('T')[0];
+  const next = new Date(Date.now()+30*86400000).toISOString().split('T')[0];
+  try {
+    await fetch(`${SUPABASE_URL}/rest/v1/teams?id=eq.${id}`, {
+      method:'PATCH',
+      headers:{ apikey:SUPABASE_KEY, Authorization:`Bearer ${SUPABASE_KEY}`, 'Content-Type':'application/json', Prefer:'return=minimal' },
+      body: JSON.stringify({ last_payment: today, next_billing: next, active: true })
+    });
+    showNotif('✅ Pagamento registrado para /' + slug);
+    renderSaPane('cobrancas');
+  } catch(e) { showNotif('Erro: '+e.message, true); }
+}
+async function saAccessTeam(slug) {
+  isSuperAdmin = false;
+  window.history.pushState({}, '', '/'+slug);
+  await initSaaS();
+}
+async function renderSaStats(el) {
+  const teams = await getAllTeams();
+  const byPlan = { basic:0, pro:0, premium:0 };
+  teams.filter(t=>t.active).forEach(t=>{ byPlan[t.plan||'basic']++; });
+  const mrr = byPlan.basic*49 + byPlan.pro*89 + byPlan.premium*149;
+  el.innerHTML = `
+    <div style="font-family:Oswald,sans-serif;font-size:16px;letter-spacing:3px;color:#fff;margin-bottom:24px;">ESTATÍSTICAS DA PLATAFORMA</div>
+    <div class="sa-stat-grid">
+      <div class="sa-stat-card"><div class="sa-stat-number">${teams.length}</div><div class="sa-stat-label">TOTAL DE TIMES</div></div>
+      <div class="sa-stat-card"><div class="sa-stat-number" style="color:var(--green);">${teams.filter(t=>t.active).length}</div><div class="sa-stat-label">ATIVOS</div></div>
+      <div class="sa-stat-card"><div class="sa-stat-number" style="color:var(--gold);">R$${mrr.toLocaleString('pt-BR')}</div><div class="sa-stat-label">MRR</div></div>
+      <div class="sa-stat-card"><div class="sa-stat-number" style="color:var(--gold);">R$${(mrr*12).toLocaleString('pt-BR')}</div><div class="sa-stat-label">ARR ESTIMADO</div></div>
+      <div class="sa-stat-card"><div class="sa-stat-number">${byPlan.basic}</div><div class="sa-stat-label">PLANO BASIC</div></div>
+      <div class="sa-stat-card"><div class="sa-stat-number">${byPlan.pro}</div><div class="sa-stat-label">PLANO PRO</div></div>
+      <div class="sa-stat-card"><div class="sa-stat-number">${byPlan.premium}</div><div class="sa-stat-label">PLANO PREMIUM</div></div>
+    </div>`;
+}
+
+// ══════════════════════════════════════════════
+// BRANDING — Painel do Admin do Time
+// ══════════════════════════════════════════════
+async function sbSaveTeamBranding(cfg) {
+  if (!SB_READY || !currentTeamId) return;
+  const row = {
+    color_primary: cfg.colorPrimary, color_secondary: cfg.colorSecondary,
+    color_template: cfg.colorTemplate, logo_url: cfg.logoUrl,
+    name: cfg.name, short_name: cfg.shortName,
+    city: cfg.city, state: cfg.state, neighborhood: cfg.neighborhood,
+    founded_year: cfg.foundedYear, instagram: cfg.instagram,
+    whatsapp: cfg.whatsapp, slogan: cfg.slogan, tagline: cfg.tagline,
+  };
+  await fetch(`${SUPABASE_URL}/rest/v1/teams?id=eq.${currentTeamId}`, {
+    method:'PATCH',
+    headers:{ apikey:SUPABASE_KEY, Authorization:`Bearer ${SUPABASE_KEY}`, 'Content-Type':'application/json', Prefer:'return=minimal' },
+    body: JSON.stringify(row)
+  });
+}
+
+function renderBrandingPane(el) {
+  const c = TEAM_CONFIG;
+  el.innerHTML = `
+    <div class="panel">
+      <div class="panel-title">🎨 Identidade Visual do Time</div>
+      <div class="grid-2col">
+        <div class="form-group"><label>Nome do Time</label><input type="text" id="bName" value="${c.name||''}" placeholder="Nome completo"></div>
+        <div class="form-group"><label>Nome Curto (nav/header)</label><input type="text" id="bShortName" value="${c.shortName||c.name||''}" placeholder="NOME FC"></div>
+      </div>
+      <div class="grid-2col">
+        <div class="form-group"><label>Cidade</label><input type="text" id="bCity" value="${c.city||''}" placeholder="Palhoça"></div>
+        <div class="form-group"><label>Estado</label><input type="text" id="bState" value="${c.state||''}" placeholder="SC" maxlength="2"></div>
+      </div>
+      <div class="grid-2col">
+        <div class="form-group"><label>Bairro</label><input type="text" id="bNeighborhood" value="${c.neighborhood||''}" placeholder="Bairro Rio Grande"></div>
+        <div class="form-group"><label>Ano de Fundação</label><input type="number" id="bYear" value="${c.foundedYear||2000}" placeholder="1991"></div>
+      </div>
+      <div class="form-group"><label>Slogan</label><input type="text" id="bSlogan" value="${c.slogan||''}" placeholder='"A resenha começa no campo..."'></div>
+      <div class="form-group"><label>Tagline (abaixo do nome)</label><input type="text" id="bTagline" value="${c.tagline||''}" placeholder="Futebol Raiz · Cidade — UF"></div>
+      <div class="form-group"><label>Instagram</label><input type="text" id="bInsta" value="${c.instagram||''}" placeholder="@seutime"></div>
+      <div class="form-group"><label>URL da Logo</label><input type="text" id="bLogo" value="${c.logoUrl||''}" placeholder="https://... ou caminho local"></div>
+      <div class="branding-preview">
+        <div class="branding-preview-bar" id="bPreviewBar"></div>
+        <div class="branding-preview-content">
+          <img id="bPreviewLogo" src="${c.logoUrl||''}" style="width:40px;height:40px;border-radius:50%;object-fit:contain;background:#111;" onerror="this.style.display='none'">
+          <div>
+            <div style="font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:2px;" id="bPreviewName">${c.shortName||c.name}</div>
+            <div style="font-family:'Oswald',sans-serif;font-size:10px;letter-spacing:2px;color:#888;" id="bPreviewCity">${c.city||''}</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin:20px 0 8px;font-family:Oswald,sans-serif;font-size:11px;letter-spacing:2px;color:#555;">TEMPLATE DE CORES</div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;">
+        ${Object.entries(COLOR_TEMPLATES).map(([k,v])=>`
+          <button class="color-template-btn${c.colorTemplate===k?' active':''}" id="bColorBtn_${k}" onclick="brandingSelectTemplate('${k}')" style="border-color:${v.primary};">
+            <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${v.primary};margin-right:4px;vertical-align:middle;"></span>${v.label}
+          </button>`).join('')}
+      </div>
+      <div class="grid-2col" id="bCustomColors" style="display:${c.colorTemplate==='personalizado'?'grid':'none'};">
+        <div class="form-group"><label>Cor Principal</label><input type="color" id="bColor1" value="${c.colorPrimary||'#CC1A1A'}" oninput="brandingLivePreview()" style="height:40px;"></div>
+        <div class="form-group"><label>Cor Secundária</label><input type="color" id="bColor2" value="${c.colorSecondary||'#C8963E'}" oninput="brandingLivePreview()" style="height:40px;"></div>
+      </div>
+      <button class="btn-red" onclick="brandingSave()" style="width:100%;margin-top:12px;">💾 SALVAR IDENTIDADE VISUAL</button>
+    </div>`;
+}
+function brandingSelectTemplate(key) {
+  document.querySelectorAll('[id^="bColorBtn_"]').forEach(b=>b.classList.remove('active'));
+  const btn = document.getElementById('bColorBtn_'+key); if (btn) btn.classList.add('active');
+  document.getElementById('bCustomColors').style.display = key==='personalizado'?'grid':'none';
+  if (key !== 'personalizado') {
+    const t = COLOR_TEMPLATES[key];
+    document.getElementById('bColor1').value = t.primary;
+    document.getElementById('bColor2').value = t.secondary;
+  }
+  brandingLivePreview();
+}
+function brandingLivePreview() {
+  const c1 = document.getElementById('bColor1')?.value||'#CC1A1A';
+  const c2 = document.getElementById('bColor2')?.value||'#C8963E';
+  const bar = document.getElementById('bPreviewBar'); if (bar) bar.style.background = c1;
+  const nm = document.getElementById('bPreviewName'); if (nm) nm.style.color = c1;
+  const logo = document.getElementById('bPreviewLogo');
+  const logoUrl = document.getElementById('bLogo')?.value;
+  if (logo && logoUrl) logo.src = logoUrl;
+  const pname = document.getElementById('bPreviewName');
+  const sname = document.getElementById('bShortName')?.value;
+  if (pname && sname) pname.textContent = sname;
+}
+async function brandingSave() {
+  const tpl = document.querySelector('[id^="bColorBtn_"].active')?.id.replace('bColorBtn_','') || 'personalizado';
+  const colors = tpl==='personalizado' ? { primary:document.getElementById('bColor1').value, secondary:document.getElementById('bColor2').value } : COLOR_TEMPLATES[tpl];
+  const cfg = {
+    name: document.getElementById('bName').value.trim(),
+    shortName: document.getElementById('bShortName').value.trim(),
+    city: document.getElementById('bCity').value.trim(),
+    state: document.getElementById('bState').value.trim().toUpperCase(),
+    neighborhood: document.getElementById('bNeighborhood').value.trim(),
+    foundedYear: parseInt(document.getElementById('bYear').value)||2000,
+    slogan: document.getElementById('bSlogan').value.trim(),
+    tagline: document.getElementById('bTagline').value.trim(),
+    instagram: document.getElementById('bInsta').value.trim(),
+    logoUrl: document.getElementById('bLogo').value.trim(),
+    colorPrimary: colors.primary,
+    colorSecondary: colors.secondary,
+    colorTemplate: tpl,
+  };
+  Object.assign(TEAM_CONFIG, cfg);
+  applyTeamBranding(TEAM_CONFIG);
+  await sbSaveTeamBranding(TEAM_CONFIG);
+  showNotif('✅ Identidade visual salva e aplicada!');
+}
+
+// ══════════════════════════════════════════════
+// INIT SAAS — Entry point principal
+// ══════════════════════════════════════════════
+async function initSaaS() {
+  const slug = getSlugFromUrl();
+
+  // ── Super Admin ──
+  if (slug === 'admin') {
+    if (!isSuperAdmin) {
+      // Mostra login overlay do super admin
+      showSaLoginOverlay();
+    } else {
+      showViewRaw('superadmin');
+      renderSaPane('times');
+    }
     return;
   }
-  await sbLoad();              // ← sincroniza em background (indicator discreto)
-  renderPublicSite();          // ← atualiza site com dados reais do Supabase
-})();
+
+  // ── Sem slug → Landing page ──
+  if (!slug) {
+    renderLanding();
+    return;
+  }
+
+  // ── Time específico ──
+  showViewRaw('site');
+  renderPublicSite(); // renderiza imediatamente com dados padrão
+
+  if (SB_READY) {
+    const teamCfg = await loadTeamBySlug(slug);
+    if (!teamCfg) {
+      // Slug não encontrado — se o slug for o time padrão, continua
+      if (slug !== TEAM_CONFIG.slug) {
+        document.body.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;height:100vh;background:#0d0d0d;font-family:Oswald,sans-serif;font-size:13px;letter-spacing:3px;color:#555;">TIME NÃO ENCONTRADO: /${slug}</div>`;
+        return;
+      }
+    } else if (!teamCfg.active) {
+      showViewRaw('blocked');
+      return;
+    } else {
+      Object.assign(TEAM_CONFIG, teamCfg);
+      currentTeamId = teamCfg.id;
+    }
+    applyTeamBranding(TEAM_CONFIG);
+    await sbLoad();
+    renderPublicSite();
+  } else {
+    applyTeamBranding(TEAM_CONFIG);
+  }
+}
+
+function showSaLoginOverlay() {
+  let ov = document.getElementById('saLoginOverlay');
+  if (!ov) {
+    ov = document.createElement('div');
+    ov.id = 'saLoginOverlay';
+    ov.className = 'login-overlay open';
+    ov.innerHTML = `<div class="login-box" style="position:relative;">
+      <div class="login-logo" style="color:var(--gold);">SUPER ADMIN</div>
+      <div class="login-sub">Acesso Restrito — Dono da Plataforma</div>
+      <div class="login-error" id="saLoginError" style="display:none;">Credenciais inválidas</div>
+      <div class="form-group"><label>Usuário</label><input type="text" id="saLoginUser" placeholder="superadmin" /></div>
+      <div class="form-group"><label>Senha</label><input type="password" id="saLoginPass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doSaLogin()" /></div>
+      <button class="btn-red" onclick="doSaLogin()">ENTRAR</button>
+    </div>`;
+    document.body.appendChild(ov);
+  }
+  ov.classList.add('open');
+}
+
+
+
+(async () => { await initSaaS(); })();
   // ══════════════════════════════════════════════
   // Bloqueia o menu de contexto (Botão direito)
   // ══════════════════════════════════════════════
@@ -3908,5 +4620,20 @@ document.addEventListener('keydown', function(e) {
   }
 });
 </script>
-</body>
-</html>
+<!-- ══ SUPER ADMIN ══ -->
+<div id="view-superadmin" class="view sa-view">
+  <div class="sa-header">
+    <div>
+      <div class="sa-header-title">GESTÃO FC <span>/ SUPER ADMIN</span></div>
+      <div style="font-family:'Oswald',sans-serif;font-size:11px;letter-spacing:2px;color:#555;margin-top:2px;" id="saUserLabel">–</div>
+    </div>
+    <div style="display:flex;gap:10px;align-items:center;">
+      <span id="saMrrBadge" style="font-family:'Oswald',sans-serif;font-size:11px;letter-spacing:2px;color:var(--gold);background:rgba(200,150,62,0.1);border:1px solid rgba(200,150,62,0.2);padding:4px 10px;">MRR: R$ 0</span>
+      <button class="btn btn-sm btn-secondary" onclick="doSaLogout()">Sair</button>
+    </div>
+  </div>
+  <div class="sa-tabs">
+    <button class="sa-tab active" onclick="switchSaTab('times',this)">Times</button>
+    <button class="sa-tab" onclick="switchSaTab('cobrancas',this)">Cobranças</button>
+    <button class="sa-tab" onclick="switchSaTab('novo',this)">+ Cadastrar Time</button>
+    <button class="sa-tab" onclick="switchSaTab('stats',this)">Estatísticas</button>
