@@ -4189,7 +4189,17 @@ function showNotif(msg, error=false) {
   n._t = setTimeout(()=>n.classList.remove('show'), 3500);
 }
 
-function closeModal() { document.getElementById('modalOverlay').classList.remove('open'); }
+function closeModal() {
+  const o = document.getElementById('modalOverlay');
+  if (o) o.classList.remove('open');
+}
+function showModal(html) {
+  const o = document.getElementById('modalOverlay');
+  const b = document.getElementById('modalBody');
+  if (!o || !b) return;
+  b.innerHTML = html;
+  o.classList.add('open');
+}
 
 
 // ══════════════════════════════════════════════
@@ -4211,8 +4221,16 @@ function doSaLogin() {
     isSuperAdmin = true;
     document.getElementById('saLoginOverlay')?.classList.remove('open');
     if (errEl) errEl.style.display = 'none';
-    showViewRaw('superadmin');
+    // Esconde TODAS as views antes de mostrar o superadmin
+    document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
+    document.getElementById('view-superadmin').classList.add('active');
+    window.scrollTo(0,0);
     document.getElementById('saUserLabel').textContent = 'Logado como: ' + SA_USER;
+    // Ativa a aba Times e renderiza
+    document.querySelectorAll('.sa-tab').forEach(b => b.classList.remove('active'));
+    document.querySelector('.sa-tab')?.classList.add('active');
+    document.querySelectorAll('[id^="sa-pane-"]').forEach(p => p.style.display = 'none');
+    document.getElementById('sa-pane-times').style.display = 'block';
     renderSaPane('times');
   } else {
     if (errEl) errEl.style.display = 'block';
@@ -4242,52 +4260,89 @@ async function getAllTeams() {
   if (!SB_READY) return [];
   try { return await sbGet('teams', '?order=name'); } catch(e) { return []; }
 }
+
+// ── helper PATCH genérico para tabela teams ──
+async function saPatchTeam(id, data) {
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/teams?id=eq.${id}`, {
+    method:'PATCH',
+    headers:{ apikey:SUPABASE_KEY, Authorization:`Bearer ${SUPABASE_KEY}`,
+      'Content-Type':'application/json', Prefer:'return=minimal' },
+    body: JSON.stringify(data)
+  });
+  if (!r.ok) throw new Error('HTTP ' + r.status);
+}
+
+// ══════════════════════════════════════════════
+// SUPER ADMIN — ABA TIMES
+// ══════════════════════════════════════════════
 async function renderSaTimes(el) {
-  el.innerHTML = '<div style="font-family:Oswald,sans-serif;font-size:12px;letter-spacing:2px;color:#555;padding:20px 0;">CARREGANDO...</div>';
+  el.innerHTML = '<div style="font-family:Oswald,sans-serif;font-size:12px;letter-spacing:2px;color:#555;padding:20px 0;">⏳ CARREGANDO TIMES...</div>';
   const teams = await getAllTeams();
-  const total = teams.length;
-  const active = teams.filter(t=>t.active).length;
-  const blocked = total - active;
-  const mrr = teams.filter(t=>t.active).reduce((s,t)=>{
-    return s + ({basic:49,pro:89,premium:149}[t.plan]||49);
-  },0);
+
+  if (!teams.length) {
+    el.innerHTML = `<div style="text-align:center;padding:60px 20px;">
+      <div style="font-size:48px;margin-bottom:16px;">⚽</div>
+      <div style="font-family:Oswald,sans-serif;font-size:16px;letter-spacing:3px;color:#fff;margin-bottom:8px;">NENHUM TIME CADASTRADO</div>
+      <div style="font-family:Barlow,sans-serif;font-size:13px;color:#555;margin-bottom:24px;">Cadastre o primeiro time para começar.</div>
+      <button class="btn-red" onclick="switchSaTab('novo',document.querySelectorAll('.sa-tab')[2])" style="font-size:13px;padding:10px 24px;">+ CADASTRAR PRIMEIRO TIME</button>
+    </div>`;
+    return;
+  }
+
+  const total   = teams.length;
+  const ativos  = teams.filter(t=>t.active).length;
+  const blocked = total - ativos;
+  const mrr = teams.filter(t=>t.active).reduce((s,t)=>s+({basic:49,pro:89,premium:149}[t.plan]||49),0);
   document.getElementById('saMrrBadge').textContent = 'MRR: R$ ' + mrr.toLocaleString('pt-BR');
+
+  // Alertas de vencimento
+  const hoje = new Date();
+  const vencidos   = teams.filter(t=>t.active && t.next_billing && new Date(t.next_billing) < hoje);
+  const vencendo   = teams.filter(t=>t.active && t.next_billing && new Date(t.next_billing) >= hoje && new Date(t.next_billing) < new Date(Date.now()+7*86400000));
+  const alertHtml  = vencidos.length ? `<div style="background:rgba(204,26,26,0.1);border:1px solid rgba(204,26,26,0.3);padding:10px 16px;margin-bottom:16px;font-family:Oswald,sans-serif;font-size:12px;letter-spacing:2px;color:var(--red);">⚠️ ${vencidos.length} TIME(S) COM PAGAMENTO VENCIDO — <span style="cursor:pointer;text-decoration:underline;" onclick="switchSaTab('cobrancas',document.querySelectorAll('.sa-tab')[1])">VER COBRANÇAS</span></div>` : '';
+  const warnHtml   = vencendo.length ? `<div style="background:rgba(200,150,62,0.1);border:1px solid rgba(200,150,62,0.3);padding:10px 16px;margin-bottom:16px;font-family:Oswald,sans-serif;font-size:12px;letter-spacing:2px;color:var(--gold);">🔔 ${vencendo.length} TIME(S) VENCEM EM MENOS DE 7 DIAS</div>` : '';
+
   el.innerHTML = `
-    <div class="sa-stat-grid">
-      <div class="sa-stat-card"><div class="sa-stat-number">${total}</div><div class="sa-stat-label">TIMES CADASTRADOS</div></div>
-      <div class="sa-stat-card"><div class="sa-stat-number" style="color:var(--green);">${active}</div><div class="sa-stat-label">TIMES ATIVOS</div></div>
+    ${alertHtml}${warnHtml}
+    <div class="sa-stat-grid" style="margin-bottom:24px;">
+      <div class="sa-stat-card"><div class="sa-stat-number">${total}</div><div class="sa-stat-label">TOTAL</div></div>
+      <div class="sa-stat-card"><div class="sa-stat-number" style="color:var(--green);">${ativos}</div><div class="sa-stat-label">ATIVOS</div></div>
       <div class="sa-stat-card"><div class="sa-stat-number" style="color:var(--red);">${blocked}</div><div class="sa-stat-label">BLOQUEADOS</div></div>
-      <div class="sa-stat-card"><div class="sa-stat-number" style="color:var(--gold);">R$${mrr.toLocaleString('pt-BR')}</div><div class="sa-stat-label">MRR ESTIMADO</div></div>
+      <div class="sa-stat-card"><div class="sa-stat-number" style="color:var(--gold);">R$${mrr.toLocaleString('pt-BR')}</div><div class="sa-stat-label">MRR</div></div>
     </div>
-    <div style="margin-bottom:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
-      <span style="font-family:Oswald,sans-serif;font-size:13px;letter-spacing:2px;color:#fff;">TIMES CADASTRADOS</span>
+
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:12px;">
+      <span style="font-family:Oswald,sans-serif;font-size:13px;letter-spacing:2px;color:#fff;">${total} TIME(S) CADASTRADO(S)</span>
+      <button class="btn btn-sm" onclick="switchSaTab('novo',document.querySelectorAll('.sa-tab')[2])" style="background:var(--red);color:#fff;border:none;">+ NOVO TIME</button>
     </div>
+
     <div style="overflow-x:auto;">
     <table class="sa-teams-table">
       <thead><tr>
-        <th>TIME</th><th>SLUG</th><th>PLANO</th><th>STATUS</th><th>VENCIMENTO</th><th>CORES</th><th>AÇÕES</th>
+        <th>TIME</th><th>URL</th><th>PLANO</th><th>STATUS</th><th>VENCIMENTO</th><th>ADMIN</th><th>AÇÕES</th>
       </tr></thead>
       <tbody>
-        ${teams.map(t=>{
-          const statusBadge = t.active
-            ? '<span class="sa-badge-active">ATIVO</span>'
-            : '<span class="sa-badge-blocked">BLOQUEADO</span>';
+        ${teams.map(t => {
+          const statusBadge = t.active ? '<span class="sa-badge-active">ATIVO</span>' : '<span class="sa-badge-blocked">BLOQUEADO</span>';
           const planBadge = `<span class="sa-plan-badge">${(t.plan||'basic').toUpperCase()}</span>`;
-          const swatch1 = `<span class="color-swatch" style="background:${t.color_primary||'#CC1A1A'}" title="${t.color_primary||'#CC1A1A'}"></span>`;
-          const swatch2 = `<span class="color-swatch" style="background:${t.color_secondary||'#C8963E'};margin-left:4px;" title="${t.color_secondary||'#C8963E'}"></span>`;
           const nb = t.next_billing ? new Date(t.next_billing).toLocaleDateString('pt-BR') : '–';
-          const isExpiring = t.next_billing && new Date(t.next_billing) < new Date(Date.now()+7*86400000);
-          const nbHtml = isExpiring ? `<span class="sa-badge-warn">${nb}</span>` : nb;
+          const isOverdue  = t.next_billing && new Date(t.next_billing) < hoje;
+          const isExpiring = !isOverdue && t.next_billing && new Date(t.next_billing) < new Date(Date.now()+7*86400000);
+          const nbHtml = isOverdue ? `<span class="sa-badge-blocked">${nb}</span>` : isExpiring ? `<span class="sa-badge-warn">${nb}</span>` : `<span style="font-size:12px;">${nb}</span>`;
+          const logoHtml = t.logo_url
+            ? `<img src="${t.logo_url}" style="width:28px;height:28px;border-radius:50%;object-fit:contain;background:#111;border:1px solid #333;vertical-align:middle;margin-right:8px;" onerror="this.style.display='none'">`
+            : `<span style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;background:${t.color_primary||'#CC1A1A'}22;border:1px solid ${t.color_primary||'#CC1A1A'}44;font-family:Bebas Neue,sans-serif;font-size:11px;color:${t.color_primary||'#CC1A1A'};margin-right:8px;vertical-align:middle;">${(t.name||'').substring(0,2).toUpperCase()}</span>`;
           return `<tr>
-            <td><strong style="color:#fff;">${t.name}</strong><br><span style="font-size:11px;color:#555;">${t.city||''}${t.state?' · '+t.state:''}</span></td>
-            <td style="font-family:monospace;color:var(--gold);">/${t.slug}</td>
+            <td>${logoHtml}<strong style="color:#fff;">${t.name}</strong><br><span style="font-size:11px;color:#555;margin-left:36px;">${t.city||''}${t.state?' · '+t.state:''}</span></td>
+            <td><a style="font-family:monospace;color:var(--gold);font-size:12px;text-decoration:none;" href="?team=${t.slug}" target="_blank">?team=${t.slug}</a></td>
             <td>${planBadge}</td>
             <td>${statusBadge}</td>
             <td>${nbHtml}</td>
-            <td>${swatch1}${swatch2}</td>
-            <td>
-              <button class="btn btn-sm" style="font-size:10px;padding:4px 8px;" onclick="saToggleTeam('${t.id}',${!t.active})">${t.active?'Bloquear':'Ativar'}</button>
-              <button class="btn btn-sm btn-secondary" style="font-size:10px;padding:4px 8px;margin-left:4px;" onclick="saAccessTeam('${t.slug}')">Acessar</button>
+            <td style="font-family:monospace;font-size:11px;color:#666;">${t.admin_user||'admin'}</td>
+            <td style="white-space:nowrap;">
+              <button class="btn btn-sm" style="font-size:10px;padding:3px 8px;" onclick="saToggleTeam('${t.id}',${!t.active},this)">${t.active?'Bloquear':'Ativar'}</button>
+              <button class="btn btn-sm btn-secondary" style="font-size:10px;padding:3px 8px;" onclick="saEditTeam('${t.id}')">Editar</button>
+              <button class="btn btn-sm btn-secondary" style="font-size:10px;padding:3px 8px;" onclick="saAccessTeam('${t.slug}')">Acessar</button>
             </td>
           </tr>`;
         }).join('')}
@@ -4295,165 +4350,396 @@ async function renderSaTimes(el) {
     </table>
     </div>`;
 }
+
+// ══════════════════════════════════════════════
+// SUPER ADMIN — ABA COBRANÇAS
+// ══════════════════════════════════════════════
 async function renderSaCobrancas(el) {
+  el.innerHTML = '<div style="font-family:Oswald,sans-serif;font-size:12px;letter-spacing:2px;color:#555;padding:20px 0;">⏳ CARREGANDO...</div>';
   const teams = await getAllTeams();
-  const sorted = [...teams].sort((a,b)=>new Date(a.next_billing||0)-new Date(b.next_billing||0));
+  const hoje = new Date();
+  const sorted = [...teams].sort((a,b) => new Date(a.next_billing||'2099')-new Date(b.next_billing||'2099'));
+
+  const totalMrr = teams.filter(t=>t.active).reduce((s,t)=>s+({basic:49,pro:89,premium:149}[t.plan]||49),0);
+  const totalVencido = teams.filter(t=>t.next_billing && new Date(t.next_billing)<hoje)
+    .reduce((s,t)=>s+({basic:49,pro:89,premium:149}[t.plan]||49),0);
+
   el.innerHTML = `
-    <div style="margin-bottom:20px;font-family:Oswald,sans-serif;font-size:13px;letter-spacing:2px;color:#fff;">COBRANÇAS E VENCIMENTOS</div>
+    <div class="sa-stat-grid" style="margin-bottom:24px;">
+      <div class="sa-stat-card"><div class="sa-stat-number" style="color:var(--gold);">R$${totalMrr.toLocaleString('pt-BR')}</div><div class="sa-stat-label">MRR TOTAL</div></div>
+      <div class="sa-stat-card"><div class="sa-stat-number" style="color:var(--red);">R$${totalVencido.toLocaleString('pt-BR')}</div><div class="sa-stat-label">EM ATRASO</div></div>
+      <div class="sa-stat-card"><div class="sa-stat-number" style="color:var(--gold);">R$${(totalMrr*12).toLocaleString('pt-BR')}</div><div class="sa-stat-label">ARR ESTIMADO</div></div>
+    </div>
     <div style="overflow-x:auto;">
     <table class="sa-teams-table">
-      <thead><tr><th>TIME</th><th>PLANO</th><th>VALOR</th><th>ÚLTIMO PGTO</th><th>PRÓXIMO VENC.</th><th>STATUS</th><th>AÇÕES</th></tr></thead>
+      <thead><tr><th>TIME</th><th>PLANO</th><th>VALOR</th><th>ÚLTIMO PGTO</th><th>PRÓX. VENC.</th><th>STATUS</th><th>AÇÕES</th></tr></thead>
       <tbody>
-        ${sorted.map(t=>{
+        ${sorted.map(t => {
           const valor = {basic:49,pro:89,premium:149}[t.plan]||49;
-          const lp = t.last_payment ? new Date(t.last_payment).toLocaleDateString('pt-BR') : '–';
-          const nb = t.next_billing ? new Date(t.next_billing).toLocaleDateString('pt-BR') : '–';
-          const overdue = t.next_billing && new Date(t.next_billing) < new Date();
-          const expiring = t.next_billing && !overdue && new Date(t.next_billing) < new Date(Date.now()+7*86400000);
-          const badge = overdue ? '<span class="sa-badge-blocked">VENCIDO</span>'
-            : expiring ? '<span class="sa-badge-warn">VENCE EM BREVE</span>'
-            : '<span class="sa-badge-active">OK</span>';
+          const lp    = t.last_payment ? new Date(t.last_payment).toLocaleDateString('pt-BR') : '–';
+          const nb    = t.next_billing ? new Date(t.next_billing).toLocaleDateString('pt-BR') : '–';
+          const overdue   = t.next_billing && new Date(t.next_billing) < hoje;
+          const expiring  = t.next_billing && !overdue && new Date(t.next_billing) < new Date(Date.now()+7*86400000);
+          const badge = overdue   ? '<span class="sa-badge-blocked">VENCIDO</span>'
+                      : expiring  ? '<span class="sa-badge-warn">VENCE EM BREVE</span>'
+                      : !t.active ? '<span class="sa-badge-blocked">BLOQUEADO</span>'
+                      : '<span class="sa-badge-active">EM DIA</span>';
           return `<tr>
-            <td><strong style="color:#fff;">${t.name}</strong></td>
+            <td><strong style="color:#fff;">${t.name}</strong><br><span style="font-size:11px;color:#555;">/${t.slug}</span></td>
             <td><span class="sa-plan-badge">${(t.plan||'basic').toUpperCase()}</span></td>
-            <td style="color:var(--gold);font-weight:bold;">R$${valor}/mês</td>
-            <td>${lp}</td>
-            <td>${nb}</td>
+            <td style="color:var(--gold);font-weight:bold;">R$${valor}</td>
+            <td style="font-size:12px;">${lp}</td>
+            <td style="font-size:12px;">${nb}</td>
             <td>${badge}</td>
-            <td><button class="btn btn-sm" style="font-size:10px;padding:4px 8px;background:rgba(46,204,113,0.15);color:#2ecc71;border:1px solid rgba(46,204,113,0.3);" onclick="saRegisterPayment('${t.id}','${t.slug}')">Registrar Pgto</button></td>
+            <td style="white-space:nowrap;">
+              <button class="btn btn-sm" style="font-size:10px;padding:3px 8px;background:rgba(46,204,113,0.15);color:#2ecc71;border:1px solid rgba(46,204,113,0.3);" onclick="saRegisterPayment('${t.id}','${t.name}','${t.plan}')">✓ Pago</button>
+              <button class="btn btn-sm btn-secondary" style="font-size:10px;padding:3px 8px;" onclick="saChangePlan('${t.id}','${t.plan}','${t.name}')">Plano</button>
+            </td>
           </tr>`;
         }).join('')}
       </tbody>
     </table></div>`;
 }
+
+// ══════════════════════════════════════════════
+// SUPER ADMIN — ABA CADASTRAR TIME
+// ══════════════════════════════════════════════
 function renderSaNovo(el) {
   el.innerHTML = `
-    <div style="max-width:560px;">
-      <div style="font-family:Oswald,sans-serif;font-size:16px;letter-spacing:3px;color:#fff;margin-bottom:24px;">CADASTRAR NOVO TIME</div>
-      <div class="form-group"><label>Slug (URL) *</label><input type="text" id="saNewSlug" placeholder="ex: novotime" style="font-family:monospace;" oninput="document.getElementById('saSlugPreview').textContent=this.value.toLowerCase().replace(/[^a-z0-9]/g,'')"></div>
-      <div style="font-family:Oswald,sans-serif;font-size:11px;letter-spacing:2px;color:var(--gold);margin:-8px 0 16px;">URL: gestaofc.com.br/?team=<span id="saSlugPreview">slug</span></div>
-      <div class="form-group"><label>Nome do Time *</label><input type="text" id="saNewName" placeholder="ex: Sotapa FC"></div>
+    <div style="max-width:600px;">
+      <div style="font-family:Oswald,sans-serif;font-size:16px;letter-spacing:3px;color:#fff;margin-bottom:6px;">CADASTRAR NOVO TIME</div>
+      <div style="font-family:Barlow,sans-serif;font-size:12px;color:#555;margin-bottom:24px;">Preencha os dados do time. O slug vira a URL de acesso.</div>
+
+      <div style="background:var(--mid);border:1px solid #333;padding:16px;margin-bottom:20px;border-left:3px solid var(--gold);">
+        <div style="font-family:Oswald,sans-serif;font-size:11px;letter-spacing:2px;color:var(--gold);margin-bottom:4px;">URL DE ACESSO DO TIME</div>
+        <div style="font-family:monospace;font-size:14px;color:#fff;">gestaofc.com.br/?team=<span id="saSlugPreview" style="color:var(--gold);">slug</span></div>
+      </div>
+
+      <div style="font-family:Oswald,sans-serif;font-size:11px;letter-spacing:2px;color:#666;margin-bottom:16px;padding-bottom:8px;border-bottom:1px solid #222;">▸ IDENTIFICAÇÃO</div>
       <div class="grid-2col">
-        <div class="form-group"><label>Cidade</label><input type="text" id="saNewCity" placeholder="Palhoça"></div>
-        <div class="form-group"><label>Estado</label><input type="text" id="saNewState" placeholder="SC" maxlength="2"></div>
+        <div class="form-group"><label>Slug (URL) *</label><input type="text" id="saNewSlug" placeholder="ex: atleticosc" style="font-family:monospace;" oninput="this.value=this.value.toLowerCase().replace(/[^a-z0-9]/g,'');document.getElementById('saSlugPreview').textContent=this.value||'slug'"></div>
+        <div class="form-group"><label>Nome Completo *</label><input type="text" id="saNewName" placeholder="ex: Atlético SC"></div>
       </div>
       <div class="grid-2col">
-        <div class="form-group"><label>Ano de Fundação</label><input type="number" id="saNewYear" placeholder="1991"></div>
+        <div class="form-group"><label>Nome Curto (nav)</label><input type="text" id="saNewShortName" placeholder="ATLÉTICO SC"></div>
+        <div class="form-group"><label>Ano de Fundação</label><input type="number" id="saNewYear" placeholder="2010" min="1900" max="2030"></div>
+      </div>
+      <div class="grid-2col">
+        <div class="form-group"><label>Cidade</label><input type="text" id="saNewCity" placeholder="Florianópolis"></div>
+        <div class="form-group"><label>Estado</label><input type="text" id="saNewState" placeholder="SC" maxlength="2" style="text-transform:uppercase;"></div>
+      </div>
+      <div class="form-group"><label>Bairro</label><input type="text" id="saNewNeighborhood" placeholder="Centro"></div>
+      <div class="form-group"><label>Slogan</label><input type="text" id="saNewSlogan" placeholder='"Unidos dentro e fora do campo"'></div>
+
+      <div style="font-family:Oswald,sans-serif;font-size:11px;letter-spacing:2px;color:#666;margin:20px 0 16px;padding-bottom:8px;border-bottom:1px solid #222;">▸ CONTATO E REDES</div>
+      <div class="grid-2col">
+        <div class="form-group"><label>WhatsApp</label><input type="text" id="saNewWhatsapp" placeholder="+55 48 99999-9999"></div>
+        <div class="form-group"><label>Instagram</label><input type="text" id="saNewInsta" placeholder="@atleticosc"></div>
+      </div>
+      <div class="form-group"><label>URL da Logo</label><input type="text" id="saNewLogo" placeholder="https://... (link direto para a imagem)" oninput="saPreviewLogo(this.value)">
+        <img id="saLogoPreview" src="" style="display:none;width:48px;height:48px;border-radius:50%;object-fit:contain;background:#111;border:2px solid #333;margin-top:8px;" onerror="this.style.display='none'">
+      </div>
+
+      <div style="font-family:Oswald,sans-serif;font-size:11px;letter-spacing:2px;color:#666;margin:20px 0 16px;padding-bottom:8px;border-bottom:1px solid #222;">▸ PLANO E ACESSO</div>
+      <div class="grid-2col">
         <div class="form-group"><label>Plano</label>
-          <select id="saNewPlan">
+          <select id="saNewPlan" onchange="saUpdatePlanInfo(this.value)">
             <option value="basic">Basic — R$49/mês</option>
             <option value="pro">Pro — R$89/mês</option>
-            <option value="premium">Premium — R$149/mês</option>
+            <option value="premium" selected>Premium — R$149/mês</option>
           </select>
         </div>
+        <div class="form-group"><label>Data 1º Vencimento</label><input type="date" id="saNewNextBilling" value="${new Date(Date.now()+30*86400000).toISOString().split('T')[0]}"></div>
+      </div>
+      <div id="saPlanInfo" style="font-family:Barlow,sans-serif;font-size:12px;color:#555;margin:-8px 0 16px;padding:8px 12px;background:#111;border-left:3px solid var(--gold);">
+        Premium: todas as funcionalidades desbloqueadas.
       </div>
       <div class="grid-2col">
-        <div class="form-group"><label>Login Admin do Time</label><input type="text" id="saNewAdminUser" placeholder="admin"></div>
-        <div class="form-group"><label>Senha Admin</label><input type="password" id="saNewAdminPass" placeholder="senha segura"></div>
-      </div>
-      <div style="margin-bottom:16px;">
-        <div style="font-family:Oswald,sans-serif;font-size:11px;letter-spacing:2px;color:#555;margin-bottom:8px;">TEMPLATE DE CORES</div>
-        <div style="display:flex;flex-wrap:wrap;gap:8px;">
-          ${Object.entries(COLOR_TEMPLATES).map(([k,v])=>`
-            <button class="color-template-btn${k==='rubro-negro'?' active':''}" id="saColorBtn_${k}" onclick="saSelectTemplate('${k}')" style="border-color:${v.primary};">
-              <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${v.primary};margin-right:4px;vertical-align:middle;"></span>${v.label}
-            </button>`).join('')}
-        </div>
-        <input type="hidden" id="saNewTemplate" value="rubro-negro">
-        <div class="grid-2col" style="margin-top:12px;" id="saCustomColors" style="display:none;">
-          <div class="form-group"><label>Cor Principal</label><input type="color" id="saNewColor1" value="#CC1A1A" style="height:40px;"></div>
-          <div class="form-group"><label>Cor Secundária</label><input type="color" id="saNewColor2" value="#C8963E" style="height:40px;"></div>
+        <div class="form-group"><label>Login Admin do Time</label><input type="text" id="saNewAdminUser" placeholder="admin" value="admin"></div>
+        <div class="form-group"><label>Senha Admin</label>
+          <div style="position:relative;">
+            <input type="text" id="saNewAdminPass" placeholder="senha segura" value="">
+            <button onclick="saGenPassword()" style="position:absolute;right:4px;top:50%;transform:translateY(-50%);background:#333;border:none;color:#888;font-size:10px;font-family:Oswald,sans-serif;letter-spacing:1px;padding:3px 8px;cursor:pointer;">GERAR</button>
+          </div>
         </div>
       </div>
-      <button class="btn-red" onclick="saCreateTeam()" style="width:100%;margin-top:8px;">CADASTRAR TIME</button>
+
+      <div style="font-family:Oswald,sans-serif;font-size:11px;letter-spacing:2px;color:#666;margin:20px 0 16px;padding-bottom:8px;border-bottom:1px solid #222;">▸ CORES DO TIME</div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;">
+        ${Object.entries(COLOR_TEMPLATES).map(([k,v])=>`
+          <button class="color-template-btn${k==='rubro-negro'?' active':''}" id="saColorBtn_${k}" onclick="saSelectTemplate('${k}')" style="border-color:${v.primary};">
+            <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${v.primary};margin-right:4px;vertical-align:middle;"></span>${v.label}
+          </button>`).join('')}
+      </div>
+      <input type="hidden" id="saNewTemplate" value="rubro-negro">
+      <div class="grid-2col" id="saCustomColors" style="display:none;">
+        <div class="form-group"><label>Cor Principal</label><input type="color" id="saNewColor1" value="#CC1A1A" style="height:40px;" oninput="saColorPreview()"></div>
+        <div class="form-group"><label>Cor Secundária</label><input type="color" id="saNewColor2" value="#C8963E" style="height:40px;" oninput="saColorPreview()"></div>
+      </div>
+      <div id="saColorPreviewBar" style="height:6px;background:linear-gradient(90deg,#CC1A1A 50%,#C8963E 50%);margin-bottom:16px;border-radius:2px;"></div>
+
+      <div style="font-family:Oswald,sans-serif;font-size:11px;letter-spacing:2px;color:#666;margin:4px 0 16px;padding-bottom:8px;border-bottom:1px solid #222;">▸ OBSERVAÇÕES INTERNAS</div>
+      <div class="form-group"><label>Notas (visível só aqui)</label><textarea id="saNewNotes" placeholder="ex: Indicado por Fulano, WhatsApp para contrato: 48 99999-9999" style="height:70px;resize:vertical;"></textarea></div>
+
+      <div style="display:flex;gap:10px;margin-top:8px;">
+        <button class="btn-red" onclick="saCreateTeam()" style="flex:1;">✓ CADASTRAR TIME</button>
+        <button class="btn btn-secondary" onclick="saResetForm()" style="padding:10px 20px;">LIMPAR</button>
+      </div>
     </div>`;
 }
+
+// ══════════════════════════════════════════════
+// SUPER ADMIN — ABA ESTATÍSTICAS
+// ══════════════════════════════════════════════
+async function renderSaStats(el) {
+  el.innerHTML = '<div style="font-family:Oswald,sans-serif;font-size:12px;letter-spacing:2px;color:#555;padding:20px 0;">⏳ CARREGANDO...</div>';
+  const teams = await getAllTeams();
+  const hoje = new Date();
+  const ativos = teams.filter(t=>t.active);
+  const byPlan = { basic:0, pro:0, premium:0 };
+  ativos.forEach(t=>{ byPlan[t.plan||'basic']++; });
+  const mrr = byPlan.basic*49 + byPlan.pro*89 + byPlan.premium*149;
+  const vencidos = teams.filter(t=>t.next_billing && new Date(t.next_billing)<hoje).length;
+
+  // Últimos cadastrados
+  const recentes = [...teams].sort((a,b)=>new Date(b.created_at||0)-new Date(a.created_at||0)).slice(0,5);
+
+  el.innerHTML = `
+    <div style="font-family:Oswald,sans-serif;font-size:16px;letter-spacing:3px;color:#fff;margin-bottom:20px;">VISÃO GERAL DA PLATAFORMA</div>
+    <div class="sa-stat-grid" style="margin-bottom:32px;">
+      <div class="sa-stat-card"><div class="sa-stat-number">${teams.length}</div><div class="sa-stat-label">TIMES TOTAL</div></div>
+      <div class="sa-stat-card"><div class="sa-stat-number" style="color:var(--green);">${ativos.length}</div><div class="sa-stat-label">ATIVOS</div></div>
+      <div class="sa-stat-card"><div class="sa-stat-number" style="color:var(--red);">${vencidos}</div><div class="sa-stat-label">INADIMPLENTES</div></div>
+      <div class="sa-stat-card"><div class="sa-stat-number" style="color:var(--gold);">R$${mrr.toLocaleString('pt-BR')}</div><div class="sa-stat-label">MRR</div></div>
+      <div class="sa-stat-card"><div class="sa-stat-number" style="color:var(--gold);">R$${(mrr*12).toLocaleString('pt-BR')}</div><div class="sa-stat-label">ARR ESTIMADO</div></div>
+      <div class="sa-stat-card"><div class="sa-stat-number">${byPlan.basic}</div><div class="sa-stat-label">BASIC (R$49)</div></div>
+      <div class="sa-stat-card"><div class="sa-stat-number">${byPlan.pro}</div><div class="sa-stat-label">PRO (R$89)</div></div>
+      <div class="sa-stat-card"><div class="sa-stat-number">${byPlan.premium}</div><div class="sa-stat-label">PREMIUM (R$149)</div></div>
+    </div>
+    ${recentes.length ? `
+    <div style="font-family:Oswald,sans-serif;font-size:13px;letter-spacing:2px;color:#fff;margin-bottom:12px;">ÚLTIMOS CADASTRADOS</div>
+    <div style="overflow-x:auto;"><table class="sa-teams-table">
+      <thead><tr><th>TIME</th><th>PLANO</th><th>CADASTRO</th><th>STATUS</th></tr></thead>
+      <tbody>${recentes.map(t=>`<tr>
+        <td><strong style="color:#fff;">${t.name}</strong></td>
+        <td><span class="sa-plan-badge">${(t.plan||'basic').toUpperCase()}</span></td>
+        <td style="font-size:12px;">${t.created_at ? new Date(t.created_at).toLocaleDateString('pt-BR') : '–'}</td>
+        <td>${t.active?'<span class="sa-badge-active">ATIVO</span>':'<span class="sa-badge-blocked">BLOQUEADO</span>'}</td>
+      </tr>`).join('')}</tbody>
+    </table></div>` : ''}`;
+}
+
+// ══════════════════════════════════════════════
+// SUPER ADMIN — AÇÕES
+// ══════════════════════════════════════════════
+function saPreviewLogo(url) {
+  const img = document.getElementById('saLogoPreview');
+  if (!img) return;
+  if (url) { img.src = url; img.style.display = 'block'; }
+  else img.style.display = 'none';
+}
+
+function saGenPassword() {
+  const chars = 'abcdefghijkmnpqrstuvwxyz23456789!@#';
+  const pwd = Array.from({length:10}, ()=>chars[Math.floor(Math.random()*chars.length)]).join('');
+  const el = document.getElementById('saNewAdminPass');
+  if (el) { el.value = pwd; el.type = 'text'; }
+}
+
+function saColorPreview() {
+  const c1 = document.getElementById('saNewColor1')?.value || '#CC1A1A';
+  const c2 = document.getElementById('saNewColor2')?.value || '#C8963E';
+  const bar = document.getElementById('saColorPreviewBar');
+  if (bar) bar.style.background = `linear-gradient(90deg,${c1} 50%,${c2} 50%)`;
+}
+
+function saResetForm() {
+  ['saNewSlug','saNewName','saNewShortName','saNewCity','saNewState','saNewNeighborhood',
+   'saNewSlogan','saNewWhatsapp','saNewInsta','saNewLogo','saNewAdminUser','saNewAdminPass','saNewNotes']
+    .forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
+  document.getElementById('saNewAdminUser').value = 'admin';
+  document.getElementById('saSlugPreview').textContent = 'slug';
+  document.getElementById('saLogoPreview').style.display = 'none';
+}
+
+function saUpdatePlanInfo(plan) {
+  const info = {
+    basic: 'Basic: Agenda, Check-in, Resultados. Até 15 atletas.',
+    pro: 'Pro: tudo do Basic + Súmula, Escalação, Ranking, Financeiro básico.',
+    premium: 'Premium: todas as funcionalidades desbloqueadas + suporte prioritário.'
+  };
+  const el = document.getElementById('saPlanInfo');
+  if (el) el.textContent = info[plan] || '';
+}
+
 function saSelectTemplate(key) {
   document.querySelectorAll('.color-template-btn').forEach(b=>b.classList.remove('active'));
   const btn = document.getElementById('saColorBtn_'+key);
   if (btn) btn.classList.add('active');
-  document.getElementById('saNewTemplate').value = key;
+  const hidEl = document.getElementById('saNewTemplate');
+  if (hidEl) hidEl.value = key;
   const cc = document.getElementById('saCustomColors');
   if (cc) cc.style.display = key === 'personalizado' ? 'grid' : 'none';
   if (key !== 'personalizado') {
     const t = COLOR_TEMPLATES[key];
-    if (t) { document.getElementById('saNewColor1').value=t.primary; document.getElementById('saNewColor2').value=t.secondary; }
+    if (t) {
+      const c1 = document.getElementById('saNewColor1');
+      const c2 = document.getElementById('saNewColor2');
+      if (c1) c1.value = t.primary;
+      if (c2) c2.value = t.secondary;
+      saColorPreview();
+    }
   }
 }
+
 async function saCreateTeam() {
-  const slug = document.getElementById('saNewSlug').value.trim().toLowerCase().replace(/[^a-z0-9]/g,'');
-  const name = document.getElementById('saNewName').value.trim();
-  if (!slug || !name) { showNotif('Slug e Nome são obrigatórios!', true); return; }
-  const tpl = document.getElementById('saNewTemplate').value;
-  const colors = tpl === 'personalizado' ? { primary: document.getElementById('saNewColor1').value, secondary: document.getElementById('saNewColor2').value } : COLOR_TEMPLATES[tpl];
+  const slug = (document.getElementById('saNewSlug')?.value||'').trim().toLowerCase().replace(/[^a-z0-9]/g,'');
+  const name = (document.getElementById('saNewName')?.value||'').trim();
+  if (!slug) { showNotif('Slug é obrigatório!', true); return; }
+  if (!name) { showNotif('Nome do time é obrigatório!', true); return; }
+  if (slug === 'admin') { showNotif('Slug "admin" é reservado!', true); return; }
+
+  const btn = document.querySelector('[onclick="saCreateTeam()"]');
+  if (btn) { btn.textContent = '⏳ CADASTRANDO...'; btn.disabled = true; }
+
+  const tpl    = document.getElementById('saNewTemplate')?.value || 'rubro-negro';
+  const colors = tpl === 'personalizado'
+    ? { primary: document.getElementById('saNewColor1').value, secondary: document.getElementById('saNewColor2').value }
+    : COLOR_TEMPLATES[tpl];
+  const shortName = (document.getElementById('saNewShortName')?.value||'').trim() || name.toUpperCase();
+  const nextBilling = document.getElementById('saNewNextBilling')?.value || new Date(Date.now()+30*86400000).toISOString().split('T')[0];
+  const adminPass = document.getElementById('saNewAdminPass')?.value || 'admin123';
+
   const row = {
-    slug, name,
-    short_name: name,
-    city: document.getElementById('saNewCity').value.trim(),
-    state: document.getElementById('saNewState').value.trim().toUpperCase(),
-    founded_year: parseInt(document.getElementById('saNewYear').value)||new Date().getFullYear(),
-    plan: document.getElementById('saNewPlan').value,
+    slug, name, short_name: shortName,
+    city: (document.getElementById('saNewCity')?.value||'').trim(),
+    state: (document.getElementById('saNewState')?.value||'').trim().toUpperCase(),
+    neighborhood: (document.getElementById('saNewNeighborhood')?.value||'').trim(),
+    founded_year: parseInt(document.getElementById('saNewYear')?.value)||new Date().getFullYear(),
+    slogan: (document.getElementById('saNewSlogan')?.value||'').trim(),
+    whatsapp: (document.getElementById('saNewWhatsapp')?.value||'').trim(),
+    instagram: (document.getElementById('saNewInsta')?.value||'').trim(),
+    logo_url: (document.getElementById('saNewLogo')?.value||'').trim(),
+    plan: document.getElementById('saNewPlan')?.value || 'basic',
     color_primary: colors.primary,
     color_secondary: colors.secondary,
     color_template: tpl,
-    admin_user: document.getElementById('saNewAdminUser').value.trim() || 'admin',
-    admin_pass: document.getElementById('saNewAdminPass').value || 'admin123',
+    admin_user: (document.getElementById('saNewAdminUser')?.value||'admin').trim(),
+    admin_pass: adminPass,
     active: true,
     billing_day: new Date().getDate(),
-    next_billing: new Date(Date.now()+30*86400000).toISOString().split('T')[0],
+    next_billing: nextBilling,
+    notes: (document.getElementById('saNewNotes')?.value||'').trim(),
   };
+
   try {
     await sbUpsert('teams', [row]);
-    showNotif('✅ Time "' + name + '" cadastrado! URL: /' + slug);
-    switchSaTab('times', document.querySelector('.sa-tab'));
-  } catch(e) { showNotif('Erro ao cadastrar: ' + e.message, true); }
+    showNotif(`✅ Time "${name}" cadastrado! URL: ?team=${slug}`);
+    // Mostra resumo antes de ir para a lista
+    const btn2 = document.querySelector('[onclick="saCreateTeam()"]');
+    if (btn2) { btn2.textContent = '✓ CADASTRAR TIME'; btn2.disabled = false; }
+    saResetForm();
+    // Vai para aba Times após 1s
+    setTimeout(()=> switchSaTab('times', document.querySelector('.sa-tab')), 1000);
+  } catch(e) {
+    showNotif('Erro ao cadastrar: ' + (e.message||'verifique o console'), true);
+    if (btn) { btn.textContent = '✓ CADASTRAR TIME'; btn.disabled = false; }
+  }
 }
-async function saToggleTeam(id, activate) {
+
+async function saToggleTeam(id, activate, btnEl) {
+  if (btnEl) { btnEl.textContent = '...'; btnEl.disabled = true; }
   try {
-    await fetch(`${SUPABASE_URL}/rest/v1/teams?id=eq.${id}`, {
-      method:'PATCH',
-      headers:{ apikey:SUPABASE_KEY, Authorization:`Bearer ${SUPABASE_KEY}`, 'Content-Type':'application/json', Prefer:'return=minimal' },
-      body: JSON.stringify({ active: activate })
-    });
+    await saPatchTeam(id, { active: activate });
     showNotif(activate ? '✅ Time ativado.' : '🔒 Time bloqueado.');
     renderSaPane('times');
-  } catch(e) { showNotif('Erro: '+e.message, true); }
+  } catch(e) {
+    showNotif('Erro: '+e.message, true);
+    if (btnEl) { btnEl.textContent = activate?'Ativar':'Bloquear'; btnEl.disabled=false; }
+  }
 }
-async function saRegisterPayment(id, slug) {
+
+async function saRegisterPayment(id, name, plan) {
   const today = new Date().toISOString().split('T')[0];
-  const next = new Date(Date.now()+30*86400000).toISOString().split('T')[0];
+  const next  = new Date(Date.now()+30*86400000).toISOString().split('T')[0];
+  const valor = {basic:49,pro:89,premium:149}[plan]||49;
+  if (!confirm(`Confirmar pagamento de R$${valor} para "${name}"?\nPróximo vencimento: ${new Date(next).toLocaleDateString('pt-BR')}`)) return;
   try {
-    await fetch(`${SUPABASE_URL}/rest/v1/teams?id=eq.${id}`, {
-      method:'PATCH',
-      headers:{ apikey:SUPABASE_KEY, Authorization:`Bearer ${SUPABASE_KEY}`, 'Content-Type':'application/json', Prefer:'return=minimal' },
-      body: JSON.stringify({ last_payment: today, next_billing: next, active: true })
-    });
-    showNotif('✅ Pagamento registrado para /' + slug);
+    await saPatchTeam(id, { last_payment: today, next_billing: next, active: true });
+    showNotif(`✅ Pagamento de R$${valor} registrado para "${name}"`);
     renderSaPane('cobrancas');
   } catch(e) { showNotif('Erro: '+e.message, true); }
 }
+
+async function saChangePlan(id, currentPlan, name) {
+  const plans = ['basic','pro','premium'];
+  const labels = { basic:'Basic — R$49/mês', pro:'Pro — R$89/mês', premium:'Premium — R$149/mês' };
+  const options = plans.map(p => `${p === currentPlan ? '● ' : '○ '}${labels[p]}`).join('\n');
+  const input = prompt(`Alterar plano de "${name}":\n\n${options}\n\nDigite: basic, pro ou premium`);
+  if (!input || !plans.includes(input.toLowerCase().trim())) return;
+  const newPlan = input.toLowerCase().trim();
+  if (newPlan === currentPlan) { showNotif('Plano não alterado.'); return; }
+  try {
+    await saPatchTeam(id, { plan: newPlan });
+    showNotif(`✅ Plano de "${name}" alterado para ${newPlan.toUpperCase()}`);
+    renderSaPane('cobrancas');
+  } catch(e) { showNotif('Erro: '+e.message, true); }
+}
+
+function saEditTeam(id) {
+  // Abre modal de edição rápida
+  showModal(`
+    <div style="font-family:Oswald,sans-serif;font-size:14px;letter-spacing:2px;color:#fff;margin-bottom:20px;">EDITAR TIME</div>
+    <div id="saEditContent" style="font-family:Barlow,sans-serif;font-size:13px;color:#666;">Carregando...</div>
+  `);
+  getAllTeams().then(teams => {
+    const t = teams.find(x=>x.id===id);
+    if (!t) { document.getElementById('saEditContent').textContent = 'Time não encontrado.'; return; }
+    document.getElementById('saEditContent').innerHTML = `
+      <div class="form-group"><label>Nome</label><input type="text" id="seeName" value="${t.name||''}" style="width:100%;"></div>
+      <div class="form-group"><label>Slug</label><input type="text" id="seeSlug" value="${t.slug||''}" style="width:100%;font-family:monospace;"></div>
+      <div class="grid-2col">
+        <div class="form-group"><label>Cidade</label><input type="text" id="seeCity" value="${t.city||''}" style="width:100%;"></div>
+        <div class="form-group"><label>Estado</label><input type="text" id="seeState" value="${t.state||''}" style="width:100%;" maxlength="2"></div>
+      </div>
+      <div class="grid-2col">
+        <div class="form-group"><label>Admin User</label><input type="text" id="seeAdminUser" value="${t.admin_user||''}" style="width:100%;"></div>
+        <div class="form-group"><label>Admin Pass</label><input type="text" id="seeAdminPass" value="${t.admin_pass||''}" style="width:100%;"></div>
+      </div>
+      <div class="form-group"><label>WhatsApp</label><input type="text" id="seeWhatsapp" value="${t.whatsapp||''}" style="width:100%;"></div>
+      <div class="form-group"><label>Notas Internas</label><textarea id="seeNotes" style="width:100%;height:60px;resize:vertical;">${t.notes||''}</textarea></div>
+      <div style="display:flex;gap:10px;margin-top:16px;">
+        <button class="btn-red" onclick="saEditSave('${id}')" style="flex:1;">SALVAR</button>
+        <button class="btn btn-secondary" onclick="closeModal()" style="padding:10px 20px;">CANCELAR</button>
+      </div>`;
+  });
+}
+
+async function saEditSave(id) {
+  const data = {
+    name:       document.getElementById('seeName')?.value.trim(),
+    slug:       document.getElementById('seeSlug')?.value.trim().toLowerCase().replace(/[^a-z0-9]/g,''),
+    city:       document.getElementById('seeCity')?.value.trim(),
+    state:      document.getElementById('seeState')?.value.trim().toUpperCase(),
+    admin_user: document.getElementById('seeAdminUser')?.value.trim(),
+    admin_pass: document.getElementById('seeAdminPass')?.value.trim(),
+    whatsapp:   document.getElementById('seeWhatsapp')?.value.trim(),
+    notes:      document.getElementById('seeNotes')?.value.trim(),
+  };
+  try {
+    await saPatchTeam(id, data);
+    closeModal();
+    showNotif('✅ Time atualizado!');
+    renderSaPane('times');
+  } catch(e) { showNotif('Erro: '+e.message, true); }
+}
+
 async function saAccessTeam(slug) {
   isSuperAdmin = false;
-  window.history.pushState({}, '', '/'+slug);
+  window.history.pushState({}, '', '?team='+slug);
   await initSaaS();
 }
-async function renderSaStats(el) {
-  const teams = await getAllTeams();
-  const byPlan = { basic:0, pro:0, premium:0 };
-  teams.filter(t=>t.active).forEach(t=>{ byPlan[t.plan||'basic']++; });
-  const mrr = byPlan.basic*49 + byPlan.pro*89 + byPlan.premium*149;
-  el.innerHTML = `
-    <div style="font-family:Oswald,sans-serif;font-size:16px;letter-spacing:3px;color:#fff;margin-bottom:24px;">ESTATÍSTICAS DA PLATAFORMA</div>
-    <div class="sa-stat-grid">
-      <div class="sa-stat-card"><div class="sa-stat-number">${teams.length}</div><div class="sa-stat-label">TOTAL DE TIMES</div></div>
-      <div class="sa-stat-card"><div class="sa-stat-number" style="color:var(--green);">${teams.filter(t=>t.active).length}</div><div class="sa-stat-label">ATIVOS</div></div>
-      <div class="sa-stat-card"><div class="sa-stat-number" style="color:var(--gold);">R$${mrr.toLocaleString('pt-BR')}</div><div class="sa-stat-label">MRR</div></div>
-      <div class="sa-stat-card"><div class="sa-stat-number" style="color:var(--gold);">R$${(mrr*12).toLocaleString('pt-BR')}</div><div class="sa-stat-label">ARR ESTIMADO</div></div>
-      <div class="sa-stat-card"><div class="sa-stat-number">${byPlan.basic}</div><div class="sa-stat-label">PLANO BASIC</div></div>
-      <div class="sa-stat-card"><div class="sa-stat-number">${byPlan.pro}</div><div class="sa-stat-label">PLANO PRO</div></div>
-      <div class="sa-stat-card"><div class="sa-stat-number">${byPlan.premium}</div><div class="sa-stat-label">PLANO PREMIUM</div></div>
-    </div>`;
-}
+
 
 // ══════════════════════════════════════════════
 // BRANDING — Painel do Admin do Time
@@ -4659,3 +4945,15 @@ document.addEventListener('keydown', function(e) {
     <button class="sa-tab" onclick="switchSaTab('cobrancas',this)">Cobranças</button>
     <button class="sa-tab" onclick="switchSaTab('novo',this)">+ Cadastrar Time</button>
     <button class="sa-tab" onclick="switchSaTab('stats',this)">Estatísticas</button>
+
+  </div>
+  <div class="sa-content">
+    <div id="sa-pane-times"></div>
+    <div id="sa-pane-cobrancas" style="display:none;"></div>
+    <div id="sa-pane-novo" style="display:none;"></div>
+    <div id="sa-pane-stats" style="display:none;"></div>
+  </div>
+</div>
+
+</body>
+</html>
