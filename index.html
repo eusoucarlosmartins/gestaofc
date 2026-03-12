@@ -4552,8 +4552,9 @@ async function initSaaS() {
 
   // ── Super Admin ──
   if (slug === 'admin') {
+    // Esconde nav e site antes de mostrar o overlay
+    document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
     if (!isSuperAdmin) {
-      // Mostra login overlay do super admin
       showSaLoginOverlay();
     } else {
       showViewRaw('superadmin');
@@ -4562,39 +4563,42 @@ async function initSaaS() {
     return;
   }
 
-  // ── Sem slug → Landing page ──
-  if (!slug) {
-    renderLanding();
-    return;
-  }
-
-  // ── Time específico ──
+  // ── Sem slug ou slug é o time padrão → mostra o site normalmente ──
+  applyTeamBranding(TEAM_CONFIG);
   showViewRaw('site');
-  renderPublicSite(); // renderiza imediatamente com dados padrão
+  renderPublicSite();
 
-  if (SB_READY) {
+  if (!SB_READY) return;
+
+  // ── Tenta carregar config do time pelo slug ──
+  // (só faz lookup se o slug for diferente do padrão)
+  if (slug && slug !== TEAM_CONFIG.slug) {
     const teamCfg = await loadTeamBySlug(slug);
     if (!teamCfg) {
-      // Slug não encontrado — se o slug for o time padrão, continua
-      if (slug !== TEAM_CONFIG.slug) {
-        document.body.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;height:100vh;background:#0d0d0d;font-family:Oswald,sans-serif;font-size:13px;letter-spacing:3px;color:#555;">TIME NÃO ENCONTRADO: /${slug}</div>`;
-        return;
-      }
+      // Tabela teams não existe ainda ou slug não encontrado → continua com config padrão
+      console.warn('Team not found for slug:', slug, '— using default config');
     } else if (!teamCfg.active) {
       showViewRaw('blocked');
       return;
     } else {
       Object.assign(TEAM_CONFIG, teamCfg);
       currentTeamId = teamCfg.id;
+      applyTeamBranding(TEAM_CONFIG);
     }
-    applyTeamBranding(TEAM_CONFIG);
-    await sbLoad();
-    renderPublicSite();
-  } else {
-    applyTeamBranding(TEAM_CONFIG);
+  } else if (slug === TEAM_CONFIG.slug || !slug) {
+    // Slug é o time padrão — tenta buscar o team_id no Supabase
+    const teamCfg = await loadTeamBySlug(TEAM_CONFIG.slug).catch(() => null);
+    if (teamCfg && teamCfg.id) {
+      currentTeamId = teamCfg.id;
+      if (teamCfg.active === false) { showViewRaw('blocked'); return; }
+      Object.assign(TEAM_CONFIG, teamCfg);
+      applyTeamBranding(TEAM_CONFIG);
+    }
   }
-}
 
+  await sbLoad();
+  renderPublicSite();
+}
 function showSaLoginOverlay() {
   let ov = document.getElementById('saLoginOverlay');
   if (!ov) {
