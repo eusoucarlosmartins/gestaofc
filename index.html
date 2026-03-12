@@ -1654,6 +1654,18 @@ let currentUser = null;
 function doLogin() {
   const u = document.getElementById('loginUser').value.trim();
   const p = document.getElementById('loginPass').value;
+
+  // Time bloqueado — impede acesso ao admin, mas só ao tentar logar
+  if (TEAM_CONFIG._isBlocked) {
+    document.getElementById('loginOverlay').classList.remove('open');
+    document.getElementById('blockedMsg').textContent =
+      'O acesso administrativo deste time está suspenso. Entre em contato com a administração da plataforma para regularizar.';
+    const contact = document.getElementById('blockedContact');
+    if (contact) contact.innerHTML = '<a href="https://wa.me/5548996962910" target="_blank" style="color:var(--gold);">📱 Falar com suporte: 48 99696-2910</a>';
+    showViewRaw('blocked');
+    return;
+  }
+
   const player = DB.players.find(pl => pl.user === u && pl.pass === p);
   if (!player) {
     document.getElementById('loginError').style.display = 'block';
@@ -4934,15 +4946,16 @@ async function initSaaS() {
   }
 
   if (teamCfg) {
-    // Só bloqueia se explicitamente active === false E o time foi encontrado
-    if (teamCfg.active === false || teamCfg.active === 'blocked') {
-      console.log('[GestãoFC] Time bloqueado no Supabase');
-      showViewRaw('blocked');
-      return;
-    }
+    // Aplica branding independente do status — visitante público sempre vê o site
     Object.assign(TEAM_CONFIG, teamCfg);
     currentTeamId = teamCfg.id;
     applyTeamBranding(TEAM_CONFIG);
+
+    // Guarda status para usar NO LOGIN DO ADMIN (não aqui)
+    TEAM_CONFIG._isBlocked = (teamCfg.active === false);
+    if (TEAM_CONFIG._isBlocked) {
+      console.log('[GestãoFC] Time bloqueado — site público ok, login admin bloqueado');
+    }
   } else {
     console.log('[GestãoFC] Time não encontrado no Supabase — usando config padrão');
   }
