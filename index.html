@@ -778,7 +778,7 @@ input, select, textarea, button { -webkit-tap-highlight-color: transparent; }
 
 <!-- HERO -->
 <section class="hero">
-  <div class="hero-year">1991</div>
+  <div class="hero-year" id="heroYearBadge">1991</div>
   <div class="hero-inner">
     <div class="club-tag" id="heroTag">Futebol Raiz · Rio Grande · Palhoça — SC</div>
     <div class="crest">
@@ -788,8 +788,8 @@ input, select, textarea, button { -webkit-tap-highlight-color: transparent; }
     <p class="club-sub" id="heroSub">"A resenha começa no campo, mas nunca termina."</p>
     <div class="hero-divider"></div>
     <div class="hero-stats">
-      <div class="stat"><div class="stat-number">35</div><div class="stat-label">Anos de História</div></div>
-      <div class="stat"><div class="stat-number">1991</div><div class="stat-label">Fundação</div></div>
+      <div class="stat"><div class="stat-number" id="heroYearsNum">–</div><div class="stat-label">Anos de História</div></div>
+      <div class="stat"><div class="stat-number" id="heroFoundedYear">–</div><div class="stat-label">Fundação</div></div>
       <div class="stat"><div class="stat-number">100%</div><div class="stat-label">Futebol Raiz</div></div>
     </div>
   </div>
@@ -840,17 +840,11 @@ input, select, textarea, button { -webkit-tap-highlight-color: transparent; }
   <div class="results-grid" id="pubResultsGrid"></div>
 </section>
 
-<!-- TIMELINE — acima do Hall da Fama -->
-<section class="site-section timeline-section" id="historia">
+<!-- TIMELINE — dinâmica por time, oculta se não cadastrada -->
+<section class="site-section timeline-section" id="historia" style="display:none;">
   <div class="section-label">Linha do Tempo</div>
-  <h2 class="section-title">Três Décadas<br><span>de Glória</span></h2>
-  <div class="tl-items">
-    <div class="tl-item"><div class="tl-year">1991</div><div class="tl-dot"></div><div class="tl-content"><div class="tl-event">🎉 Fundação do Clube</div><p class="tl-desc">Em 11 de março, no Bairro Rio Grande, Palhoça, nasce o Vira Copo FC com as cores vermelho e branco.</p></div></div>
-    <div class="tl-item"><div class="tl-year">Anos 90</div><div class="tl-dot"></div><div class="tl-content"><div class="tl-event">Consolidação na Várzea</div><p class="tl-desc">O clube firma presença nos campos amadores de Palhoça, construindo rivalidades saudáveis e amizades duradouras.</p></div></div>
-    <div class="tl-item"><div class="tl-year">2000s</div><div class="tl-dot"></div><div class="tl-content"><div class="tl-event">Tradição que Passa de Geração</div><p class="tl-desc">Novos jogadores entram, mas o espírito original se mantém. A caneca de chope segue sendo o símbolo maior.</p></div></div>
-    <div class="tl-item"><div class="tl-year">2010s</div><div class="tl-dot"></div><div class="tl-content"><div class="tl-event">Expansão Digital</div><p class="tl-desc">O Vira Copo leva sua história para as redes sociais, conectando torcedores e organizando jogos pela internet.</p></div></div>
-    <div class="tl-item"><div class="tl-year">2026</div><div class="tl-dot" style="background:var(--gold);box-shadow:0 0 10px var(--gold);"></div><div class="tl-content"><div class="tl-event">🏆 35 Anos de História!</div><p class="tl-desc">O mais antigo e unido time de várzea do Rio Grande celebra três décadas e meia de gols, amizade e resenha garantida.</p></div></div>
-  </div>
+  <h2 class="section-title" id="timelineTitle">Nossa<br><span>História</span></h2>
+  <div class="tl-items" id="timelineItems"></div>
 </section>
 
 <!-- HALL DA FAMA -->
@@ -896,11 +890,13 @@ input, select, textarea, button { -webkit-tap-highlight-color: transparent; }
 <section class="site-section social-section">
   <div class="section-label">Fique por Dentro</div>
   <h2 class="section-title">Siga no<br><span>Instagram</span></h2>
-  <p style="font-family:'Barlow Condensed',sans-serif;font-size:18px;color:var(--cream);max-width:500px;margin:0 auto 8px;">Agenda de jogos, resultados, fotos dos atletas — tudo que acontece no Vira Copo.</p>
-  <a href="https://instagram.com/viracopofc91" target="_blank" class="insta-btn">
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="m16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
-    @viracopofc91
-  </a>
+  <p id="instaDesc" style="font-family:'Barlow Condensed',sans-serif;font-size:18px;color:var(--cream);max-width:500px;margin:0 auto 8px;">Agenda de jogos, resultados, fotos dos atletas e tudo que acontece no clube.</p>
+  <div id="instaSection">
+    <a id="instaBtn" href="https://instagram.com/viracopofc91" target="_blank" class="insta-btn">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="m16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+      <span id="instaHandle">@viracopofc91</span>
+    </a>
+  </div>
 </section>
 
 <!-- FOOTER -->
@@ -908,6 +904,19 @@ input, select, textarea, button { -webkit-tap-highlight-color: transparent; }
   <img id="footerLogo" src="logo-viracopofc.png" alt="Logo" style="width:60px;height:60px;object-fit:contain;margin-bottom:12px;filter:drop-shadow(0 2px 8px rgba(204,26,26,0.5));" onerror="this.style.display='none'">
   <div class="footer-logo" id="footerName">VIRA COPO FC</div>
   <p class="footer-text" id="footerInfo">BAIRRO RIO GRANDE · PALHOÇA · SANTA CATARINA · DESDE <span>1991</span></p>
+  <div style="margin-top:32px;padding-top:24px;border-top:1px solid #2a2a2a;text-align:center;">
+    <div style="font-family:'Oswald',sans-serif;font-size:11px;letter-spacing:3px;color:#444;margin-bottom:6px;">PLATAFORMA</div>
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:4px;color:#555;margin-bottom:4px;">
+      GESTÃO <span style="color:var(--gold);">FC</span>
+    </div>
+    <p style="font-family:'Barlow',sans-serif;font-size:12px;color:#333;margin:0 0 8px;">
+      Criado por <strong style="color:#444;">Carlos Martins</strong> &nbsp;·&nbsp;
+      <a href="https://wa.me/5548996962910" target="_blank" style="color:#444;text-decoration:none;">📱 48 99696-2910</a>
+    </p>
+    <a href="#cadastrar-time" onclick="showCadastroInteresse();return false;" style="font-family:'Oswald',sans-serif;font-size:11px;letter-spacing:2px;color:var(--gold);text-decoration:none;border:1px solid rgba(200,150,62,0.3);padding:5px 14px;display:inline-block;">
+      ⚽ CADASTRE SEU TIME — 7 DIAS GRÁTIS
+    </a>
+  </div>
 </footer>
 
 </div><!-- /view-site -->
@@ -1044,10 +1053,35 @@ function applyTeamBranding(cfg) {
   const mobileTitle = document.querySelector('#mobileMenuOverlay div div:first-child');
   if (mobileTitle) mobileTitle.textContent = name;
 
-  // Marquee — atualiza texto
+  // ── Hero stats dinâmicos ──
+  const anosFund = cfg.foundedYear || 2000;
+  const anosHist = new Date().getFullYear() - anosFund;
+  const heroYN = document.getElementById('heroYearsNum');
+  if (heroYN) heroYN.textContent = anosHist;
+  const heroFY = document.getElementById('heroFoundedYear');
+  if (heroFY) heroFY.textContent = anosFund;
+  const heroYB = document.getElementById('heroYearBadge');
+  if (heroYB) heroYB.textContent = anosFund;
+
+  // ── Instagram dinâmico ──
+  const instaSection = document.getElementById('instaSection');
+  const instaBtn = document.getElementById('instaBtn');
+  const instaHandle = document.getElementById('instaHandle');
+  const instaDesc = document.getElementById('instaDesc');
+  if (cfg.instagram) {
+    const handle = cfg.instagram.replace(/^@/,'');
+    if (instaSection) instaSection.style.display = 'block';
+    if (instaBtn) instaBtn.href = 'https://instagram.com/' + handle;
+    if (instaHandle) instaHandle.textContent = '@' + handle;
+    if (instaDesc) instaDesc.textContent = 'Agenda de jogos, resultados e tudo que acontece no ' + cfg.name + '.';
+  } else {
+    if (instaSection) instaSection.style.display = 'none';
+  }
+
+  // ── Marquee — atualiza texto ──
   const marquee = document.querySelector('.marquee-track');
   if (marquee && cfg.name) {
-    const t = (cfg.name + ' ✦ ' + cfg.city.toUpperCase() + ' · ' + cfg.state + ' ✦ FUTEBOL RAIZ ✦ DESDE ' + cfg.foundedYear + ' ✦ ').repeat(2);
+    const t = (cfg.name + ' ✦ ' + (cfg.city||'').toUpperCase() + ' · ' + (cfg.state||'') + ' ✦ FUTEBOL RAIZ ✦ DESDE ' + anosFund + ' ✦ ').repeat(2);
     marquee.innerHTML = t.split(' ✦ ').map((s,i) => i%2===0 ? '<span>'+s+'</span>' : '<span class="dot">✦</span>').join('');
   }
 }
@@ -1271,6 +1305,7 @@ async function sbLoad() {
       if (c.key === 'caixa')             { try { DB.caixa         = JSON.parse(c.value); } catch(e){} }
       if (c.key === 'mensalidade_valor') DB.mensalidadeValor = parseFloat(c.value) || 30;
       if (c.key === 'elenco_seasons')    { try { const es = JSON.parse(c.value); DB.elencoSeasons = es; DB.seasons = es; } catch(e){} }
+      if (c.key === 'timeline')          { try { DB.timeline = JSON.parse(c.value); } catch(e){ DB.timeline = []; } }
     });
 
     // ── dossies ──────────────────────────────────────────
@@ -1488,6 +1523,7 @@ function showLoadingOverlay(show) {
 // ══════════════════════════════════════════════
 const DB = {
   uniform: { color: 'VERMELHO', active: false },
+  timeline: [],
   schedule: [
     { date:'07/03/2026', adversary:'TCC',                    time:'16:00h', local:'Campo do Rio Grande', fora:false, mapsUrl:'', adversaryLogo:null },
     { date:'14/03/2026', adversary:'Família Samba',          time:'16:00h', local:'Campo do Rio Grande', fora:false, mapsUrl:'', adversaryLogo:null },
@@ -1740,12 +1776,15 @@ function renderPublicSite() {
         const badgeCls = cls === 'win' ? 'badge-green' : cls === 'loss' ? 'badge-red' : 'badge-gold';
         const borderColor = cls === 'win' ? 'var(--green)' : cls === 'loss' ? 'var(--red-light)' : 'var(--gold)';
 
-        // Logo VCFC — usa a logo do clube se existir, senão escudo SVG embutido
-        const vcfcLogo = `<div class="result-team-logo" style="border-color:var(--red);background:rgba(204,26,26,0.08);">
-          <img src="logo-viracopofc.png" alt="VCFC"
+        // Logo do time — usa a logo do TEAM_CONFIG (dinâmica por time)
+        const _tName = TEAM_CONFIG.shortName || TEAM_CONFIG.name || 'TIME';
+        const _tInit = _tName.split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
+        const _tLogo = TEAM_CONFIG.logoUrl || './logo-viracopofc.png';
+        const vcfcLogo = `<div class="result-team-logo" style="border-color:var(--red);background:rgba(var(--red-rgb,204,26,26),0.08);">
+          <img src="${_tLogo}" alt="${_tInit}"
             onerror="this.style.display='none';this.nextSibling.style.display='flex';"
             style="padding:6px;">
-          <div class="result-team-logo-initials" style="display:none;color:var(--red);">VC</div>
+          <div class="result-team-logo-initials" style="display:none;color:var(--red);">${_tInit}</div>
         </div>`;
 
         // Logo do adversário — usa logo salva na agenda se existir
@@ -1770,7 +1809,7 @@ function renderPublicSite() {
           <div class="result-card-match">
             <div class="result-team">
               ${vcfcLogo}
-              <div class="result-team-name">VIRA COPO FC</div>
+              <div class="result-team-name">${(TEAM_CONFIG.shortName||TEAM_CONFIG.name||'MEU TIME').toUpperCase()}</div>
             </div>
             <div class="result-scoreboard">
               <div class="result-score-nums">
@@ -1837,6 +1876,9 @@ function renderPublicSite() {
       '</div></div>';
   }).join('');
 
+  // ── Linha do Tempo ──
+  renderTimelinePublic();
+
   // ── Patrocinadores ──
   const spEl = document.getElementById('pubSponsorsGrid');
   if (spEl) {
@@ -1844,7 +1886,7 @@ function renderPublicSite() {
       '<div class="sponsor-slot" title="' + s.name + '">' +
       (s.logo ? '<img src="' + s.logo + '" alt="' + s.name + '">' : '<span class="slot-icon">🏢</span><span class="slot-label">' + s.name + '</span>') +
       '</div>').join('') +
-      '<div class="sponsor-slot" onclick="showNotif(\'Entre em contato! WhatsApp: (48) 98475-1343\')" title="Seja um patrocinador">' +
+      '<div class="sponsor-slot" onclick="showNotif(\'Entre em contato! WhatsApp: \' + (TEAM_CONFIG.whatsapp||\'(48) 98475-1343\'))" title="Seja um patrocinador">' +
       '<span class="slot-icon">➕</span><span class="slot-label">Seja patrocinador</span></div>';
   }
 
@@ -1863,7 +1905,9 @@ function renderPublicSite() {
       if (!grouped[key]) grouped[key] = { label: monthNames[+m-1] + ' ' + y, games: [] };
       grouped[key].games.push({...g, idx});
     });
-    const waLink = 'https://wa.me/5548984751343?text=Ol%C3%A1%21+Quero+desafiar+o+Vira+Copo+FC%21';
+    const _waNum = (TEAM_CONFIG.whatsapp||'+5548984751343').replace(/\D/g,'');
+    const _waName = encodeURIComponent('Olá! Quero desafiar o ' + (TEAM_CONFIG.name||'time') + '!');
+    const waLink = 'https://wa.me/' + _waNum + '?text=' + _waName;
     const ng = nextGame;
     agEl.innerHTML = Object.values(grouped).map(grp => {
       const rows = grp.games.map(g => {
@@ -1952,6 +1996,7 @@ function buildAdminPanel() {
       { id:'ranking',   label:'Ranking' },
       { id:'financeiro',label:'Financeiro' },
       { id:'usuarios',  label:'Usuários' },
+      { id:'historia',  label:'📅 Linha do Tempo' },
       { id:'branding',  label:'🎨 Identidade' },
       { id:'uniforme',  label:'Uniforme' },
       { id:'patrocinadores', label:'Patrocinadores' },
@@ -1998,6 +2043,7 @@ function renderPane(id) {
     convocacao: renderConvocacao,
     uniforme: renderUniforme,
     patrocinadores: renderPatrocinadores,
+    historia: renderHistoriaPane,
     branding: renderBrandingPane
   };
   if (renders[id]) renders[id](el);
@@ -4927,6 +4973,166 @@ document.addEventListener('keydown', function(e) {
     e.preventDefault();
   }
 });
+
+// ══════════════════════════════════════════════
+// LINHA DO TEMPO — Admin + Render Público
+// ══════════════════════════════════════════════
+function renderHistoriaPane(el) {
+  const items = DB.timeline || [];
+  el.innerHTML = `
+    <div class="panel">
+      <div class="panel-title">📅 Linha do Tempo</div>
+      <div style="font-family:Barlow,sans-serif;font-size:13px;color:#888;margin-bottom:20px;">
+        Estes eventos aparecerão na seção <strong>História</strong> do portal público.<br>
+        Se não houver nenhum item, a seção ficará oculta automaticamente.
+      </div>
+
+      <div id="timelineAdminList" style="margin-bottom:24px;"></div>
+
+      <div style="font-family:Oswald,sans-serif;font-size:12px;letter-spacing:2px;color:#fff;margin-bottom:12px;">▸ ADICIONAR EVENTO</div>
+      <div class="grid-2col">
+        <div class="form-group"><label>Ano / Período</label><input type="text" id="tlNewYear" placeholder="ex: 2018 ou Anos 90"></div>
+        <div class="form-group"><label>Título do Evento</label><input type="text" id="tlNewEvent" placeholder="ex: 🏆 Primeiro Título"></div>
+      </div>
+      <div class="form-group"><label>Descrição</label><textarea id="tlNewDesc" placeholder="Conte o que aconteceu..." style="height:80px;resize:vertical;"></textarea></div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn-red" onclick="tlAddItem()" style="flex:1;">+ ADICIONAR</button>
+      </div>
+    </div>`;
+  renderTimelineAdminList();
+}
+
+function renderTimelineAdminList() {
+  const el = document.getElementById('timelineAdminList');
+  if (!el) return;
+  const items = DB.timeline || [];
+  if (!items.length) {
+    el.innerHTML = '<div style="font-family:Oswald,sans-serif;font-size:12px;letter-spacing:2px;color:#444;padding:20px 0;text-align:center;">Nenhum evento cadastrado ainda.</div>';
+    return;
+  }
+  el.innerHTML = items.map((item, i) => `
+    <div style="display:flex;align-items:flex-start;gap:12px;padding:12px 14px;background:#111;border:1px solid #222;margin-bottom:8px;border-left:3px solid var(--gold);">
+      <div style="flex:1;">
+        <div style="font-family:'Oswald',sans-serif;font-size:13px;letter-spacing:2px;color:var(--gold);">${item.year}</div>
+        <div style="font-family:'Oswald',sans-serif;font-size:14px;color:#fff;margin:2px 0;">${item.event}</div>
+        <div style="font-family:'Barlow',sans-serif;font-size:12px;color:#666;">${item.desc||''}</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:4px;">
+        ${i>0?`<button class="btn btn-sm btn-secondary" style="font-size:10px;padding:2px 6px;" onclick="tlMoveItem(${i},-1)">▲</button>`:''}
+        ${i<items.length-1?`<button class="btn btn-sm btn-secondary" style="font-size:10px;padding:2px 6px;" onclick="tlMoveItem(${i},1)">▼</button>`:''}
+        <button class="btn btn-sm" style="font-size:10px;padding:2px 6px;background:rgba(204,26,26,0.2);color:var(--red);border:1px solid rgba(204,26,26,0.3);" onclick="tlRemoveItem(${i})">✕</button>
+      </div>
+    </div>`).join('');
+}
+
+function tlAddItem() {
+  const year  = document.getElementById('tlNewYear')?.value.trim();
+  const event = document.getElementById('tlNewEvent')?.value.trim();
+  const desc  = document.getElementById('tlNewDesc')?.value.trim();
+  if (!year || !event) { showNotif('Ano e título são obrigatórios!', true); return; }
+  if (!DB.timeline) DB.timeline = [];
+  DB.timeline.push({ year, event, desc });
+  sbSaveTimeline();
+  document.getElementById('tlNewYear').value = '';
+  document.getElementById('tlNewEvent').value = '';
+  document.getElementById('tlNewDesc').value = '';
+  renderTimelineAdminList();
+  renderTimelinePublic();
+  showNotif('✅ Evento adicionado!');
+}
+
+function tlRemoveItem(i) {
+  DB.timeline.splice(i, 1);
+  sbSaveTimeline();
+  renderTimelineAdminList();
+  renderTimelinePublic();
+  showNotif('Evento removido.');
+}
+
+function tlMoveItem(i, dir) {
+  const j = i + dir;
+  if (j < 0 || j >= DB.timeline.length) return;
+  [DB.timeline[i], DB.timeline[j]] = [DB.timeline[j], DB.timeline[i]];
+  sbSaveTimeline();
+  renderTimelineAdminList();
+  renderTimelinePublic();
+}
+
+async function sbSaveTimeline() {
+  if (!SB_READY || !currentTeamId) return;
+  try {
+    await fetch(`${SUPABASE_URL}/rest/v1/config?team_id=eq.${currentTeamId}&key=eq.timeline`, {
+      method: 'DELETE',
+      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
+    });
+    await sbUpsert('config', [{ team_id: currentTeamId, key: 'timeline', value: JSON.stringify(DB.timeline) }]);
+  } catch(e) { console.warn('sbSaveTimeline:', e.message); }
+}
+
+function renderTimelinePublic() {
+  const items = DB.timeline || [];
+  const section = document.getElementById('historia');
+  if (!section) return;
+  if (!items.length) { section.style.display = 'none'; return; }
+  section.style.display = '';
+  const titleEl = document.getElementById('timelineTitle');
+  if (titleEl) {
+    const anos = new Date().getFullYear() - (TEAM_CONFIG.foundedYear||2000);
+    titleEl.innerHTML = anos + ' Anos de<br><span>História</span>';
+  }
+  const listEl = document.getElementById('timelineItems');
+  if (listEl) listEl.innerHTML = items.map((item, i) => {
+    const isLast = i === items.length - 1;
+    return `<div class="tl-item">
+      <div class="tl-year">${item.year}</div>
+      <div class="tl-dot"${isLast?' style="background:var(--gold);box-shadow:0 0 10px var(--gold);"':''}></div>
+      <div class="tl-content">
+        <div class="tl-event">${item.event}</div>
+        ${item.desc?`<p class="tl-desc">${item.desc}</p>`:''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════════════
+// CADASTRO — Modal interesse novo time
+// ══════════════════════════════════════════════
+function showCadastroInteresse() {
+  showModal(`
+    <div style="font-family:Oswald,sans-serif;font-size:16px;letter-spacing:3px;color:#fff;margin-bottom:6px;">⚽ CADASTRE SEU TIME</div>
+    <div style="font-family:Barlow,sans-serif;font-size:13px;color:#888;margin-bottom:20px;">Experimente grátis por 7 dias. Sem cartão de crédito.</div>
+    <div class="form-group"><label>Nome do Time *</label><input type="text" id="ciName" placeholder="ex: Atlético do Morro FC" style="width:100%;"></div>
+    <div class="grid-2col">
+      <div class="form-group"><label>Seu Nome *</label><input type="text" id="ciContact" placeholder="João" style="width:100%;"></div>
+      <div class="form-group"><label>WhatsApp *</label><input type="text" id="ciPhone" placeholder="48 99999-9999" style="width:100%;"></div>
+    </div>
+    <div class="form-group"><label>Cidade</label><input type="text" id="ciCity" placeholder="Florianópolis — SC" style="width:100%;"></div>
+    <div style="display:flex;gap:10px;margin-top:16px;">
+      <button class="btn-red" onclick="enviarCadastroInteresse()" style="flex:1;">📲 QUERO TESTAR GRÁTIS</button>
+      <button class="btn btn-secondary" onclick="closeModal()" style="padding:10px 20px;">Depois</button>
+    </div>
+  `);
+}
+
+function enviarCadastroInteresse() {
+  const name    = document.getElementById('ciName')?.value.trim();
+  const contact = document.getElementById('ciContact')?.value.trim();
+  const phone   = document.getElementById('ciPhone')?.value.trim();
+  const city    = document.getElementById('ciCity')?.value.trim();
+  if (!name || !phone) { showNotif('Nome do time e WhatsApp são obrigatórios!', true); return; }
+  const msg = encodeURIComponent(
+    `Olá Carlos! Tenho interesse em cadastrar meu time na plataforma GestãoFC.\n\n` +
+    `🏟️ Time: ${name}\n` +
+    `👤 Contato: ${contact}\n` +
+    `📍 Cidade: ${city}\n` +
+    `📱 WhatsApp: ${phone}\n\n` +
+    `Quero experimentar os 7 dias grátis!`
+  );
+  window.open('https://wa.me/5548996962910?text=' + msg, '_blank');
+  closeModal();
+  showNotif('✅ Redirecionando para o WhatsApp!');
+}
+
 </script>
 <!-- ══ SUPER ADMIN ══ -->
 <div id="view-superadmin" class="view sa-view">
