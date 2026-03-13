@@ -287,31 +287,31 @@ body { background: var(--black); color: var(--white); font-family: 'Barlow', san
 .btn-logout:hover { border-color:var(--red); color:var(--red); }
 
 /* ── NOVO MENU AGRUPADO ── */
-.admin-nav { display:flex; gap:0; border-bottom:1px solid #1e1e1e; overflow-x:auto; -webkit-overflow-scrolling:touch; padding:0 20px; background:#0a0a0a; }
-.admin-nav-group { position:relative; flex-shrink:0; }
+.admin-nav { display:flex; gap:0; border-bottom:1px solid #1e1e1e; overflow-x:auto; overflow-y:visible; -webkit-overflow-scrolling:touch; padding:0 20px; background:#0a0a0a; position:relative; }
+.admin-nav-group { position:static; flex-shrink:0; }
 .admin-nav-group-btn {
   font-family:'Oswald',sans-serif; font-size:12px; letter-spacing:2px; text-transform:uppercase;
   color:#666; padding:14px 18px; cursor:pointer; border:none; background:none;
   border-bottom:2px solid transparent; white-space:nowrap; transition:all .2s;
-  display:flex; align-items:center; gap:6px;
+  display:flex; align-items:center; gap:6px; position:relative;
 }
 .admin-nav-group-btn:hover { color:var(--cream); }
 .admin-nav-group-btn.active { color:var(--red-light); border-bottom-color:var(--red); }
 .admin-nav-group-btn .arrow { font-size:8px; transition:transform .2s; opacity:.5; }
-.admin-nav-group:hover .arrow { transform:rotate(180deg); }
+.admin-nav-group-btn.open .arrow { transform:rotate(180deg); opacity:1; }
 .admin-nav-dropdown {
-  display:none; position:absolute; top:100%; left:0; z-index:500;
+  display:none; position:fixed; z-index:9999;
   background:#0e0e0e; border:1px solid #2a2a2a; border-top:2px solid var(--red); min-width:200px;
-  box-shadow:0 8px 24px rgba(0,0,0,0.8);
+  box-shadow:0 8px 32px rgba(0,0,0,0.9);
 }
-.admin-nav-group:hover .admin-nav-dropdown { display:block; }
+.admin-nav-dropdown.open { display:block; }
 .admin-nav-sub {
   font-family:'Oswald',sans-serif; font-size:11px; letter-spacing:2px;
-  color:#666; padding:12px 18px; cursor:pointer; border:none; background:none;
+  color:#666; padding:13px 20px; cursor:pointer; border:none; background:none;
   white-space:nowrap; width:100%; text-align:left; text-transform:uppercase;
   border-left:2px solid transparent; transition:all .15s; display:block;
 }
-.admin-nav-sub:hover { color:var(--cream); background:rgba(255,255,255,0.03); border-left-color:#333; }
+.admin-nav-sub:hover { color:var(--cream); background:rgba(255,255,255,0.04); border-left-color:#333; }
 .admin-nav-sub.active { color:var(--red-light); border-left-color:var(--red); background:rgba(204,26,26,0.06); }
 
 /* subabas do Dia de Jogo (stepper interno) */
@@ -338,7 +338,7 @@ body { background: var(--black); color: var(--white); font-family: 'Barlow', san
 .admin-content { padding:24px; }
 .admin-pane { display:none; }
 .admin-pane.active { display:block; }
-/* compat: keep old tab classes working for role-based simple tabs */
+/* compat */
 .admin-tabs { display:flex; gap:0; border-bottom:1px solid #2a2a2a; overflow-x:auto;-webkit-overflow-scrolling:touch; padding: 0 20px; }
 .admin-tab { font-family:'Oswald',sans-serif; font-size:12px; letter-spacing:2px; text-transform:uppercase; color:#666; padding:14px 18px; cursor:pointer; border-bottom:2px solid transparent; white-space:nowrap; background:none; border-top:none; border-left:none; border-right:none; transition:color .2s; }
 .admin-tab:hover { color:var(--cream); }
@@ -2489,7 +2489,7 @@ function buildAdminPanel() {
     // Render nav
     navEl.innerHTML = groups.map((g,gi) => `
       <div class="admin-nav-group" id="navgrp-${g.id}">
-        <button class="admin-nav-group-btn${gi===0?' active':''}" id="navbtn-${g.id}">${g.label} <span class="arrow">▼</span></button>
+        <button class="admin-nav-group-btn${gi===0?' active':''}" id="navbtn-${g.id}" onclick="toggleNavGroup('${g.id}')">${g.label} <span class="arrow">&#9660;</span></button>
         <div class="admin-nav-dropdown" id="navdrop-${g.id}">
           ${g.subs.map(s => `<button class="admin-nav-sub" id="navsub-${s.id}" onclick="switchNavPane('${s.id}')">${s.label}</button>`).join('')}
         </div>
@@ -2500,8 +2500,9 @@ function buildAdminPanel() {
       .filter((s,i,arr) => arr.findIndex(x => x.id === s.id) === i) // deduplica
       .map(s => `<div class="admin-pane" id="pane-${s.id}"></div>`).join('');
 
-    // Ativa primeiro pane
+    // Ativa primeiro pane e registra listener global
     switchNavPane('proxjogo');
+    ensureNavListener();
 
   } else {
     // ── TABS SIMPLES para atleta/convidado ──
@@ -2518,13 +2519,40 @@ function buildAdminPanel() {
   }
 }
 
-function toggleNavGroup(groupId, e) {
-  // Não necessário — hover CSS controla o dropdown.
-  // Mantido para compatibilidade com onclick no HTML.
+// ── Nav dropdown — registra listener global UMA VEZ ──
+let _navListenerRegistered = false;
+function ensureNavListener() {
+  if (_navListenerRegistered) return;
+  _navListenerRegistered = true;
+  document.addEventListener('click', function(e) {
+    // Se o clique não foi dentro de um grupo, fecha todos
+    if (!e.target.closest('.admin-nav-group')) {
+      closeAllNavDropdowns();
+    }
+  });
+}
+
+function toggleNavGroup(groupId) {
+  const drop = document.getElementById('navdrop-' + groupId);
+  const btn  = document.getElementById('navbtn-' + groupId);
+  if (!drop || !btn) return;
+
+  const isOpen = drop.classList.contains('open');
+  closeAllNavDropdowns();
+
+  if (!isOpen) {
+    // Posiciona o dropdown fixo usando as coordenadas do botão
+    const rect = btn.getBoundingClientRect();
+    drop.style.top  = rect.bottom + 'px';
+    drop.style.left = rect.left + 'px';
+    drop.classList.add('open');
+    btn.classList.add('open');
+  }
 }
 
 function closeAllNavDropdowns() {
-  // Não necessário com hover CSS — mantido para compatibilidade.
+  document.querySelectorAll('.admin-nav-dropdown').forEach(d => d.classList.remove('open'));
+  document.querySelectorAll('.admin-nav-group-btn').forEach(b => b.classList.remove('open'));
 }
 
 function switchNavPane(id) {
