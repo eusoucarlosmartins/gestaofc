@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title id="pageTitle">MeuTime — Portal de Futebol</title>
+<title id="pageTitle">Vira Copo FC — Portal Oficial</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Oswald:wght@300;400;600;700&family=Barlow+Condensed:ital,wght@0,400;0,600;1,400&family=Barlow:wght@400;500&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -754,7 +754,7 @@ input, select, textarea, button { -webkit-tap-highlight-color: transparent; }
   <!-- NAV -->
   <nav class="lp-nav">
     <div class="lp-nav-logo">GESTÃO<span>FC</span></div>
-    <button class="lp-nav-admin" onclick="showSaLoginOverlay()">⚙ ADMIN</button>
+    <button class="lp-nav-admin" onclick="window.location.href='?admin'">⚙ ADMIN</button>
   </nav>
 
   <!-- HERO -->
@@ -905,11 +905,11 @@ input, select, textarea, button { -webkit-tap-highlight-color: transparent; }
 </div>
 
 <!-- ── UNIFORM BANNER ── -->
-<div class="uniform-banner" id="uniformBanner">⚽ UNIFORME DO PRÓXIMO JOGO: <span id="uniformText">VERMELHO</span></div>
+<div class="uniform-banner" id="uniformBanner" style="display:none;">⚽ UNIFORME DO PRÓXIMO JOGO: <span id="uniformText">VERMELHO</span></div>
 
-<!-- ── TOP NAV ── -->
-<nav class="top-nav">
-  <div class="nav-logo" id="navLogo" onclick="showView('site')">VIRA COPO FC</div>
+<!-- ── TOP NAV — só aparece nas páginas dos times ── -->
+<nav class="top-nav" style="display:none;">
+  <div class="nav-logo" id="navLogo" onclick="showView('site')">GESTÃOFC</div>
   <div class="nav-links">
     <a onclick="scrollToSection('proxjogo')">Próximo Jogo</a>
     <a onclick="scrollToSection('resultados')">Resultados</a>
@@ -4642,6 +4642,12 @@ function showViewRaw(v) {
   document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
   const el = document.getElementById('view-' + v);
   if (el) el.classList.add('active');
+  // Nav só aparece nas páginas dos times (site/admin), não na landing nem superadmin
+  const nav = document.querySelector('.top-nav');
+  const banner = document.getElementById('uniformBanner');
+  const showNav = (v === 'site' || v === 'admin');
+  if (nav) nav.style.display = showNav ? '' : 'none';
+  if (banner) banner.style.display = showNav ? '' : 'none';
   window.scrollTo(0,0);
 }
 
@@ -5397,7 +5403,7 @@ async function initSaaS() {
   const slug = getSlugFromUrl();
   console.log('[GestãoFC] slug detectado:', JSON.stringify(slug), '| search:', window.location.search);
 
-  // ── Super Admin — SEMPRE antes de qualquer request ──
+  // ── Super Admin ──
   if (slug === 'admin') {
     console.log('[GestãoFC] → Super Admin detectado');
     applyTeamBranding(TEAM_CONFIG);
@@ -5407,7 +5413,15 @@ async function initSaaS() {
     return;
   }
 
-  // ── Site normal — mostra imediatamente ──
+  // ── Sem slug = Landing Page de vendas ──
+  if (!slug) {
+    console.log('[GestãoFC] → Landing page');
+    showViewRaw('landing');
+    renderLanding();
+    return;
+  }
+
+  // ── Time específico — mostra imediatamente ──
   applyTeamBranding(TEAM_CONFIG);
   showViewRaw('site');
   renderPublicSite();
