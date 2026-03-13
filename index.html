@@ -1526,6 +1526,13 @@ async function sbLoad() {
         suspended: p.suspended || false, suspendNextSeason: p.suspend_next_season || false,
         photo: p.photo || null
       }));
+    } else if (currentTeamId) {
+      // Novo time — começa com 3 atletas modelo, sem dados do Vira Copo
+      DB.players = [
+        { id:1, name:'Atleta Modelo A', pos:'Goleiro',  num:1, games:0, goals:0, assists:0, attendance:0, mvpPts:0, paid:false, role:'atleta',    user:'atleta_a', pass:'senha123', trophies:[], monthlyPayments:{}, yellowCards:0, redCards:0, suspended:false, photo:null },
+        { id:2, name:'Atleta Modelo B', pos:'Defesa',   num:2, games:0, goals:0, assists:0, attendance:0, mvpPts:0, paid:false, role:'atleta',    user:'atleta_b', pass:'senha123', trophies:[], monthlyPayments:{}, yellowCards:0, redCards:0, suspended:false, photo:null },
+        { id:3, name:'Convidado Modelo', pos:'Atacante', num:3, games:0, goals:0, assists:0, attendance:0, mvpPts:0, paid:false, role:'convidado', user:'convidado_a', pass:'senha123', trophies:[], monthlyPayments:{}, yellowCards:0, redCards:0, suspended:false, photo:null },
+      ];
     }
 
     // ── schedule ─────────────────────────────────────────
@@ -1540,7 +1547,22 @@ async function sbLoad() {
         season: yr, game_date: g.game_date
       });
     });
-    DB.schedule = DB.scheduleAll[2026] || DB.schedule;
+    if (schedule.length) {
+      DB.schedule = DB.scheduleAll[2026] || [];
+    } else if (currentTeamId) {
+      // Novo time — 3 jogos modelo, sem agenda do Vira Copo
+      const hoje = new Date();
+      const fmt = d => `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
+      const d1 = new Date(hoje); d1.setDate(hoje.getDate() + 7);
+      const d2 = new Date(hoje); d2.setDate(hoje.getDate() + 14);
+      const d3 = new Date(hoje); d3.setDate(hoje.getDate() + 21);
+      DB.schedule = [
+        { date: fmt(d1), adversary: 'Jogo Treino A', time: '10:00h', local: 'Campo a definir', fora: false, mapsUrl: '', adversaryLogo: null },
+        { date: fmt(d2), adversary: 'Jogo Treino B', time: '10:00h', local: 'Campo a definir', fora: false, mapsUrl: '', adversaryLogo: null },
+        { date: fmt(d3), adversary: 'Amistoso Modelo', time: '10:00h', local: 'Campo a definir', fora: false, mapsUrl: '', adversaryLogo: null },
+      ];
+      DB.scheduleAll[2026] = DB.schedule;
+    }
 
     // ── results ──────────────────────────────────────────
     if (results.length) {
@@ -4059,13 +4081,17 @@ function renderFinanceiro(el) {
         <!-- Histórico de transações -->
         ${caixa.transacoes.length ? `
         <table class="data-table">
-          <thead><tr><th>Data</th><th>Descrição</th><th style="text-align:right;">Valor</th></tr></thead>
+          <thead><tr><th>Data</th><th>Descrição</th><th style="text-align:right;">Valor</th><th style="text-align:center;">Del</th></tr></thead>
           <tbody>
             ${[...caixa.transacoes].reverse().slice(0,20).map(t=>`<tr>
               <td style="font-size:11px;color:#666;white-space:nowrap;">${t.data}</td>
               <td>${t.desc}</td>
               <td style="text-align:right;font-family:'Bebas Neue',sans-serif;font-size:18px;color:${t.valor>0?'var(--green)':'var(--red-light)'};">
                 ${t.valor>0?'+':''}R$ ${Math.abs(t.valor).toFixed(2)}
+              </td>
+              <td style="text-align:center;">
+                <button onclick="deleteTransacao(${t.id})" title="Excluir lançamento"
+                  style="background:rgba(180,0,0,0.2);border:1px solid rgba(180,0,0,0.35);color:#ff6666;cursor:pointer;padding:3px 8px;font-size:13px;line-height:1;">🗑️</button>
               </td>
             </tr>`).join('')}
           </tbody>
@@ -4178,6 +4204,18 @@ function addTransacao(sinal) {
   sbSaveConfig('caixa');
   renderPane('financeiro');
   showNotif(`✅ ${sinal>0?'Entrada':'Saída'} de R$ ${valor.toFixed(2)} registrada.`);
+}
+
+function deleteTransacao(id) {
+  if (!DB.caixa) return;
+  const tx = DB.caixa.transacoes.find(t => t.id === id);
+  if (!tx) return;
+  if (!confirm(`Excluir lançamento "${tx.desc}" (${tx.valor > 0 ? '+' : ''}R$ ${tx.valor.toFixed(2)})?`)) return;
+  DB.caixa.saldo = parseFloat((DB.caixa.saldo - tx.valor).toFixed(2));
+  DB.caixa.transacoes = DB.caixa.transacoes.filter(t => t.id !== id);
+  sbSaveConfig('caixa');
+  renderPane('financeiro');
+  showNotif('🗑️ Lançamento removido e saldo ajustado.');
 }
 
 // 3-state cycle: false → true → 'skip' → false
@@ -4340,13 +4378,66 @@ function resetCards(pid) {
 }
 
 // ─── USUÁRIOS ───
+function deleteUser(id) {
+  const p = DB.players.find(x => x.id === id);
+  if (!p) return;
+  if (!confirm(`Excluir "${p.name}" do plantel? Esta ação não pode ser desfeita.`)) return;
+  DB.players = DB.players.filter(x => x.id !== id);
+  // Remove do Supabase
+  if (SB_READY && currentTeamId) {
+    fetch(`${SUPABASE_URL}/rest/v1/players?id=eq.${id}`, {
+      method: 'DELETE',
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
+    }).catch(e => console.warn('Delete player error:', e));
+  }
+  renderPane('usuarios');
+  renderPublicSite();
+  showNotif(`🗑️ ${p.name.split(' ')[0]} removido do plantel.`);
+}
+
 function renderUsuarios(el) {
-  // Verifica limite de jogadores
   const playerCount = DB.players.filter(p => p.role !== 'admin').length;
-  const lim = checkLimit('players', playerCount);
+  checkLimit('players', playerCount);
 
   const roleBadge = r => `<span class="badge ${r==='admin'?'badge-red':r==='diretoria'?'badge-gold':r==='convidado'?'badge-guest':'badge-blue'}">${r}</span>`;
   const roleOrder = ['convidado','atleta','diretoria','admin'];
+
+  const mensalistas = DB.players.filter(p => p.role !== 'admin' && p.role !== 'convidado');
+  const convidados  = DB.players.filter(p => p.role === 'convidado');
+
+  const buildRow = p => `<tr id="userRow${p.id}">
+    <td style="font-size:20px;">${p.photo ? `<img src="${p.photo}" style="width:28px;height:28px;border-radius:50%;object-fit:cover;vertical-align:middle;">` : '⚽'}</td>
+    <td>
+      <input type="text" value="${p.name}" onblur="updatePlayerName(${p.id},this.value)"
+        style="background:transparent;border:none;border-bottom:1px solid #333;color:var(--white);padding:4px 2px;font-family:'Oswald',sans-serif;font-size:13px;width:140px;outline:none;"
+        onfocus="this.style.borderBottomColor='var(--gold)'" onblur="this.style.borderBottomColor='#333';updatePlayerName(${p.id},this.value)"/>
+    </td>
+    <td>
+      <input type="number" value="${p.num}" min="1" max="99" onblur="updatePlayerNum(${p.id},this.value)"
+        style="background:transparent;border:none;border-bottom:1px solid #333;color:var(--gold);padding:4px 2px;font-family:'Bebas Neue',sans-serif;font-size:18px;width:48px;outline:none;text-align:center;"
+        onfocus="this.style.borderBottomColor='var(--gold)'" onblur="this.style.borderBottomColor='#333';updatePlayerNum(${p.id},this.value)"/>
+    </td>
+    <td style="color:#666;font-size:12px;">${p.user}</td>
+    <td>
+      <select onchange="updatePlayerPos(${p.id},this.value)" style="background:var(--mid);border:1px solid #333;color:var(--white);padding:4px 8px;font-family:'Oswald',sans-serif;font-size:12px;outline:none;">
+        ${['Goleiro','Zagueiro','Lateral','Volante','Meia','Atacante','Defesa'].map(pos =>
+          `<option value="${pos}" ${p.pos===pos?'selected':''}>${pos}</option>`
+        ).join('')}
+      </select>
+    </td>
+    <td>${roleBadge(p.role)}</td>
+    <td style="text-align:center;">
+      <div style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap;">
+        ${roleOrder.indexOf(p.role) < roleOrder.length-1 ?
+          `<button class="btn btn-secondary btn-sm" onclick="changeUserRole(${p.id},1)" title="Promover">↑</button>` : ''}
+        ${roleOrder.indexOf(p.role) > 0 ?
+          `<button class="btn btn-sm" style="background:rgba(204,26,26,0.15);color:var(--red-light);border:1px solid rgba(204,26,26,0.3);" onclick="changeUserRole(${p.id},-1)" title="Rebaixar">↓</button>` : ''}
+        <button class="btn btn-sm" style="background:rgba(180,0,0,0.25);color:#ff6666;border:1px solid rgba(180,0,0,0.4);font-size:13px;padding:3px 8px;" onclick="deleteUser(${p.id})" title="Excluir atleta">🗑️</button>
+      </div>
+    </td>
+  </tr>`;
+
+  const tableHeader = `<thead><tr><th></th><th>Nome</th><th>#</th><th>Login</th><th>Posição</th><th>Nível</th><th style="text-align:center;">Ações</th></tr></thead>`;
 
   el.innerHTML = `
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px;">
@@ -4377,44 +4468,40 @@ function renderUsuarios(el) {
           <button class="btn btn-primary" onclick="createUser()">➕ CRIAR ACESSO</button>
         </div>
       </div>
+
+      <!-- MENSALISTAS -->
       <div class="panel" style="grid-column:1/-1;">
-        <div class="panel-header"><span class="panel-title">ATLETAS CADASTRADOS</span><span class="badge badge-gold">${DB.players.filter(p=>p.role!=='admin').length} atletas</span></div>
+        <div class="panel-header" style="border-left:3px solid var(--gold);">
+          <span class="panel-title">💰 ATLETAS MENSALISTAS</span>
+          <span class="badge badge-gold">${mensalistas.length} atletas</span>
+        </div>
+        <div style="font-family:'Barlow',sans-serif;font-size:12px;color:#555;padding:8px 16px;border-bottom:1px solid #1a1a1a;">
+          Estes atletas aparecem no controle financeiro e são cobrados mensalmente.
+        </div>
         <div class="panel-body" style="overflow-x:auto;-webkit-overflow-scrolling:touch;">
+          ${mensalistas.length ? `
           <table class="data-table" style="min-width:700px;">
-            <thead><tr><th>Emoji</th><th>Nome</th><th>#️⃣</th><th>Login</th><th>Posição</th><th>Nível</th><th style="text-align:center;">Ações</th></tr></thead>
-            <tbody>
-              ${DB.players.filter(p=>p.role!=='admin').map(p => `<tr id="userRow${p.id}">
-                <td style="font-size:20px;"></td>
-                <td>
-                  <input type="text" value="${p.name}" onblur="updatePlayerName(${p.id},this.value)"
-                    style="background:transparent;border:none;border-bottom:1px solid #333;color:var(--white);padding:4px 2px;font-family:'Oswald',sans-serif;font-size:13px;width:140px;outline:none;"
-                    onfocus="this.style.borderBottomColor='var(--gold)'" onblur="this.style.borderBottomColor='#333';updatePlayerName(${p.id},this.value)"/>
-                </td>
-                <td>
-                  <input type="number" value="${p.num}" min="1" max="99" onblur="updatePlayerNum(${p.id},this.value)"
-                    style="background:transparent;border:none;border-bottom:1px solid #333;color:var(--gold);padding:4px 2px;font-family:'Bebas Neue',sans-serif;font-size:18px;width:48px;outline:none;text-align:center;"
-                    onfocus="this.style.borderBottomColor='var(--gold)'" onblur="this.style.borderBottomColor='#333';updatePlayerNum(${p.id},this.value)"/>
-                </td>
-                <td style="color:#666;font-size:12px;">${p.user}</td>
-                <td>
-                  <select onchange="updatePlayerPos(${p.id},this.value)" style="background:var(--mid);border:1px solid #333;color:var(--white);padding:4px 8px;font-family:'Oswald',sans-serif;font-size:12px;outline:none;">
-                    ${['Goleiro','Zagueiro','Lateral','Volante','Meia','Atacante','Defesa'].map(pos =>
-                      `<option value="${pos}" ${p.pos===pos?'selected':''}>${pos}</option>`
-                    ).join('')}
-                  </select>
-                </td>
-                <td>${roleBadge(p.role)}</td>
-                <td style="text-align:center;">
-                  <div style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap;">
-                    ${roleOrder.indexOf(p.role) < roleOrder.length-1 ?
-                      `<button class="btn btn-secondary btn-sm" onclick="changeUserRole(${p.id},1)" title="Promover">↑ Subir</button>` : ''}
-                    ${roleOrder.indexOf(p.role) > 0 ?
-                      `<button class="btn btn-sm" style="background:rgba(204,26,26,0.2);color:var(--red-light);border:1px solid rgba(204,26,26,0.3);" onclick="changeUserRole(${p.id},-1)" title="Rebaixar">↓ Baixar</button>` : ''}
-                  </div>
-                </td>
-              </tr>`).join('')}
-            </tbody>
-          </table>
+            ${tableHeader}
+            <tbody>${mensalistas.map(buildRow).join('')}</tbody>
+          </table>` : '<p style="font-family:Oswald,sans-serif;font-size:12px;letter-spacing:2px;color:#555;text-align:center;padding:20px 0;">Nenhum atleta mensalista cadastrado.</p>'}
+        </div>
+      </div>
+
+      <!-- CONVIDADOS -->
+      <div class="panel" style="grid-column:1/-1;">
+        <div class="panel-header" style="border-left:3px solid #4a9eff;">
+          <span class="panel-title">🎟️ CONVIDADOS</span>
+          <span class="badge badge-blue">${convidados.length} convidados</span>
+        </div>
+        <div style="font-family:'Barlow',sans-serif;font-size:12px;color:#555;padding:8px 16px;border-bottom:1px solid #1a1a1a;">
+          Convidados participam dos jogos mas <strong style="color:#777;">não são cobrados</strong> no financeiro.
+        </div>
+        <div class="panel-body" style="overflow-x:auto;-webkit-overflow-scrolling:touch;">
+          ${convidados.length ? `
+          <table class="data-table" style="min-width:700px;">
+            ${tableHeader}
+            <tbody>${convidados.map(buildRow).join('')}</tbody>
+          </table>` : '<p style="font-family:Oswald,sans-serif;font-size:12px;letter-spacing:2px;color:#555;text-align:center;padding:20px 0;">Nenhum convidado cadastrado.</p>'}
         </div>
       </div>
     </div>`;
