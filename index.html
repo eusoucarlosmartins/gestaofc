@@ -1103,9 +1103,12 @@ input, select, textarea, button { -webkit-tap-highlight-color: transparent; }
 <!-- ════════════════════════ PAINEL ADMIN ════════════════════════ -->
 <div id="view-admin" class="view admin-view">
   <div class="admin-header">
-    <div class="admin-header-left">
-      <h2>⚽ VIRA COPO FC — GESTÃO</h2>
-      <span id="adminRoleLabel">CARREGANDO...</span>
+    <div class="admin-header-left" style="display:flex;align-items:center;gap:12px;">
+      <img id="adminHeaderLogo" src="" alt="" style="width:36px;height:36px;border-radius:50%;object-fit:contain;background:#111;border:1px solid #333;display:none;">
+      <div>
+        <h2 id="adminHeaderTitle">⚽ GESTÃOFC — GESTÃO</h2>
+        <span id="adminRoleLabel">CARREGANDO...</span>
+      </div>
     </div>
     <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
       <div class="user-badge">
@@ -1533,6 +1536,24 @@ async function sbLoad() {
         { id:2, name:'Atleta Modelo B', pos:'Defesa',   num:2, games:0, goals:0, assists:0, attendance:0, mvpPts:0, paid:false, role:'atleta',    user:'atleta_b', pass:'senha123', trophies:[], monthlyPayments:{}, yellowCards:0, redCards:0, suspended:false, photo:null },
         { id:3, name:'Convidado Modelo', pos:'Atacante', num:3, games:0, goals:0, assists:0, attendance:0, mvpPts:0, paid:false, role:'convidado', user:'convidado_a', pass:'senha123', trophies:[], monthlyPayments:{}, yellowCards:0, redCards:0, suspended:false, photo:null },
       ];
+    }
+
+    // ── Garante admin do time sempre presente em DB.players ──
+    // Usa credenciais de TEAM_CONFIG (vindas da tabela teams) ou fallback 'admin'/'admin'
+    {
+      const adminUser = TEAM_CONFIG.adminUser || 'admin';
+      const adminPass = TEAM_CONFIG.adminPass || 'admin';
+      const existingAdmin = DB.players.find(p => p.role === 'admin');
+      if (!existingAdmin) {
+        DB.players.push({ id:99, name: TEAM_CONFIG.name || 'Admin', pos:'Técnico', num:99,
+          games:0, goals:0, assists:0, attendance:0, mvpPts:0, paid:true, role:'admin',
+          user: adminUser, pass: adminPass, trophies:[], monthlyPayments:{},
+          yellowCards:0, redCards:0, suspended:false, photo: TEAM_CONFIG.logoUrl || null });
+      } else {
+        // Atualiza credenciais do admin existente com as do TEAM_CONFIG
+        if (TEAM_CONFIG.adminUser) existingAdmin.user = TEAM_CONFIG.adminUser;
+        if (TEAM_CONFIG.adminPass) existingAdmin.pass = TEAM_CONFIG.adminPass;
+      }
     }
 
     // ── schedule ─────────────────────────────────────────
@@ -2291,6 +2312,19 @@ function buildAdminPanel() {
     atleta:'Painel do Atleta', diretoria:'Painel da Diretoria', admin:'Controle Total — Administrador'
   }[u.role] || '';
   document.getElementById('navLoginBtn').textContent = 'Meu Painel';
+
+  // Header dinâmico — nome e logo do time
+  const headerTitle = document.getElementById('adminHeaderTitle');
+  const headerLogo  = document.getElementById('adminHeaderLogo');
+  if (headerTitle) headerTitle.textContent = (TEAM_CONFIG.shortName || TEAM_CONFIG.name || 'GESTÃOFC') + ' — GESTÃO';
+  if (headerLogo) {
+    if (TEAM_CONFIG.logoUrl) {
+      headerLogo.src = TEAM_CONFIG.logoUrl;
+      headerLogo.style.display = 'block';
+    } else {
+      headerLogo.style.display = 'none';
+    }
+  }
 
   // Show status badge in panel
   const statusEl = document.getElementById('adminStatusBadge');
