@@ -267,7 +267,7 @@ body { background: var(--black); color: var(--white); font-family: 'Barlow', san
 }
 .btn-red:hover { background:var(--red-dark); }
 .login-close { position:absolute; top:16px; right:20px; color:#666; font-size:22px; cursor:pointer; background:none; border:none; }
-.login-error { color:var(--red-light); font-family:'Oswald',sans-serif; font-size:12px; letter-spacing:2px; text-align:center; margin-bottom:14px; display:none; }
+.login-error { color:var(--red-light); font-family:'Oswald',sans-serif; font-size:12px; letter-spacing:2px; text-align:center; margin-bottom:14px; display:none; line-height:1.8; }
 
 /* ── ADMIN PANEL ── */
 .admin-view { background:var(--black); min-height:100vh; padding-top:56px; }
@@ -1764,14 +1764,13 @@ function doLogin() {
   const u = document.getElementById('loginUser').value.trim();
   const p = document.getElementById('loginPass').value;
 
-  // Time bloqueado — impede acesso ao admin, mas só ao tentar logar
+  // Time suspenso — mostra erro NO LOGIN, site público continua visível
   if (TEAM_CONFIG._isBlocked) {
-    document.getElementById('loginOverlay').classList.remove('open');
-    document.getElementById('blockedMsg').textContent =
-      'O acesso administrativo deste time está suspenso. Entre em contato com a administração da plataforma para regularizar.';
-    const contact = document.getElementById('blockedContact');
-    if (contact) contact.innerHTML = '<a href="https://wa.me/5548996962910" target="_blank" style="color:var(--gold);">📱 Falar com suporte: 48 99696-2910</a>';
-    showViewRaw('blocked');
+    const errEl = document.getElementById('loginError');
+    if (errEl) {
+      errEl.style.display = 'block';
+      errEl.innerHTML = '🔒 Conta suspensa — pagamento pendente.<br><a href="https://wa.me/5548996962910" target="_blank" style="color:var(--gold);font-size:11px;">📱 Falar com suporte: 48 99696-2910</a>';
+    }
     return;
   }
 
@@ -1782,7 +1781,7 @@ function doLogin() {
   }
   currentUser = player;
   document.getElementById('loginOverlay').classList.remove('open');
-  document.getElementById('loginError').style.display = 'none';
+  const _le = document.getElementById('loginError'); if(_le){_le.style.display='none';_le.textContent='Usuário ou senha incorretos';}
   document.getElementById('loginUser').value = '';
   document.getElementById('loginPass').value = '';
 
