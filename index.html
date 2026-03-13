@@ -286,19 +286,64 @@ body { background: var(--black); color: var(--white); font-family: 'Barlow', san
 .btn-logout { background:transparent; border:1px solid #444; color:#888; font-family:'Oswald',sans-serif; font-size:11px; letter-spacing:2px; padding:8px 14px; cursor:pointer; transition:all .2s; text-transform:uppercase; }
 .btn-logout:hover { border-color:var(--red); color:var(--red); }
 
-.admin-tabs { display:flex; gap:0; border-bottom:1px solid #2a2a2a; overflow-x:auto;-webkit-overflow-scrolling:touch; padding: 0 28px; }
-.admin-tab {
+/* ── NOVO MENU AGRUPADO ── */
+.admin-nav { display:flex; gap:0; border-bottom:1px solid #1e1e1e; overflow-x:auto; -webkit-overflow-scrolling:touch; padding:0 20px; background:#0a0a0a; }
+.admin-nav-group { position:relative; flex-shrink:0; }
+.admin-nav-group-btn {
   font-family:'Oswald',sans-serif; font-size:12px; letter-spacing:2px; text-transform:uppercase;
-  color:#666; padding:14px 20px; cursor:pointer; border-bottom:2px solid transparent;
-  white-space:nowrap; background:none; border-top:none; border-left:none; border-right:none;
-  transition:color .2s;
+  color:#666; padding:14px 18px; cursor:pointer; border:none; background:none;
+  border-bottom:2px solid transparent; white-space:nowrap; transition:all .2s;
+  display:flex; align-items:center; gap:6px;
 }
+.admin-nav-group-btn:hover { color:var(--cream); }
+.admin-nav-group-btn.active { color:var(--red-light); border-bottom-color:var(--red); }
+.admin-nav-group-btn .arrow { font-size:8px; transition:transform .2s; opacity:.5; }
+.admin-nav-group-btn.open .arrow { transform:rotate(180deg); }
+.admin-nav-dropdown {
+  display:none; position:absolute; top:100%; left:0; z-index:500;
+  background:#0e0e0e; border:1px solid #2a2a2a; border-top:none; min-width:180px;
+  box-shadow:0 8px 24px rgba(0,0,0,0.6);
+}
+.admin-nav-dropdown.open { display:block; }
+.admin-nav-sub {
+  font-family:'Oswald',sans-serif; font-size:11px; letter-spacing:2px;
+  color:#666; padding:12px 18px; cursor:pointer; border:none; background:none;
+  white-space:nowrap; width:100%; text-align:left; text-transform:uppercase;
+  border-left:2px solid transparent; transition:all .15s; display:block;
+}
+.admin-nav-sub:hover { color:var(--cream); background:rgba(255,255,255,0.03); }
+.admin-nav-sub.active { color:var(--red-light); border-left-color:var(--red); background:rgba(204,26,26,0.06); }
+
+/* subabas do Dia de Jogo (stepper interno) */
+.dj-tabs { display:flex; gap:0; border-bottom:1px solid #2a2a2a; margin-bottom:24px; overflow-x:auto; }
+.dj-tab {
+  font-family:'Oswald',sans-serif; font-size:11px; letter-spacing:2px;
+  color:#555; padding:11px 20px; cursor:pointer; border:none; background:none;
+  border-bottom:2px solid transparent; white-space:nowrap; transition:all .2s;
+  display:flex; align-items:center; gap:6px;
+}
+.dj-tab:hover { color:var(--cream); }
+.dj-tab.active { color:var(--gold); border-bottom-color:var(--gold); }
+.dj-tab-num { width:18px; height:18px; border-radius:50%; background:#222; display:inline-flex; align-items:center; justify-content:center; font-size:9px; }
+.dj-tab.active .dj-tab-num { background:var(--gold); color:#000; }
+.dj-pane { display:none; }
+.dj-pane.active { display:block; }
+
+/* drag & drop field */
+.slot-drop { outline:2px dashed #333; outline-offset:-2px; }
+.slot-drop.over { outline-color:var(--gold); background:rgba(200,150,62,0.12); }
+.drag-player { cursor:grab; user-select:none; }
+.drag-player:active { cursor:grabbing; opacity:.7; }
+
+.admin-content { padding:24px; }
+.admin-pane { display:none; }
+.admin-pane.active { display:block; }
+/* compat: keep old tab classes working for role-based simple tabs */
+.admin-tabs { display:flex; gap:0; border-bottom:1px solid #2a2a2a; overflow-x:auto;-webkit-overflow-scrolling:touch; padding: 0 20px; }
+.admin-tab { font-family:'Oswald',sans-serif; font-size:12px; letter-spacing:2px; text-transform:uppercase; color:#666; padding:14px 18px; cursor:pointer; border-bottom:2px solid transparent; white-space:nowrap; background:none; border-top:none; border-left:none; border-right:none; transition:color .2s; }
 .admin-tab:hover { color:var(--cream); }
 .admin-tab.active { color:var(--red-light); border-bottom-color:var(--red); }
 
-.admin-content { padding:28px; }
-.admin-pane { display:none; }
-.admin-pane.active { display:block; }
 
 /* ── CARDS / PANELS ── */
 .panel {
@@ -1125,7 +1170,8 @@ input, select, textarea, button { -webkit-tap-highlight-color: transparent; }
   
   <div id="adminStatusBadge" style="padding:4px 20px 0;"></div>
   <div id="suspensionBanner" style="padding:0 20px;display:none;"></div>
-  <div class="admin-tabs" id="adminTabs"></div>
+  <div class="admin-nav" id="adminNav" style="display:none;"></div>
+  <div class="admin-tabs" id="adminTabs" style="display:none;"></div>
   <div class="admin-content" id="adminContent"></div>
 </div>
 
@@ -1636,6 +1682,7 @@ async function sbLoad() {
       if (c.key === 'mensalidade_valor') DB.mensalidadeValor = parseFloat(c.value) || 30;
       if (c.key === 'elenco_seasons')    { try { const es = JSON.parse(c.value); DB.elencoSeasons = es; DB.seasons = es; } catch(e){} }
       if (c.key === 'timeline')          { try { DB.timeline = JSON.parse(c.value); } catch(e){ DB.timeline = []; } }
+      if (c.key === 'uniformes')         { try { DB.uniformes = JSON.parse(c.value); } catch(e){} }
     });
 
     // ── dossies ──────────────────────────────────────────
@@ -1739,6 +1786,7 @@ async function sbSaveConfig(key) {
   else if (key === 'caixa')        val = JSON.stringify(DB.caixa || { saldo:0, transacoes:[] });
   else if (key === 'mensalidade_valor') val = String(DB.mensalidadeValor || 30);
   else if (key === 'elenco_seasons') val = JSON.stringify(DB.elencoSeasons || {});
+  else if (key === 'uniformes')    val = JSON.stringify(DB.uniformes || []);
   else val = null;
   if (val !== null) await sbUpsert('config', [{ key, value: val, ...(currentTeamId?{team_id:currentTeamId}:{}) }]);
 }
@@ -1808,6 +1856,7 @@ async function sbSeedAll() {
     for (const s of DB.sumulas) await sbSaveSumula(s);
     await sbSaveLineup();
     await sbSaveConfig('uniform');
+    await sbSaveConfig('uniformes');
     await sbSaveConfig('vote_window');
     await sbSaveConfig('sponsors');
     showNotif('✅ Dados iniciais enviados ao Supabase com sucesso!');
@@ -2357,7 +2406,44 @@ function buildAdminPanel() {
   if (dedupBtn) dedupBtn.style.display = SB_READY ? 'inline-flex' : 'none';
   if (localTag) localTag.style.display = SB_READY ? 'none' : 'inline';
 
-  // Define tabs by role
+  // ── Definição dos grupos do menu (admin/diretoria) ──
+  const MENU_GROUPS = [
+    {
+      id: 'painel', label: '🏠 Painel', icon: '🏠',
+      subs: [
+        { id:'proxjogo',  label:'Próximo Jogo' },
+        { id:'agenda',    label:'Agenda' },
+        { id:'ranking',   label:'Ranking' },
+        { id:'votacao',   label:'Votação MVP' },
+      ]
+    },
+    {
+      id: 'diajogo', label: '📋 Dia de Jogo', icon: '📋',
+      subs: [
+        { id:'diajogo', label:'Gestão da Partida' }
+      ]
+    },
+    {
+      id: 'financeiro', label: '💰 Financeiro', icon: '💰',
+      subs: [
+        { id:'financeiro',      label:'Fluxo de Caixa' },
+        { id:'patrocinadores',  label:'Patrocinadores' },
+      ]
+    },
+    {
+      id: 'config', label: '⚙️ Configurações', icon: '⚙️',
+      subs: [
+        { id:'usuarios',  label:'Atletas' },
+        { id:'branding',  label:'Identidade Visual' },
+        { id:'uniforme',  label:'Uniforme' },
+        { id:'historia',  label:'Linha do Tempo' },
+        { id:'sumula',    label:'Súmulas' },
+        { id:'meuperfil', label:'Meu Perfil' },
+      ]
+    }
+  ];
+
+  // Tabs simples para atleta/convidado
   const tabDefs = {
     atleta: [
       { id:'proxjogo',  label:'Próximo Jogo' },
@@ -2370,48 +2456,104 @@ function buildAdminPanel() {
       { id:'proxjogo',  label:'Próximo Jogo' },
       { id:'checkin',   label:'Check-in' },
       { id:'meuperfil', label:'Meu Perfil' }
-    ],
-    diretoria: [
-      { id:'proxjogo',  label:'Próximo Jogo' },
-      { id:'checkin',   label:'Check-in' },
-      { id:'convocacao',label:'Convocação' },
-      { id:'votacao',   label:'Votação MVP' },
-      { id:'presenca',  label:'Gestão Presença' },
-      { id:'jogo',      label:'Jogo / Escalação' },
-      { id:'sumula',    label:'Súmula' },
-      { id:'ranking',   label:'Ranking' },
-      { id:'financeiro',label:'Financeiro' },
-      { id:'meuperfil', label:'Meu Perfil' }
-    ],
-    admin: [
-      { id:'proxjogo',  label:'Próximo Jogo' },
-      { id:'checkin',   label:'Check-in' },
-      { id:'convocacao',label:'Convocação' },
-      { id:'votacao',   label:'Votação MVP' },
-      { id:'presenca',  label:'Presença' },
-      { id:'jogo',      label:'Jogo / Escalação' },
-      { id:'sumula',    label:'Súmula' },
-      { id:'agenda',    label:'Agenda' },
-      { id:'ranking',   label:'Ranking' },
-      { id:'financeiro',label:'Financeiro' },
-      { id:'usuarios',  label:'Usuários' },
-      { id:'historia',  label:'📅 Linha do Tempo' },
-      { id:'branding',  label:'🎨 Identidade' },
-      { id:'uniforme',  label:'Uniforme' },
-      { id:'patrocinadores', label:'Patrocinadores' },
-      { id:'meuperfil', label:'Meu Perfil' }
     ]
   };
-  const tabs = tabDefs[u.role] || tabDefs.atleta;
-  const tabsEl = document.getElementById('adminTabs');
+
+  const navEl     = document.getElementById('adminNav');
+  const tabsEl    = document.getElementById('adminTabs');
   const contentEl = document.getElementById('adminContent');
-  tabsEl.innerHTML = tabs.map((t,i) =>
-    `<button class="admin-tab${i===0?' active':''}" onclick="switchTab('${t.id}',this)">${t.label}</button>`
-  ).join('');
-  contentEl.innerHTML = tabs.map((t,i) =>
-    `<div class="admin-pane${i===0?' active':''}" id="pane-${t.id}"></div>`
-  ).join('');
-  tabs.forEach(t => renderPane(t.id));
+
+  if (u.role === 'admin' || u.role === 'diretoria') {
+    // ── MENU AGRUPADO ──
+    navEl.style.display = 'flex';
+    tabsEl.style.display = 'none';
+
+    // Filtra grupos por role
+    const groups = u.role === 'diretoria'
+      ? MENU_GROUPS.filter(g => g.id !== 'config').concat([{
+          id:'config', label:'⚙️ Config', icon:'⚙️',
+          subs:[{id:'usuarios',label:'Atletas'},{id:'meuperfil',label:'Meu Perfil'}]
+        }])
+      : MENU_GROUPS;
+
+    // Coleta todos os panes necessários
+    const allSubs = groups.flatMap(g => g.subs);
+
+    // Render nav
+    navEl.innerHTML = groups.map(g => `
+      <div class="admin-nav-group" id="navgrp-${g.id}">
+        <button class="admin-nav-group-btn" onclick="toggleNavGroup('${g.id}', event)">${g.label} <span class="arrow">▼</span></button>
+        <div class="admin-nav-dropdown" id="navdrop-${g.id}">
+          ${g.subs.map(s => `<button class="admin-nav-sub" id="navsub-${s.id}" onclick="switchNavPane('${s.id}')">${s.label}</button>`).join('')}
+        </div>
+      </div>`).join('');
+
+    // Render panes
+    contentEl.innerHTML = allSubs
+      .filter((s,i,arr) => arr.findIndex(x => x.id === s.id) === i) // deduplica
+      .map(s => `<div class="admin-pane" id="pane-${s.id}"></div>`).join('');
+
+    // Ativa primeiro pane
+    switchNavPane('proxjogo');
+
+    // Fecha dropdown ao clicar fora
+    document.addEventListener('click', closeAllNavDropdowns, { once: false, capture: false });
+
+  } else {
+    // ── TABS SIMPLES para atleta/convidado ──
+    navEl.style.display = 'none';
+    tabsEl.style.display = 'flex';
+    const tabs = tabDefs[u.role] || tabDefs.atleta;
+    tabsEl.innerHTML = tabs.map((t,i) =>
+      `<button class="admin-tab${i===0?' active':''}" onclick="switchTab('${t.id}',this)">${t.label}</button>`
+    ).join('');
+    contentEl.innerHTML = tabs.map((t,i) =>
+      `<div class="admin-pane${i===0?' active':''}" id="pane-${t.id}"></div>`
+    ).join('');
+    tabs.forEach(t => renderPane(t.id));
+  }
+}
+
+function toggleNavGroup(groupId, e) {
+  e.stopPropagation();
+  const drop = document.getElementById('navdrop-' + groupId);
+  const btn  = drop?.previousElementSibling;
+  const isOpen = drop?.classList.contains('open');
+  closeAllNavDropdowns();
+  if (!isOpen && drop) {
+    drop.classList.add('open');
+    btn?.classList.add('open');
+  }
+}
+
+function closeAllNavDropdowns() {
+  document.querySelectorAll('.admin-nav-dropdown').forEach(d => d.classList.remove('open'));
+  document.querySelectorAll('.admin-nav-group-btn').forEach(b => b.classList.remove('open'));
+}
+
+function switchNavPane(id) {
+  closeAllNavDropdowns();
+  // Garante que o pane existe
+  if (!document.getElementById('pane-' + id)) {
+    const contentEl = document.getElementById('adminContent');
+    const div = document.createElement('div');
+    div.className = 'admin-pane';
+    div.id = 'pane-' + id;
+    contentEl.appendChild(div);
+  }
+  document.querySelectorAll('.admin-pane').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.admin-nav-sub').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.admin-nav-group-btn').forEach(b => b.classList.remove('active'));
+  const pane = document.getElementById('pane-' + id);
+  if (pane) pane.classList.add('active');
+  const sub = document.getElementById('navsub-' + id);
+  if (sub) {
+    sub.classList.add('active');
+    // Marca grupo pai como ativo
+    const group = sub.closest('.admin-nav-group');
+    group?.querySelector('.admin-nav-group-btn')?.classList.add('active');
+  }
+  renderPane(id);
 }
 
 function switchTab(id, btn) {
@@ -2420,6 +2562,409 @@ function switchTab(id, btn) {
   btn.classList.add('active');
   const pane = document.getElementById('pane-' + id);
   if (pane) { pane.classList.add('active'); renderPane(id); }
+}
+
+// ── Dia de Jogo — pane unificado com subabas ──
+function renderDiaDeJogo(el) {
+  const ng = getNextGame();
+  const gameLabel = ng?.adversary ? `VS ${ng.adversary} · ${ng.date}` : 'PRÓXIMO JOGO';
+
+  // Uniforme ativo atual
+  const unis  = getUniformes();
+  const ativId = DB.uniform?.activeId || 'titular';
+  const atv   = unis.find(u => u.id === ativId) || unis[0];
+
+  // Selector de uniformes inline
+  const uOpts = unis.map(u => `
+    <div onclick="djSetUniform('${u.id}')" style="display:flex;align-items:center;gap:10px;padding:9px 14px;background:${ativId===u.id?'rgba(200,150,62,0.1)':'#0d0d0d'};border:1px solid ${ativId===u.id?'rgba(200,150,62,0.4)':'#1e1e1e'};cursor:pointer;transition:all .15s;flex:1;min-width:120px;">
+      ${shirtSVG(u.cor1, u.cor2, 36)}
+      <div>
+        <div style="font-family:'Oswald',sans-serif;font-size:12px;color:${ativId===u.id?'var(--gold)':'#ccc'};">${u.nome}</div>
+        <div style="font-family:'Oswald',sans-serif;font-size:9px;color:#555;">${u.label}</div>
+      </div>
+      ${ativId===u.id?'<span style="margin-left:auto;font-family:Oswald,sans-serif;font-size:9px;color:var(--gold);letter-spacing:1px;">EM USO</span>':''}
+    </div>`).join('');
+
+  el.innerHTML = `
+    <div style="margin-bottom:0;">
+      <!-- Header jogo + seleção de uniforme -->
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:16px;">
+        <div>
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;color:#fff;letter-spacing:3px;">${gameLabel}</div>
+          <div style="font-family:'Oswald',sans-serif;font-size:10px;letter-spacing:3px;color:#444;">GESTÃO DA PARTIDA — SIGA OS PASSOS</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end;">
+          <div style="font-family:'Oswald',sans-serif;font-size:9px;letter-spacing:2px;color:#555;">UNIFORME DO JOGO</div>
+          <div style="display:flex;align-items:center;gap:8px;background:#0a0a0a;border:1px solid ${ativId?'rgba(200,150,62,0.3)':'#1e1e1e'};padding:8px 12px;">
+            ${shirtSVG(atv?.cor1||'#CC1A1A', atv?.cor2||'#111', 32)}
+            <div>
+              <div style="font-family:'Oswald',sans-serif;font-size:12px;color:var(--gold);">${atv?.nome||'Titular'}</div>
+              <button onclick="document.getElementById('djUniformPicker').style.display=document.getElementById('djUniformPicker').style.display==='none'?'flex':'none'" style="font-family:'Oswald',sans-serif;font-size:9px;color:#555;background:none;border:none;cursor:pointer;letter-spacing:1px;padding:0;">▼ TROCAR</button>
+            </div>
+          </div>
+          <div id="djUniformPicker" style="display:none;flex-direction:column;gap:2px;background:#0a0a0a;border:1px solid #1e1e1e;position:absolute;z-index:100;min-width:220px;">
+            ${uOpts}
+          </div>
+        </div>
+      </div>
+
+      <div class="dj-tabs">
+        <button class="dj-tab active" id="djt-conv" onclick="switchDjTab('conv',this)">
+          <span class="dj-tab-num">1</span> CONVOCAÇÃO
+        </button>
+        <button class="dj-tab" id="djt-presenca" onclick="switchDjTab('presenca',this)">
+          <span class="dj-tab-num">2</span> PRESENÇA / CHECK-IN
+        </button>
+        <button class="dj-tab" id="djt-escalacao" onclick="switchDjTab('escalacao',this)">
+          <span class="dj-tab-num">3</span> ESCALAÇÃO TÁTICA
+        </button>
+      </div>
+      <div class="dj-pane active" id="djp-conv"></div>
+      <div class="dj-pane" id="djp-presenca"></div>
+      <div class="dj-pane" id="djp-escalacao"></div>
+    </div>`;
+
+  renderDjConv();
+  renderDjPresenca();
+  renderDjEscalacao();
+}
+
+function djSetUniform(uid) {
+  const unis = getUniformes();
+  const u = unis.find(x => x.id === uid);
+  if (!u) return;
+  if (!DB.uniform) DB.uniform = {};
+  DB.uniform.activeId = uid;
+  DB.uniform.color    = u.nome;
+  DB.uniform.cor1     = u.cor1;
+  DB.uniform.cor2     = u.cor2;
+  DB.uniform.active   = true;
+  // Atualiza banner do site
+  const banner = document.getElementById('uniformBanner');
+  const txt    = document.getElementById('uniformText');
+  if (txt) txt.textContent = u.nome;
+  if (banner) banner.classList.add('visible');
+  sbSaveConfig('uniform');
+  showNotif(`⚽ Uniforme "${u.nome}" selecionado para este jogo!`);
+  renderPane('diajogo');
+}
+
+function switchDjTab(id, btn) {
+  document.querySelectorAll('.dj-tab').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.dj-pane').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  const pane = document.getElementById('djp-' + id);
+  if (pane) pane.classList.add('active');
+}
+
+// ── Sub 1: Convocação com filtros e convocação rápida ──
+function renderDjConv() {
+  const el = document.getElementById('djp-conv');
+  if (!el) return;
+  const convocados = DB.convocados || [];
+  const ng = getNextGame();
+  const allAtletas   = DB.players.filter(p => p.role !== 'admin' && p.role !== 'convidado').sort((a,b)=>a.name.localeCompare(b.name,'pt'));
+  const allConvidados = DB.players.filter(p => p.role === 'convidado').sort((a,b)=>a.name.localeCompare(b.name,'pt'));
+
+  const buildCard = (p, group) => {
+    const isConv = convocados.includes(p.id);
+    const isSusp = p.suspended;
+    const photo = p.photo
+      ? `<img src="${p.photo}" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0;">`
+      : `<div style="width:34px;height:34px;border-radius:50%;background:#1a1a1a;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:13px;color:var(--gold);">${p.name.substring(0,2).toUpperCase()}</div>`;
+    const paidBadge = group === 'atleta' && p.monthlyPayments
+      ? (Object.values(p.monthlyPayments).filter(v=>v===true).length >= 3 ? '<span style="font-size:9px;color:#2ecc71;">✓pago</span>' : '')
+      : '';
+    return `<div onclick="${isSusp ? `showNotif('${p.name.split(' ')[0]} suspenso!',true)` : `djToggleConv(${p.id})`}"
+      style="display:flex;align-items:center;gap:10px;padding:9px 12px;background:${isConv?'rgba(200,150,62,0.1)':isSusp?'rgba(204,26,26,0.05)':'#0f0f0f'};border:1px solid ${isConv?'rgba(200,150,62,0.35)':isSusp?'rgba(204,26,26,0.2)':'#1e1e1e'};cursor:${isSusp?'not-allowed':'pointer'};transition:all .15s;">
+      ${photo}
+      <div style="flex:1;min-width:0;">
+        <div style="font-family:'Oswald',sans-serif;font-size:13px;color:${isSusp?'var(--red-light)':isConv?'var(--gold)':'#ccc'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">#${p.num} ${p.name.split(' ')[0]} ${paidBadge}</div>
+        <div style="font-family:'Oswald',sans-serif;font-size:10px;color:#555;">${p.pos}${isSusp?' · SUSPENSO':''}</div>
+      </div>
+      <span style="font-size:16px;">${isConv?'✅':isSusp?'🚫':'⬜'}</span>
+    </div>`;
+  };
+
+  el.innerHTML = `
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;align-items:center;">
+      <span style="font-family:'Oswald',sans-serif;font-size:10px;letter-spacing:2px;color:#555;">CONVOCAÇÃO RÁPIDA →</span>
+      <button class="btn btn-sm btn-gold" onclick="djConvRapidaPagos()" title="Seleciona atletas com mensalidade em dia">💰 Mensalidade Em Dia</button>
+      <button class="btn btn-sm btn-secondary" onclick="djConvRapidaPresenca()" title="Seleciona os 11 com mais presença">📊 Top 11 Presença</button>
+      <button class="btn btn-sm btn-secondary" onclick="djConvTodos()" title="Convoca todos os atletas">☑ Todos</button>
+      <button class="btn btn-sm" style="background:rgba(204,26,26,0.15);color:var(--red-light);border:1px solid rgba(204,26,26,0.3);" onclick="limparConvocacao()">✕ Limpar</button>
+      <span class="badge badge-gold" style="margin-left:auto;">${convocados.length} convocados</span>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start;">
+      <div>
+        <div style="font-family:'Oswald',sans-serif;font-size:10px;letter-spacing:3px;color:var(--gold);border-bottom:1px solid #222;padding-bottom:8px;margin-bottom:10px;">💰 MENSALISTAS (${allAtletas.length})</div>
+        <div style="display:flex;flex-direction:column;gap:4px;">${allAtletas.map(p=>buildCard(p,'atleta')).join('') || '<p style="color:#444;font-family:Oswald,sans-serif;font-size:11px;padding:12px 0;">Nenhum atleta cadastrado.</p>'}</div>
+      </div>
+      <div>
+        <div style="font-family:'Oswald',sans-serif;font-size:10px;letter-spacing:3px;color:#4a9eff;border-bottom:1px solid #222;padding-bottom:8px;margin-bottom:10px;">🎟️ CONVIDADOS (${allConvidados.length})</div>
+        <div style="display:flex;flex-direction:column;gap:4px;">${allConvidados.map(p=>buildCard(p,'convidado')).join('') || '<p style="color:#444;font-family:Oswald,sans-serif;font-size:11px;padding:12px 0;">Nenhum convidado adicionado.</p>'}</div>
+        <div style="margin-top:12px;padding:12px;background:#0a0a0a;border:1px solid #1a1a1a;">
+          <div style="font-family:'Oswald',sans-serif;font-size:10px;letter-spacing:2px;color:#444;margin-bottom:8px;">ADICIONAR CONVIDADO</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <input type="text" id="djGuestName" placeholder="Nome" style="flex:1;min-width:100px;background:#111;border:1px solid #2a2a2a;color:#ccc;padding:7px 10px;font-family:'Oswald',sans-serif;font-size:12px;outline:none;">
+            <input type="text" id="djGuestPos" placeholder="Posição" style="width:100px;background:#111;border:1px solid #2a2a2a;color:#ccc;padding:7px 10px;font-family:'Oswald',sans-serif;font-size:12px;outline:none;">
+            <button class="btn btn-sm btn-gold" onclick="djAddGuest()">+ ADD</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top:20px;display:flex;gap:10px;">
+      <button class="btn btn-primary" onclick="publicarConvocacao();renderDjConv()">📢 PUBLICAR CONVOCAÇÃO</button>
+      <button class="btn btn-secondary btn-sm" onclick="switchDjTab('presenca',document.getElementById('djt-presenca'))">→ IR PARA PRESENÇA</button>
+    </div>`;
+}
+
+function djToggleConv(id) {
+  if (!DB.convocados) DB.convocados = [];
+  const idx = DB.convocados.indexOf(id);
+  if (idx >= 0) DB.convocados.splice(idx,1);
+  else DB.convocados.push(id);
+  sbSaveConfig('convocados');
+  renderDjConv();
+}
+
+function djConvRapidaPagos() {
+  const pagos = DB.players
+    .filter(p => p.role !== 'admin' && p.role !== 'convidado' && !p.suspended)
+    .filter(p => Object.values(p.monthlyPayments||{}).filter(v=>v===true).length >= 3)
+    .map(p => p.id);
+  DB.convocados = pagos.length ? pagos : DB.players.filter(p=>p.role!=='admin'&&p.role!=='convidado'&&!p.suspended).map(p=>p.id);
+  sbSaveConfig('convocados');
+  renderDjConv();
+  showNotif(`✅ ${DB.convocados.length} atletas convocados por mensalidade.`);
+}
+
+function djConvRapidaPresenca() {
+  const sorted = DB.players
+    .filter(p => p.role !== 'admin' && p.role !== 'convidado' && !p.suspended)
+    .sort((a,b) => (b.attendance||0) - (a.attendance||0))
+    .slice(0,11).map(p => p.id);
+  DB.convocados = sorted;
+  sbSaveConfig('convocados');
+  renderDjConv();
+  showNotif(`⭐ Top ${sorted.length} por presença convocados.`);
+}
+
+function djConvTodos() {
+  DB.convocados = DB.players.filter(p=>p.role!=='admin'&&!p.suspended).map(p=>p.id);
+  sbSaveConfig('convocados');
+  renderDjConv();
+  showNotif(`☑ Todos convocados (${DB.convocados.length}).`);
+}
+
+function djAddGuest() {
+  const name = document.getElementById('djGuestName')?.value.trim();
+  const pos  = document.getElementById('djGuestPos')?.value.trim() || 'Convidado';
+  if (!name) { showNotif('Digite o nome!', true); return; }
+  const id = Math.max(...DB.players.map(p=>p.id), 0) + 1;
+  DB.players.push({ id, name, pos, num:id, games:0, goals:0, assists:0, attendance:0, mvpPts:0, paid:false, role:'convidado', user:'conv_'+id, pass:'conv_'+id, trophies:[], monthlyPayments:{}, photo:null, yellowCards:0, redCards:0, suspended:false });
+  if (!DB.convocados) DB.convocados = [];
+  DB.convocados.push(id);
+  DB.checkins[id] = true;
+  sbSavePlayers([id]);
+  sbSaveCheckin(id);
+  sbSaveConfig('convocados');
+  renderDjConv();
+  showNotif(`🌟 ${name} adicionado e confirmado!`);
+}
+
+// ── Sub 2: Presença/Check-in unificado ──
+function renderDjPresenca() {
+  const el = document.getElementById('djp-presenca');
+  if (!el) return;
+  const u = currentUser;
+  const ng = getNextGame();
+  const isManager = u.role === 'admin' || u.role === 'diretoria';
+  const players = [...DB.players].filter(p => p.role !== 'admin').sort((a,b)=>a.name.localeCompare(b.name,'pt'));
+  const confirmed = players.filter(p => DB.checkins[p.id] === true).length;
+
+  const rows = players.map(p => {
+    const ci = DB.checkins[p.id];
+    const cls = ci===true?'confirmed':ci===false?'absent':'pending';
+    const icon = ci===true?'✅':ci===false?'❌':'⏳';
+    const label = ci===true?'Confirmado':ci===false?'Ausente':'Aguardando';
+    const ctrl = isManager ? `
+      <div style="display:flex;gap:5px;margin-left:auto;">
+        <button class="btn btn-sm" style="background:var(--green);color:#fff;padding:4px 10px;" onclick="djAdminCheckin(${p.id},true)">✅</button>
+        <button class="btn btn-sm" style="background:#e74c3c;color:#fff;padding:4px 10px;" onclick="djAdminCheckin(${p.id},false)">❌</button>
+        <button class="btn btn-sm btn-secondary" onclick="djAdminCheckin(${p.id},null)" style="padding:4px 8px;">↺</button>
+      </div>` : `<span style="font-size:11px;font-family:Oswald,sans-serif;color:${ci===true?'var(--green)':ci===false?'var(--red-light)':'#555'};margin-left:auto;">${label}</span>`;
+    return `<div class="presence-item ${cls}" style="justify-content:space-between;flex-wrap:wrap;gap:8px;">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span class="presence-icon">${icon}</span>
+        <div>
+          <div class="presence-name">${p.name}${p.role==='convidado'?'<span class="badge badge-guest" style="font-size:9px;margin-left:4px;">Conv</span>':''}</div>
+          <div class="presence-status">${p.pos}</div>
+        </div>
+      </div>${ctrl}
+    </div>`;
+  }).join('');
+
+  el.innerHTML = `
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-title">PRESENÇA — VS ${ng?.adversary||'A DEFINIR'}</span>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <span class="badge badge-green">✅ ${confirmed} confirmados</span>
+          ${isManager ? `<button onclick="resetAllCheckins()" style="background:rgba(204,26,26,0.15);border:1px solid rgba(204,26,26,0.35);color:var(--red-light);padding:4px 12px;cursor:pointer;font-family:'Oswald',sans-serif;font-size:11px;letter-spacing:1px;">🔄 NOVO JOGO</button>` : ''}
+        </div>
+      </div>
+      <div class="panel-body">
+        ${isManager ? '<p style="font-family:Oswald,sans-serif;font-size:11px;letter-spacing:2px;color:#555;margin-bottom:14px;">✅ confirmar · ❌ barrar · ↺ resetar · Atleta faz check-in pelo portal do time</p>' : ''}
+        <div class="presence-list">${rows}</div>
+      </div>
+    </div>
+    ${isManager ? `<div style="margin-top:12px;display:flex;gap:10px;">
+      <button class="btn btn-secondary btn-sm" onclick="switchDjTab('escalacao',document.getElementById('djt-escalacao'))">→ IR PARA ESCALAÇÃO (${confirmed} confirmados)</button>
+    </div>` : ''}`;
+}
+
+function djAdminCheckin(playerId, val) {
+  DB.checkins[playerId] = val;
+  sbSaveCheckin(playerId);
+  renderDjPresenca();
+  renderDjEscalacao();
+  const p = DB.players.find(x=>x.id===playerId);
+  const msg = val===true?`✅ ${p?.name} confirmado!`:val===false?`❌ ${p?.name} barrado.`:`↺ ${p?.name} resetado.`;
+  showNotif(msg);
+}
+
+// ── Sub 3: Escalação com drag & drop ──
+function renderDjEscalacao() {
+  const el = document.getElementById('djp-escalacao');
+  if (!el) return;
+  const confirmedIds = Object.entries(DB.checkins).filter(([,v])=>v===true).map(([k])=>parseInt(k));
+  const confirmed = DB.players.filter(p => confirmedIds.includes(p.id) && p.role !== 'admin');
+  const formation = DB.lineup.formation || '4-3-3';
+  if (!DB.lineup.posSlots) DB.lineup.posSlots = {};
+
+  const formBtns = Object.keys(FORMATIONS).map(f =>
+    `<button onclick="setLineupFormation('${f}');renderDjEscalacao()"
+      style="font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:2px;padding:5px 12px;border:2px solid ${f===formation?'var(--red)':'#333'};background:${f===formation?'var(--red)':'transparent'};color:${f===formation?'#fff':'#666'};cursor:pointer;transition:all .15s;">${f}</button>`
+  ).join('');
+
+  // Jogadores não escalados
+  const usedIds = Object.values(DB.lineup.posSlots).map(Number).filter(Boolean);
+  const bench   = confirmed.filter(p => !usedIds.includes(p.id));
+
+  el.innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr auto;gap:20px;align-items:start;flex-wrap:wrap;">
+      <div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;">${formBtns}</div>
+        <div style="font-family:'Oswald',sans-serif;font-size:10px;letter-spacing:3px;color:#555;margin-bottom:8px;">CAMPINHO — ARRASTE OS JOGADORES PARA A POSIÇÃO</div>
+        ${buildDDField(formation, DB.lineup.posSlots, confirmed)}
+        <button class="btn btn-gold" style="margin-top:12px;width:100%;" onclick="publishLineup()">📋 PUBLICAR ESCALAÇÃO</button>
+      </div>
+      <div style="min-width:160px;">
+        <div style="font-family:'Oswald',sans-serif;font-size:10px;letter-spacing:3px;color:#555;margin-bottom:8px;">DISPONÍVEIS (${bench.length})</div>
+        <div id="dd-bench" style="min-height:60px;display:flex;flex-direction:column;gap:4px;"
+          ondragover="event.preventDefault()" ondrop="ddDropBench(event)">
+          ${bench.map(p => `<div class="drag-player" draggable="true" data-pid="${p.id}"
+            ondragstart="ddDragStart(event,${p.id})"
+            style="font-family:'Oswald',sans-serif;font-size:12px;letter-spacing:1px;padding:6px 10px;background:#111;border:1px solid #2a2a2a;color:#ccc;display:flex;align-items:center;gap:6px;">
+            <span style="color:var(--gold);font-family:'Bebas Neue',sans-serif;">#${p.num}</span> ${p.name.split(' ')[0]}
+            <span style="font-size:10px;color:#444;margin-left:auto;">${p.pos}</span>
+          </div>`).join('') || '<div style="font-family:Oswald,sans-serif;font-size:11px;color:#333;padding:8px;text-align:center;">Todos escalados</div>'}
+        </div>
+        <div style="margin-top:8px;">
+          <div style="font-family:'Oswald',sans-serif;font-size:10px;letter-spacing:2px;color:#444;margin-bottom:6px;">SEM CONFIRMAÇÃO (${DB.players.filter(p=>p.role!=='admin'&&!confirmedIds.includes(p.id)).length})</div>
+          ${DB.players.filter(p=>p.role!=='admin'&&!confirmedIds.includes(p.id)).map(p =>
+            `<div style="font-family:'Oswald',sans-serif;font-size:11px;color:#333;padding:4px 6px;">#${p.num} ${p.name.split(' ')[0]}</div>`
+          ).join('') || '<div style="font-family:Oswald,sans-serif;font-size:11px;color:#333;padding:4px;">–</div>'}
+        </div>
+      </div>
+    </div>`;
+}
+
+function buildDDField(formation, posSlots, players) {
+  const slots = FORMATIONS[formation] || [];
+  const rows = {};
+  slots.forEach(s => { if (!rows[s.row]) rows[s.row] = []; rows[s.row].push(s); });
+  const rowOrder = Object.keys(rows).sort((a,b) => Number(b) - Number(a));
+
+  let html = `<div style="background:#1a4a1a;border-radius:6px;padding:16px;position:relative;min-height:340px;">`;
+  html += `<div style="font-family:'Oswald',sans-serif;font-size:9px;letter-spacing:3px;color:rgba(255,255,255,0.3);text-align:center;margin-bottom:10px;">↑ ATAQUE</div>`;
+
+  rowOrder.forEach(row => {
+    html += `<div style="display:flex;justify-content:center;gap:8px;margin-bottom:12px;">`;
+    rows[row].forEach(slot => {
+      const pid = posSlots[slot.key] ? parseInt(posSlots[slot.key]) : null;
+      const player = pid ? players.find(p=>p.id===pid) : null;
+      const label = player ? `<span style="font-family:'Oswald',sans-serif;font-size:11px;color:#fff;white-space:nowrap;">${player.name.split(' ')[0]}</span>` : `<span style="font-family:'Oswald',sans-serif;font-size:9px;color:rgba(255,255,255,0.3);">${slot.label||slot.key}</span>`;
+      html += `<div class="slot-drop" id="ddslot-${slot.key}" data-key="${slot.key}"
+        ondragover="ddDragOver(event)" ondragleave="ddDragLeave(event)" ondrop="ddDrop(event,'${slot.key}')"
+        style="width:64px;height:64px;border-radius:50%;background:rgba(0,0,0,0.35);border:2px solid rgba(255,255,255,0.15);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;position:relative;text-align:center;padding:4px;"
+        ${player?`draggable="true" ondragstart="ddDragStart(event,${player.id},true,\'${slot.key}\')" class="slot-drop drag-player"`:'class="slot-drop"'}>
+        ${label}
+        ${player?`<button onclick="ddClearSlot('${slot.key}')" style="position:absolute;top:-4px;right:-4px;width:16px;height:16px;border-radius:50%;background:#cc1a1a;border:none;color:#fff;font-size:9px;cursor:pointer;line-height:1;padding:0;">✕</button>`:''}
+      </div>`;
+    });
+    html += `</div>`;
+  });
+
+  html += `<div style="font-family:'Oswald',sans-serif;font-size:9px;letter-spacing:3px;color:rgba(255,255,255,0.3);text-align:center;margin-top:4px;">↓ DEFESA — GOLEIRO</div>`;
+  html += `</div>`;
+  return html;
+}
+
+let _ddDragPid = null;
+let _ddFromSlot = null;
+
+function ddDragStart(e, pid, fromSlot, slotKey) {
+  _ddDragPid  = pid;
+  _ddFromSlot = fromSlot ? slotKey : null;
+  e.dataTransfer.effectAllowed = 'move';
+}
+
+function ddDragOver(e) {
+  e.preventDefault();
+  e.currentTarget.classList.add('over');
+}
+
+function ddDragLeave(e) {
+  e.currentTarget.classList.remove('over');
+}
+
+function ddDrop(e, slotKey) {
+  e.preventDefault();
+  e.currentTarget.classList.remove('over');
+  if (!_ddDragPid) return;
+  // Se já havia alguém nesse slot, troca ou manda pro banco
+  const prev = DB.lineup.posSlots[slotKey];
+  if (_ddFromSlot) delete DB.lineup.posSlots[_ddFromSlot];
+  if (prev && _ddFromSlot) DB.lineup.posSlots[_ddFromSlot] = prev; // troca
+  DB.lineup.posSlots[slotKey] = _ddDragPid;
+  // Atualiza starting
+  DB.lineup.starting = Object.values(DB.lineup.posSlots).filter(Boolean).map(Number);
+  sbSaveLineup();
+  renderDjEscalacao();
+  _ddDragPid = null; _ddFromSlot = null;
+}
+
+function ddDropBench(e) {
+  e.preventDefault();
+  if (!_ddDragPid) return;
+  if (_ddFromSlot) {
+    delete DB.lineup.posSlots[_ddFromSlot];
+    DB.lineup.starting = Object.values(DB.lineup.posSlots).filter(Boolean).map(Number);
+    sbSaveLineup();
+    renderDjEscalacao();
+  }
+  _ddDragPid = null; _ddFromSlot = null;
+}
+
+function ddClearSlot(slotKey) {
+  delete DB.lineup.posSlots[slotKey];
+  DB.lineup.starting = Object.values(DB.lineup.posSlots).filter(Boolean).map(Number);
+  sbSaveLineup();
+  renderDjEscalacao();
 }
 
 function renderPane(id) {
@@ -2464,7 +3009,8 @@ function renderPane(id) {
     uniforme: renderUniforme,
     patrocinadores: renderPatrocinadores,
     historia: renderHistoriaPane,
-    branding: renderBrandingPane
+    branding: renderBrandingPane,
+    diajogo: renderDiaDeJogo,
   };
   if (renders[id]) renders[id](el);
 }
@@ -3265,10 +3811,16 @@ function renderDossie(el) {
     const actionBtn = `<button onclick="selectGameForSumula('${g.date}','${(g.adversary||'').replace(/'/g,"\\'")}')"
         style="background:${sum?'rgba(200,150,62,0.12)':'rgba(204,26,26,0.1)'};border:1px solid ${sum?'rgba(200,150,62,0.35)':'rgba(204,26,26,0.3)'};color:${sum?'var(--gold)':'var(--red-light)'};padding:4px 10px;cursor:pointer;font-family:'Oswald',sans-serif;font-size:11px;letter-spacing:1px;">
         ${sum?'✏️ EDITAR':'📋 PREENCHER'}</button>`;
+    // Uniforme vinculado à súmula
+    const uBadge = sum?.uniform
+      ? `<div style="display:flex;align-items:center;gap:5px;" title="${sum.uniform.nome}">${shirtSVG(sum.uniform.cor1||'#CC1A1A', sum.uniform.cor2||'#111', 20)}<span style="font-family:'Oswald',sans-serif;font-size:9px;color:#666;">${sum.uniform.nome}</span></div>`
+      : '<span style="font-family:Oswald,sans-serif;font-size:9px;color:#333;">—</span>';
+
     return `<tr>
       <td style="font-family:'Oswald',sans-serif;font-size:12px;white-space:nowrap;">${g.date}</td>
       <td>${logo}<strong>${g.adversary}</strong></td>
       <td style="text-align:center;">${placar}${evFeed}</td>
+      <td>${uBadge}</td>
       <td style="font-size:11px;color:${g.fora?'var(--gold)':'#5599ff'};">${g.fora?'✈️ Fora':'🏠 Casa'}</td>
       <td style="font-size:11px;color:#666;">${g.local||''}</td>
       <td style="text-align:right;">${actionBtn}</td>
@@ -3325,7 +3877,7 @@ function renderDossie(el) {
           ${pastGames.length === 0
             ? `<p style="font-family:'Oswald',sans-serif;font-size:12px;letter-spacing:2px;color:#555;padding:20px 0;text-align:center;">Nenhum jogo cadastrado ainda.</p>`
             : `<table class="data-table" style="min-width:540px;">
-                <thead><tr><th>Data</th><th>Adversário</th><th>Placar</th><th>Mando</th><th>Local</th><th></th></tr></thead>
+                <thead><tr><th>Data</th><th>Adversário</th><th>Placar</th><th>Uniforme</th><th>Mando</th><th>Local</th><th></th></tr></thead>
                 <tbody>${histRows}</tbody>
               </table>
               <p style="font-family:'Oswald',sans-serif;font-size:10px;letter-spacing:2px;color:#555;margin-top:8px;">Clique em "PREENCHER" ou "EDITAR" para lançar ou corrigir a súmula.</p>`}
@@ -3735,7 +4287,11 @@ function saveDossie(schedDate, schedAdv) {
     date:         schedDate,
     adversary:    schedAdv,
     us, them, formation, posSlots, playerIds, bench, scorers, assists, mvp, obs,
-    events: [..._dossieEvents]
+    events: [..._dossieEvents],
+    // Uniforme usado no jogo
+    uniform: DB.uniform?.activeId
+      ? { id: DB.uniform.activeId, nome: DB.uniform.color || DB.uniform.activeId, cor1: DB.uniform.cor1 || '#CC1A1A', cor2: DB.uniform.cor2 || '#111' }
+      : null,
   };
 
   if (!DB.dossies) DB.dossies = [];
@@ -4682,46 +5238,186 @@ function removeSponsor(idx) {
 }
 
 // ─── UNIFORME ───
+// ── UNIFORMES — constantes de cores ──
+const SHIRT_COLORS = [
+  { label:'Vermelho',  hex:'#CC1A1A' },
+  { label:'Grená',     hex:'#8B0000' },
+  { label:'Preto',     hex:'#111111' },
+  { label:'Branco',    hex:'#F5F5F5' },
+  { label:'Azul',      hex:'#1565C0' },
+  { label:'Azul Royal',hex:'#1a237e' },
+  { label:'Verde',     hex:'#2E7D32' },
+  { label:'Amarelo',   hex:'#F9A825' },
+  { label:'Laranja',   hex:'#E65100' },
+  { label:'Roxo',      hex:'#6A1B9A' },
+  { label:'Cinza',     hex:'#616161' },
+  { label:'Rosa',      hex:'#C2185B' },
+];
+
+function getUniformes() {
+  if (!DB.uniformes) {
+    DB.uniformes = [
+      { id:'titular',   label:'Titular',    cor1:'#CC1A1A', cor2:'#111111', nome:'Uniforme Titular' },
+      { id:'reserva',   label:'Reserva',    cor1:'#F5F5F5', cor2:'#CC1A1A', nome:'Uniforme Reserva' },
+      { id:'alternativo',label:'Alternativo',cor1:'#1565C0',cor2:'#F5F5F5', nome:'Uniforme Alternativo' },
+    ];
+  }
+  return DB.uniformes;
+}
+
+function shirtSVG(cor1, cor2, size=64) {
+  return `<svg width="${size}" height="${size}" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+    <path d="M12 14 L20 8 Q32 4 44 8 L52 14 L44 22 L44 56 L20 56 L20 22 Z" fill="${cor1}" stroke="rgba(255,255,255,0.15)" stroke-width="1.5"/>
+    <path d="M12 14 L4 28 L14 30 L20 22 Z" fill="${cor2}" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+    <path d="M52 14 L60 28 L50 30 L44 22 Z" fill="${cor2}" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+    <path d="M20 8 Q32 12 44 8 Q38 16 32 16 Q26 16 20 8 Z" fill="${cor2}" opacity="0.7"/>
+  </svg>`;
+}
+
+function colorOpts(selected) {
+  return SHIRT_COLORS.map(c =>
+    `<option value="${c.hex}" ${selected===c.hex?'selected':''}>${c.label}</option>`
+  ).join('');
+}
+
 function renderUniforme(el) {
-  el.innerHTML = `
-    <div class="panel" style="max-width:480px;">
-      <div class="panel-header"><span class="panel-title">GIRO DE UNIFORME</span></div>
-      <div class="panel-body">
-        <p style="font-family:'Oswald',sans-serif;font-size:12px;letter-spacing:2px;color:var(--cream);margin-bottom:20px;">Defina qual uniforme será usado no próximo jogo. Aparece no topo do site para todos os atletas.</p>
-        <div class="form-group">
-          <label>Uniforme do Próximo Jogo</label>
-          <select id="uniformSelect">
-            <option value="VERMELHO" ${DB.uniform.color==='VERMELHO'?'selected':''}>🔴 UNIFORME VERMELHO</option>
-            <option value="BRANCO" ${DB.uniform.color==='BRANCO'?'selected':''}>⚪ UNIFORME BRANCO</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label>Exibir banner no site?</label>
-          <select id="uniformActive">
-            <option value="1" ${DB.uniform.active?'selected':''}>✅ Sim — Mostrar</option>
-            <option value="0" ${!DB.uniform.active?'selected':''}>❌ Não — Ocultar</option>
-          </select>
-        </div>
-        <button class="btn btn-primary" onclick="saveUniform()">📢 PUBLICAR AVISO DE UNIFORME</button>
-        <div style="margin-top:20px;padding:14px;background:var(--mid);border:1px solid #333;">
-          <div class="section-label">STATUS ATUAL</div>
-          <p style="font-family:'Bebas Neue',sans-serif;font-size:24px;color:${DB.uniform.color==='VERMELHO'?'var(--red-light)':'var(--white)'};">${DB.uniform.active?'🟢 ATIVO':'🔴 OCULTO'} — ${DB.uniform.color}</p>
+  const unis = getUniformes();
+  const activeId = DB.uniform?.activeId || 'titular';
+
+  const cards = unis.map(u => {
+    const isActive = activeId === u.id;
+    return `<div style="background:${isActive?'rgba(200,150,62,0.08)':'#0d0d0d'};border:1px solid ${isActive?'rgba(200,150,62,0.4)':'#1e1e1e'};padding:20px;position:relative;">
+      ${isActive?'<div style="position:absolute;top:10px;right:10px;font-family:Oswald,sans-serif;font-size:9px;letter-spacing:2px;color:var(--gold);background:rgba(200,150,62,0.15);padding:3px 8px;border:1px solid rgba(200,150,62,0.3);">EM USO</div>':''}
+      <div style="display:flex;align-items:center;gap:14px;margin-bottom:16px;">
+        <div id="uShirt_${u.id}">${shirtSVG(u.cor1, u.cor2, 56)}</div>
+        <div>
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:2px;color:#fff;">${u.label.toUpperCase()}</div>
+          <input type="text" id="uNome_${u.id}" value="${u.nome}" placeholder="Nome do uniforme"
+            style="background:transparent;border:none;border-bottom:1px solid #333;color:#999;font-family:'Oswald',sans-serif;font-size:12px;letter-spacing:1px;outline:none;width:160px;"
+            onfocus="this.style.borderBottomColor='var(--gold)'" onblur="this.style.borderBottomColor='#333'">
         </div>
       </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
+        <div>
+          <label style="font-family:'Oswald',sans-serif;font-size:9px;letter-spacing:2px;color:#555;display:block;margin-bottom:5px;">COR PRINCIPAL</label>
+          <select id="uCor1_${u.id}" onchange="uPreviewShirt('${u.id}')"
+            style="width:100%;background:#111;border:1px solid #2a2a2a;color:#ccc;padding:7px 8px;font-family:'Oswald',sans-serif;font-size:11px;outline:none;">
+            ${colorOpts(u.cor1)}
+            <option value="custom_${u.cor1}" ${!SHIRT_COLORS.find(c=>c.hex===u.cor1)?'selected':''}>🎨 Personalizado</option>
+          </select>
+          <input type="color" id="uCor1c_${u.id}" value="${u.cor1}" oninput="uPreviewShirt('${u.id}')"
+            style="width:100%;height:28px;margin-top:4px;border:none;padding:0;cursor:pointer;background:transparent;">
+        </div>
+        <div>
+          <label style="font-family:'Oswald',sans-serif;font-size:9px;letter-spacing:2px;color:#555;display:block;margin-bottom:5px;">COR SECUNDÁRIA</label>
+          <select id="uCor2_${u.id}" onchange="uPreviewShirt('${u.id}')"
+            style="width:100%;background:#111;border:1px solid #2a2a2a;color:#ccc;padding:7px 8px;font-family:'Oswald',sans-serif;font-size:11px;outline:none;">
+            ${colorOpts(u.cor2)}
+            <option value="custom_${u.cor2}" ${!SHIRT_COLORS.find(c=>c.hex===u.cor2)?'selected':''}>🎨 Personalizado</option>
+          </select>
+          <input type="color" id="uCor2c_${u.id}" value="${u.cor2}" oninput="uPreviewShirt('${u.id}')"
+            style="width:100%;height:28px;margin-top:4px;border:none;padding:0;cursor:pointer;background:transparent;">
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn btn-sm btn-secondary" onclick="uSaveShirt('${u.id}')">💾 SALVAR</button>
+        <button class="btn btn-sm ${isActive?'btn-gold':'btn-primary'}" onclick="uSetAtivo('${u.id}')">${isActive?'✅ EM USO':'📢 USAR NO JOGO'}</button>
+      </div>
+    </div>`;
+  }).join('');
+
+  const atv = unis.find(u=>u.id===activeId) || unis[0];
+  el.innerHTML = `
+    <div style="margin-bottom:24px;padding:16px 20px;background:#0a0a0a;border:1px solid #1a1a1a;display:flex;align-items:center;gap:16px;">
+      ${shirtSVG(atv.cor1, atv.cor2, 48)}
+      <div>
+        <div style="font-family:'Oswald',sans-serif;font-size:10px;letter-spacing:3px;color:#555;">UNIFORME DO PRÓXIMO JOGO</div>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;color:#fff;letter-spacing:3px;">${atv.nome}</div>
+        <div style="font-family:'Oswald',sans-serif;font-size:10px;color:#666;">${atv.label}</div>
+      </div>
+      <div style="margin-left:auto;text-align:right;">
+        <label style="font-family:'Oswald',sans-serif;font-size:9px;letter-spacing:2px;color:#555;display:block;margin-bottom:4px;">EXIBIR BANNER?</label>
+        <select id="uniformActive" onchange="uToggleBanner()"
+          style="background:#111;border:1px solid #2a2a2a;color:#ccc;padding:6px 10px;font-family:'Oswald',sans-serif;font-size:11px;outline:none;">
+          <option value="1" ${DB.uniform?.active?'selected':''}>✅ Visível no site</option>
+          <option value="0" ${!DB.uniform?.active?'selected':''}>❌ Oculto</option>
+        </select>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:2px;background:#111;">
+      ${cards}
     </div>`;
 }
 
-function saveUniform() {
-  DB.uniform.color = document.getElementById('uniformSelect').value;
-  DB.uniform.active = document.getElementById('uniformActive').value === '1';
-  const banner = document.getElementById('uniformBanner');
-  if (DB.uniform.active) {
-    document.getElementById('uniformText').textContent = DB.uniform.color;
-    banner.classList.add('visible');
-  } else { banner.classList.remove('visible'); }
-  renderPane('uniforme');
-  showNotif('Aviso de uniforme atualizado! ' + (DB.uniform.active?'Visível no site.':'Oculto.'));
+function uGetColors(uid) {
+  const sel1 = document.getElementById('uCor1_'+uid);
+  const sel2 = document.getElementById('uCor2_'+uid);
+  const cp1  = document.getElementById('uCor1c_'+uid);
+  const cp2  = document.getElementById('uCor2c_'+uid);
+  const c1 = sel1?.value?.startsWith('custom') ? cp1?.value : (sel1?.value || cp1?.value);
+  const c2 = sel2?.value?.startsWith('custom') ? cp2?.value : (sel2?.value || cp2?.value);
+  return { c1: c1 || '#CC1A1A', c2: c2 || '#111111' };
 }
+
+function uPreviewShirt(uid) {
+  const { c1, c2 } = uGetColors(uid);
+  const el = document.getElementById('uShirt_'+uid);
+  if (el) el.innerHTML = shirtSVG(c1, c2, 56);
+}
+
+function uSaveShirt(uid) {
+  const unis = getUniformes();
+  const u = unis.find(x=>x.id===uid);
+  if (!u) return;
+  const { c1, c2 } = uGetColors(uid);
+  u.cor1  = c1;
+  u.cor2  = c2;
+  u.nome  = document.getElementById('uNome_'+uid)?.value.trim() || u.label;
+  sbSaveConfig('uniformes');
+  showNotif(`💾 ${u.nome} salvo!`);
+  renderPane('uniforme');
+}
+
+function uSetAtivo(uid) {
+  const unis = getUniformes();
+  const u = unis.find(x=>x.id===uid);
+  if (!u) return;
+  if (!DB.uniform) DB.uniform = { color:'', active:true, activeId:'' };
+  DB.uniform.activeId = uid;
+  DB.uniform.color = u.nome;
+  DB.uniform.active = true;
+  DB.uniform.cor1 = u.cor1;
+  DB.uniform.cor2 = u.cor2;
+  // Banner
+  const banner = document.getElementById('uniformBanner');
+  const txt    = document.getElementById('uniformText');
+  if (txt) txt.textContent = u.nome;
+  if (banner) banner.classList.add('visible');
+  sbSaveConfig('uniform');
+  sbSaveConfig('uniformes');
+  showNotif(`📢 ${u.nome} selecionado para o próximo jogo!`);
+  renderPane('uniforme');
+}
+
+function uToggleBanner() {
+  const val = document.getElementById('uniformActive')?.value === '1';
+  if (!DB.uniform) DB.uniform = { color:'', active:false };
+  DB.uniform.active = val;
+  const banner = document.getElementById('uniformBanner');
+  const txt    = document.getElementById('uniformText');
+  if (val) {
+    const unis = getUniformes();
+    const atv  = unis.find(u=>u.id===DB.uniform?.activeId) || unis[0];
+    if (txt) txt.textContent = atv?.nome || '';
+    banner?.classList.add('visible');
+  } else {
+    banner?.classList.remove('visible');
+  }
+  sbSaveConfig('uniform');
+  showNotif(val ? '✅ Banner de uniforme visível no site.' : '❌ Banner ocultado.');
+}
+
+function saveUniform() { uToggleBanner(); } // compat
 
 // ══════════════════════════════════════════════
 // UI HELPERS
@@ -5416,17 +6112,23 @@ async function sbSaveTeamBranding(cfg) {
   });
 }
 
+// Buffer para logo carregada via FileReader
+let _brandingLogoDataUrl = null;
+
 function renderBrandingPane(el) {
   const c = TEAM_CONFIG;
+  // Reseta buffer ao re-renderizar
+  _brandingLogoDataUrl = null;
+
   el.innerHTML = `
     <div class="panel">
       <div class="panel-title">🎨 Identidade Visual do Time</div>
       <div class="grid-2col">
-        <div class="form-group"><label>Nome do Time</label><input type="text" id="bName" value="${c.name||''}" placeholder="Nome completo"></div>
-        <div class="form-group"><label>Nome Curto (nav/header)</label><input type="text" id="bShortName" value="${c.shortName||c.name||''}" placeholder="NOME FC"></div>
+        <div class="form-group"><label>Nome do Time</label><input type="text" id="bName" value="${c.name||''}" placeholder="Nome completo" oninput="brandingLivePreview()"></div>
+        <div class="form-group"><label>Nome Curto (nav/header)</label><input type="text" id="bShortName" value="${c.shortName||c.name||''}" placeholder="NOME FC" oninput="brandingLivePreview()"></div>
       </div>
       <div class="grid-2col">
-        <div class="form-group"><label>Cidade</label><input type="text" id="bCity" value="${c.city||''}" placeholder="Palhoça"></div>
+        <div class="form-group"><label>Cidade</label><input type="text" id="bCity" value="${c.city||''}" placeholder="Palhoça" oninput="brandingLivePreview()"></div>
         <div class="form-group"><label>Estado</label><input type="text" id="bState" value="${c.state||''}" placeholder="SC" maxlength="2"></div>
       </div>
       <div class="grid-2col">
@@ -5436,13 +6138,31 @@ function renderBrandingPane(el) {
       <div class="form-group"><label>Slogan</label><input type="text" id="bSlogan" value="${c.slogan||''}" placeholder='"A resenha começa no campo..."'></div>
       <div class="form-group"><label>Tagline (abaixo do nome)</label><input type="text" id="bTagline" value="${c.tagline||''}" placeholder="Futebol Raiz · Cidade — UF"></div>
       <div class="form-group"><label>Instagram</label><input type="text" id="bInsta" value="${c.instagram||''}" placeholder="@seutime"></div>
-      <div class="form-group"><label>URL da Logo</label><input type="text" id="bLogo" value="${c.logoUrl||''}" placeholder="https://... ou caminho local"></div>
-      <div class="branding-preview">
-        <div class="branding-preview-bar" id="bPreviewBar"></div>
+
+      <!-- ── LOGO: Upload + URL ── -->
+      <div class="form-group">
+        <label>Logo do Time</label>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+          <div style="width:64px;height:64px;border-radius:50%;background:#111;border:2px solid #2a2a2a;overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center;">
+            <img id="bPreviewLogoThumb" src="${c.logoUrl||''}" style="width:100%;height:100%;object-fit:contain;" onerror="this.style.display='none'">
+          </div>
+          <div style="flex:1;min-width:180px;display:flex;flex-direction:column;gap:6px;">
+            <label style="display:flex;align-items:center;gap:8px;background:#111;border:1px solid #2a2a2a;padding:8px 14px;cursor:pointer;font-family:'Oswald',sans-serif;font-size:11px;letter-spacing:2px;color:#aaa;transition:border-color .2s;" onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='#2a2a2a'">
+              📁 FAZER UPLOAD DA IMAGEM
+              <input type="file" accept="image/*" style="display:none;" onchange="brandingLogoUpload(this)">
+            </label>
+            <input type="text" id="bLogo" value="${c.logoUrl||''}" placeholder="ou cole uma URL aqui" oninput="brandingLogoUrlPreview()" style="background:#111;border:1px solid #1e1e1e;color:#666;padding:6px 10px;font-family:'Oswald',sans-serif;font-size:11px;outline:none;">
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Preview da nav ── -->
+      <div class="branding-preview" style="margin:16px 0;">
+        <div class="branding-preview-bar" id="bPreviewBar" style="background:${c.colorPrimary||'#CC1A1A'};"></div>
         <div class="branding-preview-content">
           <img id="bPreviewLogo" src="${c.logoUrl||''}" style="width:40px;height:40px;border-radius:50%;object-fit:contain;background:#111;" onerror="this.style.display='none'">
           <div>
-            <div style="font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:2px;" id="bPreviewName">${c.shortName||c.name}</div>
+            <div style="font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:2px;color:${c.colorPrimary||'#CC1A1A'};" id="bPreviewName">${c.shortName||c.name}</div>
             <div style="font-family:'Oswald',sans-serif;font-size:10px;letter-spacing:2px;color:#888;" id="bPreviewCity">${c.city||''}</div>
           </div>
         </div>
@@ -5461,7 +6181,40 @@ function renderBrandingPane(el) {
       </div>
       <button class="btn-red" onclick="brandingSave()" style="width:100%;margin-top:12px;">💾 SALVAR IDENTIDADE VISUAL</button>
     </div>`;
+
+  // Aplica cor da preview no load
+  brandingLivePreview();
 }
+
+function brandingLogoUpload(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    _brandingLogoDataUrl = e.target.result;
+    // Atualiza thumbs imediatamente
+    const thumb = document.getElementById('bPreviewLogoThumb');
+    const prev  = document.getElementById('bPreviewLogo');
+    if (thumb) { thumb.src = _brandingLogoDataUrl; thumb.style.display = 'block'; }
+    if (prev)  { prev.src  = _brandingLogoDataUrl; prev.style.display  = 'block'; }
+    // Limpa campo URL para não conflitar
+    const urlInput = document.getElementById('bLogo');
+    if (urlInput) urlInput.value = '';
+    showNotif('✅ Logo carregada! Clique em Salvar para aplicar.');
+  };
+  reader.readAsDataURL(file);
+}
+
+function brandingLogoUrlPreview() {
+  const url = document.getElementById('bLogo')?.value.trim();
+  if (!url) return;
+  _brandingLogoDataUrl = null; // URL tem prioridade quando digitada manualmente
+  const thumb = document.getElementById('bPreviewLogoThumb');
+  const prev  = document.getElementById('bPreviewLogo');
+  if (thumb) { thumb.src = url; thumb.style.display = 'block'; }
+  if (prev)  { prev.src  = url; prev.style.display  = 'block'; }
+}
+
 function brandingSelectTemplate(key) {
   document.querySelectorAll('[id^="bColorBtn_"]').forEach(b=>b.classList.remove('active'));
   const btn = document.getElementById('bColorBtn_'+key); if (btn) btn.classList.add('active');
@@ -5473,39 +6226,50 @@ function brandingSelectTemplate(key) {
   }
   brandingLivePreview();
 }
+
 function brandingLivePreview() {
-  const c1 = document.getElementById('bColor1')?.value||'#CC1A1A';
-  const c2 = document.getElementById('bColor2')?.value||'#C8963E';
-  const bar = document.getElementById('bPreviewBar'); if (bar) bar.style.background = c1;
-  const nm = document.getElementById('bPreviewName'); if (nm) nm.style.color = c1;
-  const logo = document.getElementById('bPreviewLogo');
-  const logoUrl = document.getElementById('bLogo')?.value;
-  if (logo && logoUrl) logo.src = logoUrl;
-  const pname = document.getElementById('bPreviewName');
-  const sname = document.getElementById('bShortName')?.value;
-  if (pname && sname) pname.textContent = sname;
+  const tpl = document.querySelector('[id^="bColorBtn_"].active')?.id.replace('bColorBtn_','') || 'personalizado';
+  const c1 = tpl !== 'personalizado' ? COLOR_TEMPLATES[tpl]?.primary : (document.getElementById('bColor1')?.value || '#CC1A1A');
+  const bar  = document.getElementById('bPreviewBar');
+  const nm   = document.getElementById('bPreviewName');
+  const city = document.getElementById('bPreviewCity');
+  if (bar) bar.style.background = c1;
+  if (nm)  { nm.style.color = c1; nm.textContent = document.getElementById('bShortName')?.value || nm.textContent; }
+  if (city) city.textContent = document.getElementById('bCity')?.value || city.textContent;
+  // Logo: se tem upload em buffer usa ele, senão usa URL
+  const logoSrc = _brandingLogoDataUrl || document.getElementById('bLogo')?.value || '';
+  const prev = document.getElementById('bPreviewLogo');
+  if (prev && logoSrc) { prev.src = logoSrc; prev.style.display = 'block'; }
 }
+
 async function brandingSave() {
   const tpl = document.querySelector('[id^="bColorBtn_"].active')?.id.replace('bColorBtn_','') || 'personalizado';
-  const colors = tpl==='personalizado' ? { primary:document.getElementById('bColor1').value, secondary:document.getElementById('bColor2').value } : COLOR_TEMPLATES[tpl];
+  const colors = tpl==='personalizado'
+    ? { primary: document.getElementById('bColor1').value, secondary: document.getElementById('bColor2').value }
+    : COLOR_TEMPLATES[tpl];
+
+  // Logo: preferência ao upload, fallback para URL digitada
+  const logoUrl = _brandingLogoDataUrl || document.getElementById('bLogo').value.trim();
+
   const cfg = {
-    name: document.getElementById('bName').value.trim(),
-    shortName: document.getElementById('bShortName').value.trim(),
-    city: document.getElementById('bCity').value.trim(),
-    state: document.getElementById('bState').value.trim().toUpperCase(),
+    name:         document.getElementById('bName').value.trim(),
+    shortName:    document.getElementById('bShortName').value.trim(),
+    city:         document.getElementById('bCity').value.trim(),
+    state:        document.getElementById('bState').value.trim().toUpperCase(),
     neighborhood: document.getElementById('bNeighborhood').value.trim(),
-    foundedYear: parseInt(document.getElementById('bYear').value)||2000,
-    slogan: document.getElementById('bSlogan').value.trim(),
-    tagline: document.getElementById('bTagline').value.trim(),
-    instagram: document.getElementById('bInsta').value.trim(),
-    logoUrl: document.getElementById('bLogo').value.trim(),
-    colorPrimary: colors.primary,
+    foundedYear:  parseInt(document.getElementById('bYear').value) || 2000,
+    slogan:       document.getElementById('bSlogan').value.trim(),
+    tagline:      document.getElementById('bTagline').value.trim(),
+    instagram:    document.getElementById('bInsta').value.trim(),
+    logoUrl,
+    colorPrimary:   colors.primary,
     colorSecondary: colors.secondary,
-    colorTemplate: tpl,
+    colorTemplate:  tpl,
   };
   Object.assign(TEAM_CONFIG, cfg);
   applyTeamBranding(TEAM_CONFIG);
   await sbSaveTeamBranding(TEAM_CONFIG);
+  _brandingLogoDataUrl = null;
   showNotif('✅ Identidade visual salva e aplicada!');
 }
 
