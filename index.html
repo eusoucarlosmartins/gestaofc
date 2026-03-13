@@ -597,40 +597,98 @@ input, select, textarea, button { -webkit-tap-highlight-color: transparent; }
 }
 
 /* ══════════════════ LANDING PAGE ══════════════════ */
-.landing-view { min-height:100vh; background:var(--black); position:relative; }
-.landing-hero {
-  min-height:60vh; display:flex; flex-direction:column;
-  align-items:center; justify-content:center; text-align:center;
-  padding:80px 24px 60px; position:relative; overflow:hidden;
+/* ══ LANDING — SALES PAGE ══ */
+.landing-view { background:#080808; position:relative; overflow-x:hidden; }
+
+/* HERO */
+.lp-nav { position:absolute; top:0; left:0; right:0; z-index:100; display:flex; align-items:center; justify-content:space-between; padding:20px 40px; }
+.lp-nav-logo { font-family:'Bebas Neue',sans-serif; font-size:22px; letter-spacing:4px; color:#fff; }
+.lp-nav-logo span { color:var(--red); }
+.lp-nav-admin { font-family:'Oswald',sans-serif; font-size:10px; letter-spacing:2px; padding:7px 16px; background:transparent; border:1px solid #2a2a2a; color:#444; cursor:pointer; transition:all .2s; }
+.lp-nav-admin:hover { border-color:var(--gold); color:var(--gold); }
+
+.lp-hero { min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:120px 24px 80px; position:relative; overflow:hidden; }
+.lp-hero-bg { position:absolute; inset:0; background:radial-gradient(ellipse 80% 60% at 50% 0%, rgba(204,26,26,0.18) 0%, transparent 70%), radial-gradient(ellipse 40% 40% at 80% 80%, rgba(200,150,62,0.06) 0%, transparent 60%); }
+.lp-hero-grid { position:absolute; inset:0; background-image:linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px); background-size:60px 60px; }
+.lp-hero-tag { font-family:'Oswald',sans-serif; font-size:11px; letter-spacing:4px; color:var(--gold); border:1px solid rgba(200,150,62,0.3); padding:6px 18px; display:inline-block; margin-bottom:28px; position:relative; z-index:1; }
+.lp-hero-title { font-family:'Bebas Neue',sans-serif; font-size:clamp(42px,8vw,88px); color:#fff; letter-spacing:3px; line-height:0.95; position:relative; z-index:1; max-width:900px; }
+.lp-hero-title em { color:var(--red); font-style:normal; }
+.lp-hero-sub { font-family:'Barlow Condensed',sans-serif; font-size:clamp(16px,2.5vw,20px); color:#888; margin:24px 0 40px; position:relative; z-index:1; max-width:580px; line-height:1.6; font-weight:300; }
+.lp-cta-group { display:flex; gap:14px; flex-wrap:wrap; justify-content:center; position:relative; z-index:1; }
+.lp-btn-main { font-family:'Oswald',sans-serif; font-size:14px; letter-spacing:3px; padding:16px 36px; background:var(--red); color:#fff; border:none; cursor:pointer; text-decoration:none; transition:all .25s; position:relative; overflow:hidden; display:inline-block; }
+.lp-btn-main::before { content:''; position:absolute; inset:0; background:rgba(255,255,255,0.1); transform:translateX(-100%); transition:transform .3s; }
+.lp-btn-main:hover::before { transform:translateX(0); }
+.lp-btn-main:hover { transform:translateY(-2px); box-shadow:0 8px 32px rgba(204,26,26,0.4); }
+.lp-btn-ghost { font-family:'Oswald',sans-serif; font-size:13px; letter-spacing:2px; padding:16px 28px; background:transparent; color:#888; border:1px solid #2a2a2a; cursor:pointer; text-decoration:none; transition:all .2s; display:inline-block; }
+.lp-btn-ghost:hover { border-color:#555; color:#ccc; }
+.lp-hero-stat-row { display:flex; gap:48px; justify-content:center; margin-top:64px; position:relative; z-index:1; flex-wrap:wrap; }
+.lp-stat { text-align:center; }
+.lp-stat-num { font-family:'Bebas Neue',sans-serif; font-size:40px; color:#fff; letter-spacing:2px; line-height:1; }
+.lp-stat-num span { color:var(--red); }
+.lp-stat-label { font-family:'Oswald',sans-serif; font-size:10px; letter-spacing:3px; color:#444; margin-top:4px; }
+
+/* BENEFÍCIOS */
+.lp-section { padding:100px 24px; max-width:1100px; margin:0 auto; }
+.lp-section-tag { font-family:'Oswald',sans-serif; font-size:10px; letter-spacing:4px; color:var(--gold); margin-bottom:12px; }
+.lp-section-title { font-family:'Bebas Neue',sans-serif; font-size:clamp(32px,5vw,52px); color:#fff; letter-spacing:3px; line-height:1.05; margin-bottom:8px; }
+.lp-section-sub { font-family:'Barlow',sans-serif; font-size:15px; color:#555; margin-bottom:56px; }
+.lp-benefits-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:2px; }
+.lp-benefit { background:#0f0f0f; padding:36px 28px; border:1px solid #161616; transition:all .3s; position:relative; overflow:hidden; }
+.lp-benefit::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:var(--red); transform:scaleX(0); transform-origin:left; transition:transform .3s; }
+.lp-benefit:hover { background:#121212; border-color:#222; }
+.lp-benefit:hover::before { transform:scaleX(1); }
+.lp-benefit-icon { font-size:28px; margin-bottom:16px; }
+.lp-benefit-title { font-family:'Oswald',sans-serif; font-size:16px; letter-spacing:2px; color:#fff; margin-bottom:10px; }
+.lp-benefit-text { font-family:'Barlow',sans-serif; font-size:13px; color:#555; line-height:1.7; }
+
+/* PLANOS */
+.lp-plans-wrap { background:#050505; border-top:1px solid #111; border-bottom:1px solid #111; padding:100px 24px; }
+.lp-plans-inner { max-width:1000px; margin:0 auto; }
+.lp-plans-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:1px; background:#111; margin-top:56px; }
+.lp-plan { background:#0a0a0a; padding:40px 32px; position:relative; transition:background .2s; }
+.lp-plan:hover { background:#0f0f0f; }
+.lp-plan.featured { background:#0e0c0c; outline:1px solid rgba(204,26,26,0.5); outline-offset:-1px; }
+.lp-plan-badge { position:absolute; top:0; left:50%; transform:translateX(-50%) translateY(-50%); font-family:'Oswald',sans-serif; font-size:9px; letter-spacing:3px; background:var(--red); color:#fff; padding:4px 14px; white-space:nowrap; }
+.lp-plan-name { font-family:'Bebas Neue',sans-serif; font-size:28px; letter-spacing:3px; color:#fff; margin-bottom:4px; }
+.lp-plan-price { font-family:'Bebas Neue',sans-serif; font-size:52px; color:#fff; letter-spacing:2px; line-height:1; }
+.lp-plan-price span { font-size:20px; color:#555; vertical-align:super; }
+.lp-plan-price sub { font-family:'Oswald',sans-serif; font-size:12px; letter-spacing:2px; color:#444; vertical-align:baseline; }
+.lp-plan-desc { font-family:'Barlow',sans-serif; font-size:13px; color:#555; margin:12px 0 28px; line-height:1.6; }
+.lp-plan-divider { height:1px; background:#161616; margin-bottom:24px; }
+.lp-plan-feature { font-family:'Barlow',sans-serif; font-size:13px; color:#666; padding:7px 0; display:flex; align-items:flex-start; gap:10px; border-bottom:1px solid #0d0d0d; }
+.lp-plan-feature:last-child { border-bottom:none; }
+.lp-plan-feature .chk { color:var(--gold); font-size:11px; flex-shrink:0; margin-top:1px; }
+.lp-plan-cta { margin-top:28px; }
+.lp-plan-cta button { width:100%; font-family:'Oswald',sans-serif; font-size:12px; letter-spacing:3px; padding:14px; cursor:pointer; transition:all .2s; }
+.lp-plan.featured .lp-plan-cta button { background:var(--red); color:#fff; border:none; }
+.lp-plan.featured .lp-plan-cta button:hover { background:#e02020; }
+.lp-plan:not(.featured) .lp-plan-cta button { background:transparent; color:#666; border:1px solid #222; }
+.lp-plan:not(.featured) .lp-plan-cta button:hover { border-color:#555; color:#ccc; }
+
+/* TIMES */
+.lp-teams-wrap { padding:100px 24px; max-width:1100px; margin:0 auto; }
+.teams-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(190px,1fr)); gap:1px; background:#111; }
+.team-card-landing { background:#090909; padding:28px 16px; text-align:center; cursor:pointer; transition:all .2s; text-decoration:none; display:block; position:relative; }
+.team-card-landing:hover { background:#0f0f0f; }
+.team-card-logo { width:60px; height:60px; border-radius:50%; object-fit:contain; margin:0 auto 14px; background:#111; padding:6px; border:1px solid #1e1e1e; display:block; }
+.team-card-logo-placeholder { width:60px; height:60px; border-radius:50%; background:rgba(204,26,26,0.08); border:1px solid rgba(204,26,26,0.2); display:flex; align-items:center; justify-content:center; margin:0 auto 14px; font-family:'Bebas Neue',sans-serif; font-size:18px; color:var(--red); }
+.team-card-name { font-family:'Oswald',sans-serif; font-size:13px; letter-spacing:2px; color:#ccc; margin-bottom:4px; }
+.team-card-city { font-family:'Barlow',sans-serif; font-size:11px; color:#3a3a3a; }
+.team-card-badge { display:inline-flex; align-items:center; gap:4px; font-family:'Oswald',sans-serif; font-size:8px; letter-spacing:2px; padding:3px 8px; margin-top:10px; background:rgba(200,150,62,0.08); color:var(--gold); border:1px solid rgba(200,150,62,0.2); }
+.lp-footer { text-align:center; padding:48px 24px; border-top:1px solid #111; font-family:'Oswald',sans-serif; font-size:10px; letter-spacing:3px; color:#2a2a2a; }
+.lp-footer a { color:#333; text-decoration:none; transition:color .2s; }
+.lp-footer a:hover { color:var(--gold); }
+
+/* DIVIDER */
+.lp-stripe { height:1px; background:linear-gradient(90deg, transparent, var(--red) 30%, var(--gold) 70%, transparent); opacity:0.3; }
+
+@media(max-width:640px) {
+  .lp-nav { padding:16px 20px; }
+  .lp-hero { padding:100px 20px 60px; }
+  .lp-hero-stat-row { gap:28px; }
+  .lp-section, .lp-teams-wrap { padding:70px 20px; }
+  .lp-plan { padding:32px 24px; }
 }
-.landing-hero::before {
-  content:''; position:absolute; inset:0;
-  background:radial-gradient(ellipse at 50% 0%, rgba(204,26,26,0.2) 0%, transparent 65%);
-}
-.landing-title { font-family:'Bebas Neue',sans-serif; font-size:clamp(52px,10vw,96px); color:#fff; letter-spacing:4px; line-height:1; position:relative; z-index:1; }
-.landing-title span { color:var(--red); }
-.landing-sub { font-family:'Oswald',sans-serif; font-size:clamp(13px,2.5vw,16px); letter-spacing:4px; color:var(--gold); margin:12px 0 32px; position:relative; z-index:1; }
-.landing-cta { display:inline-flex; gap:12px; flex-wrap:wrap; justify-content:center; position:relative; z-index:1; }
-.landing-cta a { font-family:'Oswald',sans-serif; font-size:13px; letter-spacing:3px; padding:12px 28px; cursor:pointer; text-decoration:none; transition:all .2s; }
-.landing-cta .btn-primary { background:var(--red); color:#fff; border:none; }
-.landing-cta .btn-primary:hover { background:#e02020; }
-.landing-cta .btn-outline { background:transparent; color:var(--cream); border:1px solid #444; }
-.landing-cta .btn-outline:hover { border-color:var(--gold); color:var(--gold); }
-.landing-teams-section { padding:60px 24px; max-width:1100px; margin:0 auto; }
-.landing-teams-section h2 { font-family:'Bebas Neue',sans-serif; font-size:36px; color:#fff; letter-spacing:3px; margin-bottom:6px; }
-.landing-teams-section .sub { font-family:'Oswald',sans-serif; font-size:12px; letter-spacing:3px; color:#555; margin-bottom:32px; }
-.teams-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:16px; }
-.team-card-landing {
-  background:var(--dark); border:1px solid #2a2a2a; padding:24px 16px;
-  text-align:center; cursor:pointer; transition:all .2s; text-decoration:none; display:block;
-}
-.team-card-landing:hover { border-color:var(--red); transform:translateY(-3px); }
-.team-card-logo { width:64px; height:64px; border-radius:50%; object-fit:contain; margin:0 auto 12px; background:#111; padding:6px; border:2px solid #333; display:block; }
-.team-card-logo-placeholder { width:64px; height:64px; border-radius:50%; background:rgba(204,26,26,0.1); border:2px solid rgba(204,26,26,0.3); display:flex; align-items:center; justify-content:center; margin:0 auto 12px; font-family:'Bebas Neue',sans-serif; font-size:20px; color:var(--red); }
-.team-card-name { font-family:'Oswald',sans-serif; font-size:14px; letter-spacing:2px; color:#fff; margin-bottom:4px; }
-.team-card-city { font-family:'Barlow',sans-serif; font-size:11px; color:#555; }
-.team-card-badge { display:inline-block; font-family:'Oswald',sans-serif; font-size:9px; letter-spacing:2px; padding:2px 8px; margin-top:8px; background:rgba(204,26,26,0.15); color:var(--red); border:1px solid rgba(204,26,26,0.3); }
-.landing-footer { text-align:center; padding:40px 24px; border-top:1px solid #1a1a1a; font-family:'Oswald',sans-serif; font-size:11px; letter-spacing:3px; color:#333; }
 
 /* ══════════════════ TELA BLOQUEADA ══════════════════ */
 .blocked-view { min-height:100vh; display:flex; align-items:center; justify-content:center; background:var(--black); padding:24px; }
@@ -692,24 +750,148 @@ input, select, textarea, button { -webkit-tap-highlight-color: transparent; }
   </div>
 </div>
 <div id="view-landing" class="view landing-view">
-  <!-- Botão Admin fixo no canto superior direito da landing -->
-  <div style="position:absolute;top:16px;right:20px;z-index:200;">
-    <button onclick="showSaLoginOverlay()" style="font-family:'Oswald',sans-serif;font-size:11px;letter-spacing:2px;padding:8px 18px;background:transparent;border:1px solid #333;color:#555;cursor:pointer;transition:all .2s;" onmouseover="this.style.borderColor='var(--gold)';this.style.color='var(--gold)';" onmouseout="this.style.borderColor='#333';this.style.color='#555';">⚙ ADMIN</button>
-  </div>
-  <div class="landing-hero">
-    <div class="landing-title"><span>MEU</span>TIME</div>
-    <div class="landing-sub">A PLATAFORMA DOS TIMES DE FUTEBOL AMADOR</div>
-    <div class="landing-cta">
-      <a class="btn-primary" onclick="document.getElementById('landingTeamsSection').scrollIntoView({behavior:'smooth'})">VER TIMES</a>
-      <a class="btn-outline" href="https://wa.me/5548996962910?text=Quero+cadastrar+meu+time+no+GestãoFC" target="_blank">QUERO MEU TIME AQUI</a>
+
+  <!-- NAV -->
+  <nav class="lp-nav">
+    <div class="lp-nav-logo">GESTÃO<span>FC</span></div>
+    <button class="lp-nav-admin" onclick="showSaLoginOverlay()">⚙ ADMIN</button>
+  </nav>
+
+  <!-- HERO -->
+  <section class="lp-hero">
+    <div class="lp-hero-bg"></div>
+    <div class="lp-hero-grid"></div>
+    <div class="lp-hero-tag">⚽ PLATAFORMA DE GESTÃO PARA FUTEBOL AMADOR</div>
+    <h1 class="lp-hero-title">
+      Transforme sua Várzea<br>em <em>Profissional</em>
+    </h1>
+    <p class="lp-hero-sub">Acabe com a bagunça nas mensalidades, escale seu time como um profissional e eternize a história do seu clube.</p>
+    <div class="lp-cta-group">
+      <a class="lp-btn-main" href="https://wa.me/5548996962910?text=Quero+começar+7+dias+grátis+no+GestãoFC" target="_blank">COMEÇAR 7 DIAS GRÁTIS</a>
+      <a class="lp-btn-ghost" onclick="document.getElementById('lp-times').scrollIntoView({behavior:'smooth'})">VER TIMES CADASTRADOS</a>
+    </div>
+    <div class="lp-hero-stat-row">
+      <div class="lp-stat"><div class="lp-stat-num">3<span>+</span></div><div class="lp-stat-label">PLANOS DISPONÍVEIS</div></div>
+      <div class="lp-stat"><div class="lp-stat-num">7<span>D</span></div><div class="lp-stat-label">GRÁTIS PARA TESTAR</div></div>
+      <div class="lp-stat"><div class="lp-stat-num">100<span>%</span></div><div class="lp-stat-label">FEITO PARA VÁRZEA</div></div>
+    </div>
+  </section>
+
+  <div class="lp-stripe"></div>
+
+  <!-- BENEFÍCIOS -->
+  <div style="background:#050505; border-top:1px solid #0d0d0d; border-bottom:1px solid #0d0d0d; padding:100px 24px;">
+    <div class="lp-section" style="padding:0; margin:0 auto;">
+      <div class="lp-section-tag">POR QUE O GESTAOFC?</div>
+      <h2 class="lp-section-title">Tudo que seu clube<br>precisa em um lugar</h2>
+      <p class="lp-section-sub">Feito por quem entende de várzea. Sem complicação.</p>
+      <div class="lp-benefits-grid">
+        <div class="lp-benefit">
+          <div class="lp-benefit-icon">💰</div>
+          <div class="lp-benefit-title">TRANSPARÊNCIA FINANCEIRA</div>
+          <div class="lp-benefit-text">Chega de cobrar no grito. Controle mensalidades e fluxo de caixa com um clique. Cada centavo no lugar certo.</div>
+        </div>
+        <div class="lp-benefit">
+          <div class="lp-benefit-icon">🎯</div>
+          <div class="lp-benefit-title">DOMÍNIO TÁTICO</div>
+          <div class="lp-benefit-text">Escale seu time nos campinhos profissionais — 4-3-3, 4-4-2 e muito mais. Publique para os atletas antes do jogo.</div>
+        </div>
+        <div class="lp-benefit">
+          <div class="lp-benefit-icon">🏆</div>
+          <div class="lp-benefit-title">ENGAJAMENTO DE ELITE</div>
+          <div class="lp-benefit-text">Votação de MVP, súmulas detalhadas e Hall da Fama. Seus jogadores vão querer vir em todo jogo.</div>
+        </div>
+        <div class="lp-benefit">
+          <div class="lp-benefit-icon">📜</div>
+          <div class="lp-benefit-title">HISTÓRIA ETERNIZADA</div>
+          <div class="lp-benefit-text">Linha do tempo exclusiva para contar a trajetória do seu clube. Fundação, títulos, momentos marcantes.</div>
+        </div>
+      </div>
     </div>
   </div>
-  <div class="landing-teams-section" id="landingTeamsSection">
-    <h2>TIMES CADASTRADOS</h2>
-    <div class="sub">CLIQUE PARA ACESSAR O PORTAL DO TIME</div>
-    <div class="teams-grid" id="landingTeamsGrid"></div>
+
+  <div class="lp-stripe"></div>
+
+  <!-- PLANOS -->
+  <div class="lp-plans-wrap" id="lp-planos">
+    <div class="lp-plans-inner">
+      <div class="lp-section-tag" style="text-align:center;">PREÇOS SIMPLES E DIRETOS</div>
+      <h2 class="lp-section-title" style="text-align:center;">Escolha o plano<br>do seu clube</h2>
+      <p class="lp-section-sub" style="text-align:center;">Sem taxa de setup. Cancele quando quiser.</p>
+
+      <div class="lp-plans-grid">
+
+        <!-- BASIC -->
+        <div class="lp-plan">
+          <div class="lp-plan-name">BASIC</div>
+          <div class="lp-plan-price"><span>R$</span>49<sub>/mês</sub></div>
+          <div class="lp-plan-desc">O essencial para organizar seu clube e sair da bagunça.</div>
+          <div class="lp-plan-divider"></div>
+          <div class="lp-plan-feature"><span class="chk">✦</span>Portal público do time</div>
+          <div class="lp-plan-feature"><span class="chk">✦</span>Agenda de jogos</div>
+          <div class="lp-plan-feature"><span class="chk">✦</span>Resultados e elenco</div>
+          <div class="lp-plan-feature"><span class="chk">✦</span>Check-in de atletas</div>
+          <div class="lp-plan-feature"><span class="chk">✦</span>Até 15 jogadores · 1 admin</div>
+          <div class="lp-plan-cta"><button onclick="window.open('https://wa.me/5548996962910?text=Quero+o+plano+Basic+do+GestãoFC','_blank')">COMEÇAR GRÁTIS</button></div>
+        </div>
+
+        <!-- PRO -->
+        <div class="lp-plan featured">
+          <div class="lp-plan-badge">⭐ MAIS POPULAR</div>
+          <div class="lp-plan-name">PRO</div>
+          <div class="lp-plan-price"><span>R$</span>89<sub>/mês</sub></div>
+          <div class="lp-plan-desc">O favorito dos clubes. Gestão completa com tudo que importa.</div>
+          <div class="lp-plan-divider"></div>
+          <div class="lp-plan-feature"><span class="chk">✦</span>Tudo do Basic</div>
+          <div class="lp-plan-feature"><span class="chk">✦</span>Financeiro e mensalidades</div>
+          <div class="lp-plan-feature"><span class="chk">✦</span>Súmula e escalação tática</div>
+          <div class="lp-plan-feature"><span class="chk">✦</span>Ranking e votação de MVP</div>
+          <div class="lp-plan-feature"><span class="chk">✦</span>Até 30 jogadores · 3 admins</div>
+          <div class="lp-plan-cta"><button onclick="window.open('https://wa.me/5548996962910?text=Quero+o+plano+Pro+do+GestãoFC','_blank')">COMEÇAR GRÁTIS</button></div>
+        </div>
+
+        <!-- PREMIUM -->
+        <div class="lp-plan">
+          <div class="lp-plan-name">PREMIUM</div>
+          <div class="lp-plan-price"><span>R$</span>149<sub>/mês</sub></div>
+          <div class="lp-plan-desc">Gestão total sem limites. Para clubes que levam a sério.</div>
+          <div class="lp-plan-divider"></div>
+          <div class="lp-plan-feature"><span class="chk">✦</span>Tudo do Pro</div>
+          <div class="lp-plan-feature"><span class="chk">✦</span>Jogadores e admins ilimitados</div>
+          <div class="lp-plan-feature"><span class="chk">✦</span>Linha do tempo histórica</div>
+          <div class="lp-plan-feature"><span class="chk">✦</span>Gestão de patrocinadores</div>
+          <div class="lp-plan-feature"><span class="chk">✦</span>Suporte prioritário</div>
+          <div class="lp-plan-cta"><button onclick="window.open('https://wa.me/5548996962910?text=Quero+o+plano+Premium+do+GestãoFC','_blank')">COMEÇAR GRÁTIS</button></div>
+        </div>
+
+      </div>
+
+      <!-- Desconto anual -->
+      <div style="text-align:center;margin-top:28px;font-family:'Oswald',sans-serif;font-size:11px;letter-spacing:2px;color:#333;">
+        💰 ATÉ 30% DE DESCONTO NO PLANO ANUAL · <a href="https://wa.me/5548996962910" target="_blank" style="color:var(--gold);text-decoration:none;">FALAR COM A GENTE</a>
+      </div>
+    </div>
   </div>
-  <div class="landing-footer">GESTAOFC.COM.BR · FUTEBOL AMADOR BRASILEIRO · 2026</div>
+
+  <div class="lp-stripe"></div>
+
+  <!-- TIMES CADASTRADOS -->
+  <div class="lp-teams-wrap" id="lp-times">
+    <div class="lp-section-tag">QUEM JÁ USA O GESTAOFC</div>
+    <h2 class="lp-section-title">Times Cadastrados</h2>
+    <p class="lp-section-sub">Clique no time para acessar o portal.</p>
+    <div class="teams-grid" id="landingTeamsGrid">
+      <div style="grid-column:1/-1;padding:40px;text-align:center;font-family:'Oswald',sans-serif;font-size:12px;letter-spacing:2px;color:#2a2a2a;">CARREGANDO TIMES...</div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="lp-footer">
+    <div style="margin-bottom:14px;font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:4px;color:#1a1a1a;">GESTAO<span style="color:#2a1a1a;">FC</span></div>
+    GESTAOFC.COM.BR · FUTEBOL AMADOR BRASILEIRO · 2026<br>
+    <span style="margin-top:8px;display:block;">Criado por <a href="https://wa.me/5548996962910">Carlos Martins</a> · 48 99696-2910</span>
+  </div>
+
 </div>
 
 <!-- ══ TIME BLOQUEADO ══ -->
@@ -1070,15 +1252,17 @@ function renderPlanBlock(message, feature) {
   const status = getTeamStatus();
   const plan = getPlan();
   const isSuspended = status === 'suspended';
-  return \`<div style="background:rgba(204,26,26,0.08);border:1px solid rgba(204,26,26,0.25);border-left:3px solid var(--red);padding:16px 20px;margin:12px 0;text-align:center;">
-    <div style="font-size:24px;margin-bottom:8px;">\${isSuspended?'🔒':'⚡'}</div>
-    <div style="font-family:Oswald,sans-serif;font-size:14px;letter-spacing:2px;color:var(--red);margin-bottom:6px;">\${isSuspended?'ACESSO SUSPENSO':'LIMITE DO PLANO'}</div>
-    <div style="font-family:Barlow,sans-serif;font-size:13px;color:#888;margin-bottom:12px;">\${message}</div>
-    \${isSuspended
-      ? \`<a href="https://wa.me/5548996962910" target="_blank" style="font-family:Oswald,sans-serif;font-size:12px;letter-spacing:2px;color:var(--gold);text-decoration:none;border:1px solid rgba(200,150,62,0.3);padding:6px 16px;display:inline-block;">📱 REGULARIZAR PAGAMENTO</a>\`
-      : \`<div style="font-family:Oswald,sans-serif;font-size:11px;letter-spacing:2px;color:#555;margin-top:4px;">Plano atual: \${plan.label.toUpperCase()} · Fale com o suporte para fazer upgrade</div>\`
-    }
-  </div>\`;
+  const icon = isSuspended ? '🔒' : '⚡';
+  const title = isSuspended ? 'ACESSO SUSPENSO' : 'LIMITE DO PLANO';
+  const action = isSuspended
+    ? '<a href="https://wa.me/5548996962910" target="_blank" style="font-family:Oswald,sans-serif;font-size:12px;letter-spacing:2px;color:var(--gold);text-decoration:none;border:1px solid rgba(200,150,62,0.3);padding:6px 16px;display:inline-block;">📱 REGULARIZAR PAGAMENTO</a>'
+    : '<div style="font-family:Oswald,sans-serif;font-size:11px;letter-spacing:2px;color:#555;margin-top:4px;">Plano atual: ' + plan.label.toUpperCase() + ' · Fale com o suporte para fazer upgrade</div>';
+  return '<div style="background:rgba(204,26,26,0.08);border:1px solid rgba(204,26,26,0.25);border-left:3px solid var(--red);padding:16px 20px;margin:12px 0;text-align:center;">'
+    + '<div style="font-size:24px;margin-bottom:8px;">' + icon + '</div>'
+    + '<div style="font-family:Oswald,sans-serif;font-size:14px;letter-spacing:2px;color:var(--red);margin-bottom:6px;">' + title + '</div>'
+    + '<div style="font-family:Barlow,sans-serif;font-size:13px;color:#888;margin-bottom:12px;">' + message + '</div>'
+    + action
+    + '</div>';
 }
 
 // Badge de status do time
@@ -1086,19 +1270,21 @@ function renderStatusBadge() {
   const status = getTeamStatus();
   const plan = getPlan();
   const cfg = {
-    active:    { icon:'●', label:'ATIVO',     color:'#2ecc71' },
-    trial:     { icon:'◐', label:'TRIAL',     color:'var(--gold)' },
-    suspended: { icon:'✕', label:'SUSPENSO',  color:'var(--red)' }
+    active:    { icon:'●', label:'ATIVO',    color:'#2ecc71' },
+    trial:     { icon:'◐', label:'TRIAL',    color:'var(--gold)' },
+    suspended: { icon:'✕', label:'SUSPENSO', color:'var(--red)' }
   }[status] || { icon:'?', label:'–', color:'#555' };
 
-  // Dias restantes do vencimento
   let daysHtml = '';
   if (TEAM_CONFIG.nextBilling) {
     const days = Math.ceil((new Date(TEAM_CONFIG.nextBilling) - new Date()) / 86400000);
-    if (days <= 7 && days >= 0) daysHtml = \` <span style="color:var(--gold);font-size:10px;">· vence em \${days}d</span>\`;
-    else if (days < 0) daysHtml = \` <span style="color:var(--red);font-size:10px;">· \${Math.abs(days)}d vencido</span>\`;
+    if (days <= 7 && days >= 0)
+      daysHtml = ' <span style="color:var(--gold);font-size:10px;">· vence em ' + days + 'd</span>';
+    else if (days < 0)
+      daysHtml = ' <span style="color:var(--red);font-size:10px;">· ' + Math.abs(days) + 'd vencido</span>';
   }
-  return \`<span style="font-family:Oswald,sans-serif;font-size:10px;letter-spacing:1px;color:\${cfg.color};">\${cfg.icon} \${cfg.label} · \${plan.label.toUpperCase()}\${daysHtml}</span>\`;
+  return '<span style="font-family:Oswald,sans-serif;font-size:10px;letter-spacing:1px;color:' + cfg.color + ';">'
+    + cfg.icon + ' ' + cfg.label + ' · ' + plan.label.toUpperCase() + daysHtml + '</span>';
 }
 
 // Templates de cores pré-definidos
@@ -1268,7 +1454,7 @@ async function renderLanding() {
       ${logoHtml}
       <div class="team-card-name">${t.name}</div>
       <div class="team-card-city">${t.city || ''}${t.state ? ' · '+t.state : ''}</div>
-      <div class="team-card-badge">${(t.plan||'basic').toUpperCase()}</div>
+      <div class="team-card-badge">✦ ${t.plan === 'premium' ? 'GESTÃO DE ELITE' : t.plan === 'pro' ? 'TIME VERIFICADO' : 'CADASTRADO'}</div>
     </a>`;
   }).join('');
 }
