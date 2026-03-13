@@ -742,6 +742,11 @@ input, select, textarea, button { -webkit-tap-highlight-color: transparent; }
   .lp-plan { padding:32px 24px; }
 }
 
+@media(max-width:900px) {
+  /* Mockup grids empilham em coluna em telas menores */
+  .lp-mockup-row-1, .lp-mockup-row-2 { grid-template-columns: 1fr !important; }
+}
+
 /* ══════════════════ TELA BLOQUEADA ══════════════════ */
 .blocked-view { min-height:100vh; display:flex; align-items:center; justify-content:center; background:var(--black); padding:24px; }
 .blocked-box { max-width:480px; text-align:center; padding:48px 32px; background:var(--dark); border:1px solid #2a2a2a; border-top:3px solid var(--red); }
@@ -831,32 +836,110 @@ input, select, textarea, button { -webkit-tap-highlight-color: transparent; }
 
   <div class="lp-stripe"></div>
 
-  <!-- BENEFÍCIOS -->
-  <div style="background:#050505; border-top:1px solid #0d0d0d; border-bottom:1px solid #0d0d0d; padding:100px 24px;">
+  <!-- BENEFÍCIOS + MOCKUPS -->
+  <div style="background:#00060c; border-top:1px solid #0d0d0d; border-bottom:1px solid #0d0d0d; padding:100px 24px;">
     <div class="lp-section" style="padding:0; margin:0 auto;">
       <div class="lp-section-tag">POR QUE O GESTAOFC?</div>
       <h2 class="lp-section-title">Tudo que seu clube<br>precisa em um lugar</h2>
       <p class="lp-section-sub">Feito por quem entende de várzea. Sem complicação.</p>
-      <div class="lp-benefits-grid">
+
+      <!-- Fila 1: 2 benefícios + mockup escalação -->
+      <div style="display:grid;grid-template-columns:1fr 1fr 1.4fr;gap:2px;margin-bottom:2px;">
+        <div class="lp-benefit">
+          <div class="lp-benefit-icon">🎯</div>
+          <div class="lp-benefit-title">ESCALAÇÃO TÁTICA</div>
+          <div class="lp-benefit-text">Monte o time no campinho com drag & drop. 4-3-3, 4-4-2 e muito mais. Publique para os atletas antes do jogo.</div>
+        </div>
+        <div class="lp-benefit">
+          <div class="lp-benefit-icon">👥</div>
+          <div class="lp-benefit-title">CONVOCAÇÃO INTELIGENTE</div>
+          <div class="lp-benefit-text">Convoque em um clique por mensalidade em dia ou top presença. Controle quem confirmou e quem não apareceu.</div>
+        </div>
+        <!-- Mockup: Escalação -->
+        <div style="background:#000d18;border:1px solid rgba(237,181,24,0.08);overflow:hidden;position:relative;">
+          <div style="background:#070f18;padding:8px 12px;border-bottom:1px solid rgba(237,181,24,0.1);display:flex;align-items:center;gap:6px;">
+            <div style="width:6px;height:6px;border-radius:50%;background:#79031D;"></div>
+            <div style="width:6px;height:6px;border-radius:50%;background:#EDB518;opacity:.5;"></div>
+            <span style="font-family:'Oswald',sans-serif;font-size:9px;letter-spacing:2px;color:rgba(245,247,247,0.3);">ESCALAÇÃO TÁTICA — VS FAMÍLIA SAMBA</span>
+          </div>
+          <div style="padding:14px;display:flex;gap:10px;align-items:flex-start;">
+            <!-- Campinho mini -->
+            <div style="flex:1;background:#0d2a0d;border-radius:4px;padding:10px;min-height:180px;position:relative;">
+              <div style="font-family:'Oswald',sans-serif;font-size:7px;letter-spacing:2px;color:rgba(255,255,255,0.25);text-align:center;margin-bottom:8px;">4-3-3</div>
+              <!-- Atacantes -->
+              <div style="display:flex;justify-content:space-around;margin-bottom:8px;">
+                ${['MARCOS','VINí','JAMES'].map(n=>`<div style="width:36px;height:36px;border-radius:50%;background:rgba(121,3,29,0.6);border:1px solid rgba(237,181,24,0.4);display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:9px;color:#EDB518;">${n}</div>`).join('')}
+              </div>
+              <!-- Meias -->
+              <div style="display:flex;justify-content:space-around;margin-bottom:8px;">
+                ${['CARLOS','LUCAS','DIOGO'].map(n=>`<div style="width:36px;height:36px;border-radius:50%;background:rgba(0,4,7,0.8);border:1px solid rgba(245,247,247,0.15);display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:9px;color:#aaa;">${n}</div>`).join('')}
+              </div>
+              <!-- Defensores -->
+              <div style="display:flex;justify-content:space-around;margin-bottom:8px;">
+                ${['ANDRE','THIAGO','IVAN','PAULO'].map(n=>`<div style="width:30px;height:30px;border-radius:50%;background:rgba(0,4,7,0.8);border:1px solid rgba(245,247,247,0.1);display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:8px;color:#888;">${n}</div>`).join('')}
+              </div>
+              <!-- Goleiro -->
+              <div style="display:flex;justify-content:center;">
+                <div style="width:36px;height:36px;border-radius:50%;background:rgba(237,181,24,0.15);border:2px solid rgba(237,181,24,0.5);display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:9px;color:#EDB518;">MOIS</div>
+              </div>
+            </div>
+            <!-- Lista disponíveis -->
+            <div style="min-width:80px;">
+              <div style="font-family:'Oswald',sans-serif;font-size:7px;letter-spacing:2px;color:rgba(245,247,247,0.3);margin-bottom:6px;">BANCO</div>
+              ${['DINHO','GUILH','DOUG'].map(n=>`<div style="font-family:'Oswald',sans-serif;font-size:9px;color:rgba(245,247,247,0.5);padding:4px 6px;border-bottom:1px solid rgba(245,247,247,0.05);">${n}</div>`).join('')}
+              <div style="margin-top:8px;padding:5px 8px;background:#79031D;font-family:'Oswald',sans-serif;font-size:8px;letter-spacing:1px;color:#F5F7F7;text-align:center;">📋 PUBLICAR</div>
+            </div>
+          </div>
+          <div style="position:absolute;bottom:0;left:0;right:0;height:40px;background:linear-gradient(to top, #000d18, transparent);"></div>
+          <div style="position:absolute;top:8px;right:10px;font-family:'Oswald',sans-serif;font-size:8px;letter-spacing:1px;color:#EDB518;background:rgba(237,181,24,0.1);border:1px solid rgba(237,181,24,0.25);padding:2px 7px;">REAL</div>
+        </div>
+      </div>
+
+      <!-- Fila 2: mockup financeiro + 2 benefícios -->
+      <div style="display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:2px;">
+        <!-- Mockup: Financeiro -->
+        <div style="background:#000d18;border:1px solid rgba(237,181,24,0.08);overflow:hidden;position:relative;">
+          <div style="background:#070f18;padding:8px 12px;border-bottom:1px solid rgba(237,181,24,0.1);display:flex;align-items:center;gap:6px;">
+            <div style="width:6px;height:6px;border-radius:50%;background:#79031D;"></div>
+            <div style="width:6px;height:6px;border-radius:50%;background:#EDB518;opacity:.5;"></div>
+            <span style="font-family:'Oswald',sans-serif;font-size:9px;letter-spacing:2px;color:rgba(245,247,247,0.3);">FLUXO DE CAIXA · MARÇO 2026</span>
+          </div>
+          <div style="padding:14px;">
+            <!-- Saldo cards -->
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;margin-bottom:12px;">
+              ${[['SALDO','R$ 1.240','#EDB518'],['ENTRADAS','R$ 2.100','#2ecc71'],['SAÍDAS','R$ 860','#e74c3c']].map(([l,v,c])=>`
+                <div style="background:rgba(255,255,255,0.03);padding:7px;border:1px solid rgba(255,255,255,0.05);">
+                  <div style="font-family:'Oswald',sans-serif;font-size:7px;letter-spacing:1px;color:#444;">${l}</div>
+                  <div style="font-family:'Bebas Neue',sans-serif;font-size:14px;color:${c};letter-spacing:1px;">${v}</div>
+                </div>`).join('')}
+            </div>
+            <!-- Tabela mini -->
+            <div style="font-family:'Oswald',sans-serif;font-size:7px;letter-spacing:1px;color:#555;border-bottom:1px solid #111;padding-bottom:4px;margin-bottom:4px;display:flex;justify-content:space-between;">
+              <span>DESCRIÇÃO</span><span>TIPO</span><span>VALOR</span>
+            </div>
+            ${[['Mensalidade — Marcelo','📥 Entrada','+ R$ 30'],['Mensalidade — Lucas','📥 Entrada','+ R$ 30'],['Árbitro — Jogo #14','📤 Saída','- R$ 80'],['Mensalidade — Vini','📥 Entrada','+ R$ 30'],['Aluguel Campo','📤 Saída','- R$ 120']].map(([d,t,v])=>`
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.03);">
+                <span style="font-family:'Oswald',sans-serif;font-size:8px;color:rgba(245,247,247,0.5);flex:2;">${d}</span>
+                <span style="font-family:'Oswald',sans-serif;font-size:7px;color:#555;">${t}</span>
+                <span style="font-family:'Oswald',sans-serif;font-size:9px;color:${v.includes('+')?'#2ecc71':'#e74c3c'};min-width:55px;text-align:right;">${v}</span>
+              </div>`).join('')}
+            <div style="margin-top:8px;display:flex;gap:4px;">
+              <div style="flex:1;padding:4px;background:rgba(46,204,113,0.1);border:1px solid rgba(46,204,113,0.2);font-family:'Oswald',sans-serif;font-size:7px;letter-spacing:1px;color:#2ecc71;text-align:center;">+ ENTRADA</div>
+              <div style="flex:1;padding:4px;background:rgba(231,76,60,0.1);border:1px solid rgba(231,76,60,0.2);font-family:'Oswald',sans-serif;font-size:7px;letter-spacing:1px;color:#e74c3c;text-align:center;">- SAÍDA</div>
+            </div>
+          </div>
+          <div style="position:absolute;bottom:0;left:0;right:0;height:30px;background:linear-gradient(to top, #000d18, transparent);"></div>
+          <div style="position:absolute;top:8px;right:10px;font-family:'Oswald',sans-serif;font-size:8px;letter-spacing:1px;color:#EDB518;background:rgba(237,181,24,0.1);border:1px solid rgba(237,181,24,0.25);padding:2px 7px;">REAL</div>
+        </div>
         <div class="lp-benefit">
           <div class="lp-benefit-icon">💰</div>
           <div class="lp-benefit-title">TRANSPARÊNCIA FINANCEIRA</div>
-          <div class="lp-benefit-text">Chega de cobrar no grito. Controle mensalidades e fluxo de caixa com um clique. Cada centavo no lugar certo.</div>
-        </div>
-        <div class="lp-benefit">
-          <div class="lp-benefit-icon">🎯</div>
-          <div class="lp-benefit-title">DOMÍNIO TÁTICO</div>
-          <div class="lp-benefit-text">Escale seu time nos campinhos profissionais — 4-3-3, 4-4-2 e muito mais. Publique para os atletas antes do jogo.</div>
-        </div>
-        <div class="lp-benefit">
-          <div class="lp-benefit-icon">🏆</div>
-          <div class="lp-benefit-title">ENGAJAMENTO DE ELITE</div>
-          <div class="lp-benefit-text">Votação de MVP, súmulas detalhadas e Hall da Fama. Seus jogadores vão querer vir em todo jogo.</div>
+          <div class="lp-benefit-text">Chega de cobrar no grito. Controle mensalidades e fluxo de caixa com um clique. Cada centavo registrado.</div>
         </div>
         <div class="lp-benefit">
           <div class="lp-benefit-icon">📜</div>
           <div class="lp-benefit-title">HISTÓRIA ETERNIZADA</div>
-          <div class="lp-benefit-text">Linha do tempo exclusiva para contar a trajetória do seu clube. Fundação, títulos, momentos marcantes.</div>
+          <div class="lp-benefit-text">Linha do tempo exclusiva para contar a trajetória do clube. Fundação, títulos, momentos inesquecíveis.</div>
         </div>
       </div>
     </div>
@@ -921,6 +1004,75 @@ input, select, textarea, button { -webkit-tap-highlight-color: transparent; }
       <!-- Desconto anual -->
       <div style="text-align:center;margin-top:28px;font-family:'Oswald',sans-serif;font-size:11px;letter-spacing:2px;color:#333;">
         💰 ATÉ 30% DE DESCONTO NO PLANO ANUAL · <a href="https://wa.me/5548996962910" target="_blank" style="color:var(--gold);text-decoration:none;">FALAR COM A GENTE</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="lp-stripe"></div>
+
+  <!-- DEPOIMENTOS -->
+  <div style="background:#000407;padding:100px 24px;">
+    <div style="max-width:1100px;margin:0 auto;">
+      <div class="lp-section-tag" style="text-align:center;">PROVA SOCIAL</div>
+      <h2 class="lp-section-title" style="text-align:center;margin-bottom:8px;">O que dizem os<br><em style="color:#EDB518;font-style:normal;">Presidentes</em></h2>
+      <p class="lp-section-sub" style="text-align:center;margin-bottom:64px;">Times reais. Resultados reais.</p>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:2px;">
+
+        <!-- Depoimento 1 -->
+        <div style="background:#00060c;border:1px solid rgba(237,181,24,0.08);padding:36px 32px;position:relative;">
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:64px;color:rgba(237,181,24,0.12);line-height:0.7;margin-bottom:20px;user-select:none;">"</div>
+          <p style="font-family:'Barlow',sans-serif;font-size:15px;color:rgba(245,247,247,0.7);line-height:1.75;margin-bottom:28px;font-style:italic;">"Antes a gente controlava tudo no WhatsApp e caderninho. Hoje o presidente vê o saldo do caixa em tempo real, e os meninos já abrem o portal pra ver se estão convocados. Mudou o nível do nosso time."</p>
+          <div style="display:flex;align-items:center;gap:12px;border-top:1px solid rgba(237,181,24,0.08);padding-top:20px;">
+            <div style="width:40px;height:40px;border-radius:50%;background:rgba(121,3,29,0.3);border:1px solid rgba(121,3,29,0.5);display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:16px;color:#EDB518;flex-shrink:0;">MR</div>
+            <div>
+              <div style="font-family:'Oswald',sans-serif;font-size:13px;letter-spacing:2px;color:#F5F7F7;">MARCELO ROSA</div>
+              <div style="font-family:'Barlow',sans-serif;font-size:11px;color:rgba(237,181,24,0.6);">Presidente · Vira Copo FC — Palhoça/SC</div>
+            </div>
+            <div style="margin-left:auto;display:flex;gap:2px;">
+              ${[1,2,3,4,5].map(()=>'<span style="color:#EDB518;font-size:12px;">★</span>').join('')}
+            </div>
+          </div>
+        </div>
+
+        <!-- Depoimento 2 -->
+        <div style="background:#00060c;border:1px solid rgba(237,181,24,0.08);padding:36px 32px;position:relative;">
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:64px;color:rgba(237,181,24,0.12);line-height:0.7;margin-bottom:20px;user-select:none;">"</div>
+          <p style="font-family:'Barlow',sans-serif;font-size:15px;color:rgba(245,247,247,0.7);line-height:1.75;margin-bottom:28px;font-style:italic;">"A escalação com drag and drop é um diferencial absurdo. Mostrei pro grupo e virou assunto. Cada um fica esperando pra ver se o nome está no campinho. O engajamento no grupo triplicou."</p>
+          <div style="display:flex;align-items:center;gap:12px;border-top:1px solid rgba(237,181,24,0.08);padding-top:20px;">
+            <div style="width:40px;height:40px;border-radius:50%;background:rgba(21,101,192,0.25);border:1px solid rgba(21,101,192,0.4);display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:16px;color:#EDB518;flex-shrink:0;">FS</div>
+            <div>
+              <div style="font-family:'Oswald',sans-serif;font-size:13px;letter-spacing:2px;color:#F5F7F7;">FÁBIO SANTOS</div>
+              <div style="font-family:'Barlow',sans-serif;font-size:11px;color:rgba(237,181,24,0.6);">Presidente · Família Samba FC — Florianópolis/SC</div>
+            </div>
+            <div style="margin-left:auto;display:flex;gap:2px;">
+              ${[1,2,3,4,5].map(()=>'<span style="color:#EDB518;font-size:12px;">★</span>').join('')}
+            </div>
+          </div>
+        </div>
+
+        <!-- Depoimento 3 -->
+        <div style="background:#00060c;border:1px solid rgba(237,181,24,0.08);padding:36px 32px;position:relative;">
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:64px;color:rgba(237,181,24,0.12);line-height:0.7;margin-bottom:20px;user-select:none;">"</div>
+          <p style="font-family:'Barlow',sans-serif;font-size:15px;color:rgba(245,247,247,0.7);line-height:1.75;margin-bottom:28px;font-style:italic;">"Finalmente uma ferramenta que parece profissional mas foi feita pensando na gente. O valor da mensalidade cabe no bolso e o retorno é imediato. A inadimplência caiu porque todo mundo vê quem pagou."</p>
+          <div style="display:flex;align-items:center;gap:12px;border-top:1px solid rgba(237,181,24,0.08);padding-top:20px;">
+            <div style="width:40px;height:40px;border-radius:50%;background:rgba(46,125,50,0.25);border:1px solid rgba(46,125,50,0.4);display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:16px;color:#EDB518;flex-shrink:0;">RL</div>
+            <div>
+              <div style="font-family:'Oswald',sans-serif;font-size:13px;letter-spacing:2px;color:#F5F7F7;">RODRIGO LIMA</div>
+              <div style="font-family:'Barlow',sans-serif;font-size:11px;color:rgba(237,181,24,0.6);">Presidente · Rio Grande United — Palhoça/SC</div>
+            </div>
+            <div style="margin-left:auto;display:flex;gap:2px;">
+              ${[1,2,3,4,5].map(()=>'<span style="color:#EDB518;font-size:12px;">★</span>').join('')}
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- CTA abaixo dos depoimentos -->
+      <div style="text-align:center;margin-top:64px;">
+        <div style="font-family:'Oswald',sans-serif;font-size:11px;letter-spacing:4px;color:rgba(245,247,247,0.3);margin-bottom:20px;">PRONTO PARA ELEVAR SEU TIME?</div>
+        <a href="https://wa.me/5548996962910?text=Olá, quero conhecer o GestãoFC!" target="_blank" class="lp-btn-main">🚀 COMEÇAR AGORA — GRÁTIS POR 7 DIAS</a>
       </div>
     </div>
   </div>
@@ -2907,32 +3059,41 @@ function renderDjEscalacao() {
 }
 
 function buildDDField(formation, posSlots, players) {
-  const slots = FORMATIONS[formation] || [];
-  const rows = {};
-  slots.forEach(s => { if (!rows[s.row]) rows[s.row] = []; rows[s.row].push(s); });
-  const rowOrder = Object.keys(rows).sort((a,b) => Number(b) - Number(a));
+  const f = FORMATIONS[formation] || FORMATIONS['4-3-3'];
+  if (!f || !f.rows) return '<div style="color:#555;padding:20px;text-align:center;font-family:Oswald,sans-serif;">Forma&#231;&#227;o inv&#225;lida</div>';
 
-  let html = `<div style="background:#1a4a1a;border-radius:6px;padding:16px;position:relative;min-height:340px;">`;
-  html += `<div style="font-family:'Oswald',sans-serif;font-size:9px;letter-spacing:3px;color:rgba(255,255,255,0.3);text-align:center;margin-bottom:10px;">↑ ATAQUE</div>`;
+  const posColor = { GOL:'#e67e22', DEF:'#2980b9', VOL:'#8e44ad', MEI:'#27ae60', ATA:'#e74c3c' };
+  const rowsRev = [...f.rows].reverse();
 
-  rowOrder.forEach(row => {
-    html += `<div style="display:flex;justify-content:center;gap:8px;margin-bottom:12px;">`;
-    rows[row].forEach(slot => {
-      const pid = posSlots[slot.key] ? parseInt(posSlots[slot.key]) : null;
-      const player = pid ? players.find(p=>p.id===pid) : null;
-      const label = player ? `<span style="font-family:'Oswald',sans-serif;font-size:11px;color:#fff;white-space:nowrap;">${player.name.split(' ')[0]}</span>` : `<span style="font-family:'Oswald',sans-serif;font-size:9px;color:rgba(255,255,255,0.3);">${slot.label||slot.key}</span>`;
-      html += `<div class="slot-drop" id="ddslot-${slot.key}" data-key="${slot.key}"
-        ondragover="ddDragOver(event)" ondragleave="ddDragLeave(event)" ondrop="ddDrop(event,'${slot.key}')"
-        style="width:64px;height:64px;border-radius:50%;background:rgba(0,0,0,0.35);border:2px solid rgba(255,255,255,0.15);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;position:relative;text-align:center;padding:4px;"
-        ${player?`draggable="true" ondragstart="ddDragStart(event,${player.id},true,\'${slot.key}\')" class="slot-drop drag-player"`:'class="slot-drop"'}>
-        ${label}
-        ${player?`<button onclick="ddClearSlot('${slot.key}')" style="position:absolute;top:-4px;right:-4px;width:16px;height:16px;border-radius:50%;background:#cc1a1a;border:none;color:#fff;font-size:9px;cursor:pointer;line-height:1;padding:0;">✕</button>`:''}
+  let html = `<div style="background:linear-gradient(to bottom,#0a3d0a 0%,#145214 35%,#145214 65%,#0a3d0a 100%);border:2px solid #2d7a2d;border-radius:6px;padding:16px 8px;position:relative;width:100%;max-width:380px;">`;
+  html += `<div style="text-align:center;font-family:'Oswald',sans-serif;font-size:9px;letter-spacing:3px;color:rgba(255,255,255,0.3);margin-bottom:10px;">&#11014; ATAQUE</div>`;
+  html += `<div style="position:absolute;top:50%;left:5%;right:5%;height:1px;background:rgba(255,255,255,0.09);"></div>`;
+
+  rowsRev.forEach((row, ri) => {
+    const actualRi = f.rows.length - 1 - ri;
+    const color = posColor[row.pos] || '#555';
+    html += `<div style="display:flex;justify-content:center;gap:6px;margin-bottom:12px;flex-wrap:wrap;">`;
+    for (let si = 0; si < row.n; si++) {
+      const key    = getSlotKey(formation, actualRi, si);
+      const pid    = posSlots[key] ? parseInt(posSlots[key]) : null;
+      const player = pid ? players.find(p => p.id === pid) : null;
+      const bgSlot  = player ? 'rgba(0,0,0,0.5)'            : 'rgba(0,0,0,0.25)';
+      const bdrSlot = player ? color                         : 'rgba(255,255,255,0.18)';
+      html += `<div class="slot-drop${player?' drag-player':''}" id="ddslot-${key}" data-key="${key}"
+        ondragover="ddDragOver(event)" ondragleave="ddDragLeave(event)" ondrop="ddDrop(event,'${key}')"
+        ${player ? `draggable="true" ondragstart="ddDragStart(event,${player.id},true,'${key}')"` : ''}
+        style="width:62px;height:62px;border-radius:50%;background:${bgSlot};border:2px solid ${bdrSlot};display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:${player?'grab':'pointer'};position:relative;text-align:center;padding:4px;transition:border-color .15s,background .15s;">
+        <span style="font-family:'Bebas Neue',sans-serif;font-size:${player?'13':'9'}px;color:${player?'#fff':'rgba(255,255,255,0.28)'};white-space:nowrap;line-height:1.1;">
+          ${player ? player.name.split(' ')[0].substring(0,7) : row.pos}
+        </span>
+        ${player ? `<span style="font-family:'Oswald',sans-serif;font-size:8px;color:${color};">#${player.num}</span>` : ''}
+        ${player ? `<button onclick="ddClearSlot('${key}')" title="Remover" style="position:absolute;top:-3px;right:-3px;width:16px;height:16px;border-radius:50%;background:#cc1a1a;border:none;color:#fff;font-size:9px;cursor:pointer;line-height:1;padding:0;z-index:2;">&#10005;</button>` : ''}
       </div>`;
-    });
+    }
     html += `</div>`;
   });
 
-  html += `<div style="font-family:'Oswald',sans-serif;font-size:9px;letter-spacing:3px;color:rgba(255,255,255,0.3);text-align:center;margin-top:4px;">↓ DEFESA — GOLEIRO</div>`;
+  html += `<div style="text-align:center;font-family:'Oswald',sans-serif;font-size:9px;letter-spacing:3px;color:rgba(255,255,255,0.3);margin-top:4px;">&#11015; GOLEIRO</div>`;
   html += `</div>`;
   return html;
 }
