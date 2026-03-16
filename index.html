@@ -2594,7 +2594,7 @@ function buildAdminPanel() {
   // ── Definição dos grupos do menu (admin/diretoria) ──
   const MENU_GROUPS = [
     {
-      id: 'painel', label: '🏠 Painel', icon: '🏠',
+      id: 'painel', label: '🏠 Dashboard', icon: '🏠',
       subs: [
         { id:'proxjogo',  label:'Próximo Jogo' },
         { id:'agenda',    label:'Agenda' },
@@ -2603,26 +2603,34 @@ function buildAdminPanel() {
       ]
     },
     {
-      id: 'diajogo', label: '📋 Dia de Jogo', icon: '📋',
+      id: 'diajogo', label: '⚽ Dia de Jogo', icon: '⚽',
       subs: [
-        { id:'diajogo', label:'Gestão da Partida' }
+        { id:'diajogo',   label:'Convocação / Presença / Escalação' },
+        { id:'sumula',    label:'Súmulas' },
       ]
     },
     {
       id: 'financeiro', label: '💰 Financeiro', icon: '💰',
       subs: [
-        { id:'financeiro',      label:'Fluxo de Caixa' },
-        { id:'patrocinadores',  label:'Patrocinadores' },
+        { id:'caixa',         label:'Fluxo de Caixa' },
+        { id:'mensalidades',  label:'Mensalidades' },
+        { id:'socios',        label:'Sócios' },
+        { id:'valoresconfig', label:'Configurar Valores' },
+        { id:'patrocinadores',label:'Patrocinadores' },
       ]
     },
     {
-      id: 'config', label: '⚙️ Configurações', icon: '⚙️',
+      id: 'clube', label: '🛡️ Clube', icon: '🛡️',
       subs: [
         { id:'usuarios',  label:'Atletas' },
         { id:'branding',  label:'Identidade Visual' },
-        { id:'uniforme',  label:'Uniforme' },
+        { id:'uniforme',  label:'Uniformes' },
         { id:'historia',  label:'Linha do Tempo' },
-        { id:'sumula',    label:'Súmulas' },
+      ]
+    },
+    {
+      id: 'perfil', label: '👤 Perfil', icon: '👤',
+      subs: [
         { id:'meuperfil', label:'Meu Perfil' },
       ]
     }
@@ -2655,9 +2663,9 @@ function buildAdminPanel() {
 
     // Filtra grupos por role
     const groups = u.role === 'diretoria'
-      ? MENU_GROUPS.filter(g => g.id !== 'config').concat([{
-          id:'config', label:'⚙️ Config', icon:'⚙️',
-          subs:[{id:'usuarios',label:'Atletas'},{id:'meuperfil',label:'Meu Perfil'}]
+      ? MENU_GROUPS.filter(g => g.id !== 'clube').concat([{
+          id:'clube', label:'🛡️ Clube', icon:'🛡️',
+          subs:[{id:'usuarios',label:'Atletas'}]
         }])
       : MENU_GROUPS;
 
@@ -3220,7 +3228,13 @@ function renderPane(id) {
     sumula2: renderDossie,
     proxjogo: renderProxJogo,
     agenda: renderAgenda,
-    financeiro: renderFinanceiro,
+    // Financeiro split
+    financeiro: renderFinanceiro,   // alias legado
+    caixa: renderCaixa,
+    mensalidades: renderMensalidades,
+    socios: renderSocios,
+    valoresconfig: renderValoresConfig,
+    // Clube
     usuarios: renderUsuarios,
     convocacao: renderConvocacao,
     uniforme: renderUniforme,
@@ -3585,14 +3599,36 @@ function resetAllCheckins() {
 
 // ─── RANKING ───
 let adminRankingSeason = 'current'; // 'current' | year | 'geral'
+let adminRankingFilter = 'attendance'; // 'attendance' | 'goals' | 'assists' | 'mvp'
 
 function renderRanking(el) {
   const seasons = getAvailableSeasons();
-  const tabBtns = ['geral', ...seasons].map(yr => {
+
+  // ── Seletor de temporada (linha superior) ──
+  const seasonBtns = ['geral', ...seasons].map(yr => {
     const lbl = yr === 'geral' ? 'GERAL' : String(yr);
     const active = (adminRankingSeason === yr) || (adminRankingSeason === 'current' && yr === currentSeason);
-    return '<button onclick="adminRankingSeason=\'' + yr + '\';renderPane(\'ranking\')" style="font-family:Bebas Neue,sans-serif;font-size:14px;letter-spacing:2px;padding:5px 14px;border:1px solid ' +
-      (active?'var(--red)':'#333') + ';background:' + (active?'var(--red)':'transparent') + ';color:' + (active?'#fff':'#888') + ';cursor:pointer;transition:all .15s;">' + lbl + '</button>';
+    return '<button onclick="adminRankingSeason=\'' + yr + '\';renderPane(\'ranking\')"'
+      + ' style="font-family:\'Bebas Neue\',sans-serif;font-size:14px;letter-spacing:2px;padding:5px 14px;border:1px solid '
+      + (active?'var(--red)':'#333') + ';background:' + (active?'var(--red)':'transparent') + ';color:' + (active?'#fff':'#888') + ';cursor:pointer;transition:all .15s;">' + lbl + '</button>';
+  }).join('');
+
+  // ── Filtros de tipo ──
+  const filters = [
+    { id:'attendance', icon:'📅', label:'PRESENÇAS' },
+    { id:'goals',      icon:'⚽', label:'ARTILHARIA' },
+    { id:'assists',    icon:'🎯', label:'ASSISTÊNCIAS' },
+    { id:'mvp',        icon:'🏆', label:'MVP' },
+  ];
+  const filterBtns = filters.map(f => {
+    const active = adminRankingFilter === f.id;
+    return '<button onclick="adminRankingFilter=\'' + f.id + '\';renderPane(\'ranking\')"'
+      + ' style="font-family:Oswald,sans-serif;font-size:11px;letter-spacing:2px;padding:8px 16px;'
+      + 'border:none;cursor:pointer;transition:all .15s;white-space:nowrap;'
+      + 'background:' + (active?'var(--red)':'#111') + ';'
+      + 'color:' + (active?'#fff':'#888') + ';'
+      + 'border-bottom:2px solid ' + (active?'var(--red)':'transparent') + ';">'
+      + f.icon + ' ' + f.label + '</button>';
   }).join('');
 
   const yr = (adminRankingSeason === 'current') ? currentSeason : adminRankingSeason;
@@ -3601,28 +3637,49 @@ function renderRanking(el) {
     : getSeasonStats(yr).filter(p=>p.role!=='admin');
 
   const medal = i => '<span class="badge ' + (i===0?'badge-gold':i===1?'badge-gray':i===2?'badge-red':'') + '">' + (i+1) + 'º</span>';
-  const byAttend  = [...ps].sort((a,b)=>b.attendance-a.attendance||b.games-a.games);
-  const byMvp     = [...ps].sort((a,b)=>b.mvpPts-a.mvpPts);
-  const byGoals   = [...ps].sort((a,b)=>b.goals-a.goals).filter(p=>p.goals>0);
-  const byAssists = [...ps].sort((a,b)=>b.assists-a.assists).filter(p=>p.assists>0);
   const mkTable = (cols, rows) => '<table class="data-table"><thead><tr>' + cols.map(c=>'<th>'+c+'</th>').join('') + '</tr></thead><tbody>' + rows + '</tbody></table>';
   const empty = msg => '<p style="font-family:Oswald,sans-serif;font-size:12px;letter-spacing:2px;color:#555;padding:16px 0;">' + msg + '</p>';
 
-  el.innerHTML = '<div style="margin-bottom:20px;display:flex;gap:6px;flex-wrap:wrap;">' + tabBtns + '</div>' +
-    '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));gap:14px;">' +
-    '<div class="panel"><div class="panel-header"><span class="panel-title">📅 COMPARECIMENTO</span></div><div class="panel-body">' +
-    mkTable(['#','Atleta','Jogos','%'], byAttend.map((p,i)=>'<tr><td>'+medal(i)+'</td><td><strong>'+p.name.split(' ')[0]+'</strong></td><td style="text-align:center;">'+p.games+'</td><td><strong style="color:'+(p.attendance>=90?'var(--green)':p.attendance>=70?'var(--gold)':'var(--red-light)')+';">'+p.attendance+'%</strong></td></tr>').join('')) +
-    '</div></div>' +
-    '<div class="panel"><div class="panel-header"><span class="panel-title">⚽ ARTILHARIA</span></div><div class="panel-body">' +
-    (byGoals.length ? mkTable(['#','Atleta','Gols','Jogos'], byGoals.map((p,i)=>'<tr><td>'+medal(i)+'</td><td><strong>'+p.name.split(' ')[0]+'</strong></td><td><span style="font-family:Bebas Neue,sans-serif;font-size:22px;color:var(--gold);">'+p.goals+'</span></td><td style="color:#666;font-size:12px;">'+p.games+'</td></tr>').join('')) : empty('Nenhum gol registrado.')) +
-    '</div></div>' +
-    '<div class="panel"><div class="panel-header"><span class="panel-title">🎯 ASSISTÊNCIAS</span></div><div class="panel-body">' +
-    (byAssists.length ? mkTable(['#','Atleta','Assist.','Jogos'], byAssists.map((p,i)=>'<tr><td>'+medal(i)+'</td><td><strong>'+p.name.split(' ')[0]+'</strong></td><td><span style="font-family:Bebas Neue,sans-serif;font-size:22px;color:#3498db;">'+p.assists+'</span></td><td style="color:#666;font-size:12px;">'+p.games+'</td></tr>').join('')) : empty('Nenhuma assistência registrada.')) +
-    '</div></div>' +
-    '<div class="panel"><div class="panel-header"><span class="panel-title">🏆 MVP</span></div><div class="panel-body">' +
-    mkTable(['#','Atleta','Gols','Pts MVP'], byMvp.map((p,i)=>'<tr><td>'+medal(i)+'</td><td><strong>'+p.name.split(' ')[0]+'</strong></td><td style="color:var(--gold);">'+p.goals+'</td><td><span style="font-family:Bebas Neue,sans-serif;font-size:20px;color:var(--gold-light);">'+p.mvpPts+'</span></td></tr>').join('')) +
-    '</div></div></div>';
+  let tableHtml = '';
+  switch (adminRankingFilter) {
+    case 'goals': {
+      const list = [...ps].sort((a,b)=>b.goals-a.goals).filter(p=>p.goals>0);
+      tableHtml = list.length
+        ? mkTable(['#','Atleta','Gols','Jogos'],
+            list.map((p,i)=>'<tr><td>'+medal(i)+'</td><td><strong>'+p.name.split(' ')[0]+'</strong></td><td><span style="font-family:\'Bebas Neue\',sans-serif;font-size:22px;color:var(--gold);">'+p.goals+'</span></td><td style="color:#666;font-size:12px;">'+p.games+'</td></tr>').join(''))
+        : empty('Nenhum gol registrado.');
+      break;
+    }
+    case 'assists': {
+      const list = [...ps].sort((a,b)=>b.assists-a.assists).filter(p=>p.assists>0);
+      tableHtml = list.length
+        ? mkTable(['#','Atleta','Assist.','Jogos'],
+            list.map((p,i)=>'<tr><td>'+medal(i)+'</td><td><strong>'+p.name.split(' ')[0]+'</strong></td><td><span style="font-family:\'Bebas Neue\',sans-serif;font-size:22px;color:#3498db;">'+p.assists+'</span></td><td style="color:#666;font-size:12px;">'+p.games+'</td></tr>').join(''))
+        : empty('Nenhuma assistência registrada.');
+      break;
+    }
+    case 'mvp': {
+      const list = [...ps].sort((a,b)=>b.mvpPts-a.mvpPts);
+      tableHtml = mkTable(['#','Atleta','Gols','Pts MVP'],
+        list.map((p,i)=>'<tr><td>'+medal(i)+'</td><td><strong>'+p.name.split(' ')[0]+'</strong></td><td style="color:var(--gold);">'+p.goals+'</td><td><span style="font-family:\'Bebas Neue\',sans-serif;font-size:20px;color:var(--gold-light);">'+p.mvpPts+'</span></td></tr>').join(''));
+      break;
+    }
+    default: { // attendance
+      const list = [...ps].sort((a,b)=>b.attendance-a.attendance||b.games-a.games);
+      tableHtml = mkTable(['#','Atleta','Jogos','% Presença'],
+        list.map((p,i)=>'<tr><td>'+medal(i)+'</td><td><strong>'+p.name.split(' ')[0]+'</strong></td><td style="text-align:center;">'+p.games+'</td><td><strong style="color:'+(p.attendance>=90?'var(--green)':p.attendance>=70?'var(--gold)':'var(--red-light)')+';">'+p.attendance+'%</strong></td></tr>').join(''));
+    }
+  }
+
+  el.innerHTML =
+    // linha de temporadas
+    '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;">' + seasonBtns + '</div>'
+    // filtros de tipo (aba interna)
+    + '<div style="display:flex;gap:0;border-bottom:1px solid #1e1e1e;margin-bottom:20px;overflow-x:auto;">' + filterBtns + '</div>'
+    // tabela
+    + '<div class="panel"><div class="panel-body">' + tableHtml + '</div></div>';
 }
+
 
 // ─── ESCALAÇÃO ───
 function buildFieldReadOnly() {
@@ -4665,15 +4722,27 @@ function renderAgenda(el) {
       </div>
       <div class="panel-body">
 
-        <!-- Season tabs -->
-        <div style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap;">
+        <!-- Seletor de temporada inline (filtro de página) -->
+        <div style="display:flex;align-items:center;gap:0;border-bottom:1px solid #2a2a2a;margin-bottom:20px;overflow-x:auto;">
           ${seasons.map(yr => `
             <button onclick="switchAgendaSeason(${yr})"
-              style="font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:3px;padding:8px 20px;border:2px solid ${yr===currentSeason?'var(--red)':'#333'};background:${yr===currentSeason?'var(--red)':'transparent'};color:${yr===currentSeason?'#fff':'#666'};cursor:pointer;transition:all .2s;">
+              style="font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:3px;padding:10px 20px;
+                     border:none;border-bottom:2px solid ${yr===currentSeason?'var(--red)':'transparent'};
+                     background:transparent;color:${yr===currentSeason?'var(--red-light)':'#666'};
+                     cursor:pointer;transition:all .15s;white-space:nowrap;">
               ${yr}
             </button>`).join('')}
-          <button onclick="addAgendaSeason()" style="font-family:'Oswald',sans-serif;font-size:11px;letter-spacing:2px;padding:8px 14px;border:1px dashed #444;background:transparent;color:#666;cursor:pointer;">+ NOVA TEMPORADA</button>
-          <button onclick="saveElencoSnapshot(currentSeason)" style="font-family:'Oswald',sans-serif;font-size:11px;letter-spacing:2px;padding:8px 14px;border:1px solid rgba(200,150,62,0.3);background:transparent;color:var(--gold);cursor:pointer;" title="Salvar snapshot do elenco desta temporada para histórico">📸 SALVAR ELENCO</button>
+          <button onclick="addAgendaSeason()"
+            style="font-family:'Oswald',sans-serif;font-size:10px;letter-spacing:2px;padding:10px 14px;
+                   border:none;border-bottom:2px solid transparent;background:transparent;
+                   color:#444;cursor:pointer;white-space:nowrap;">+ NOVA TEMPORADA</button>
+          <div style="margin-left:auto;padding:6px 0;">
+            <button onclick="saveElencoSnapshot(currentSeason)"
+              style="font-family:'Oswald',sans-serif;font-size:10px;letter-spacing:2px;padding:6px 12px;
+                     border:1px solid rgba(200,150,62,0.3);background:transparent;color:var(--gold);cursor:pointer;white-space:nowrap;">
+              📸 SALVAR ELENCO
+            </button>
+          </div>
         </div>
 
         <!-- Add game form -->
@@ -4922,6 +4991,148 @@ function buildAddSocioForm() {
 }
 
 
+// ─── HELPERS FINANCEIRO (compartilhados) ─────────────────────
+function _finSetup() {
+  ensureMonthlyPayments();
+  const u = currentUser;
+  const isManager = u.role === 'admin' || u.role === 'diretoria';
+  const months = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  const stIcon  = st => st===true?'✅':st==='skip'?'—':'⭕';
+  const stBg    = st => st===true?'rgba(46,204,113,0.15)':st==='skip'?'rgba(255,255,255,0.03)':'rgba(204,26,26,0.07)';
+  const stColor = st => st===true?'var(--green)':st==='skip'?'#555':'var(--red-light)';
+  const players = DB.players.filter(p => p.role !== 'admin' && p.role !== 'convidado').sort((a,b)=>a.name.localeCompare(b.name,'pt'));
+  if (!DB.socios) DB.socios = [];
+  const socios = DB.socios.slice().sort((a,b)=>a.name.localeCompare(b.name,'pt'));
+  return { u, isManager, months, stIcon, stBg, stColor, players, socios };
+}
+
+// ─── CAIXA ────────────────────────────────────────────────────
+function renderCaixa(el) {
+  const { isManager } = _finSetup();
+  if (!DB.caixa) DB.caixa = { saldo:0, transacoes:[] };
+  const caixa = DB.caixa;
+  const entradas = caixa.transacoes.filter(t=>t.valor>0).reduce((s,t)=>s+t.valor,0);
+  const saidas   = caixa.transacoes.filter(t=>t.valor<0).reduce((s,t)=>s+t.valor,0);
+
+  const saldoColor = caixa.saldo>=0 ? 'var(--green)' : 'var(--red-light)';
+
+  el.innerHTML = '<div class="panel">'
+    + '<div class="panel-header"><span class="panel-title">💰 CAIXA DO CLUBE</span>'
+    + '<span class="badge" style="background:' + (caixa.saldo>=0?'rgba(46,204,113,0.2)':'rgba(204,26,26,0.2)') + ';color:' + saldoColor + ';font-family:\'Bebas Neue\',sans-serif;font-size:18px;padding:4px 12px;">R$ ' + caixa.saldo.toFixed(2) + '</span>'
+    + '</div><div class="panel-body">'
+    + '<div class="grid-3col-sm" style="margin-bottom:20px;">'
+    + '<div style="background:rgba(46,204,113,0.08);border:1px solid rgba(46,204,113,0.2);padding:14px;text-align:center;"><div style="font-family:\'Bebas Neue\',sans-serif;font-size:24px;color:var(--green);">R$ ' + entradas.toFixed(2) + '</div><div style="font-family:\'Oswald\',sans-serif;font-size:9px;letter-spacing:2px;color:#666;">ENTRADAS</div></div>'
+    + '<div style="background:rgba(204,26,26,0.08);border:1px solid rgba(204,26,26,0.2);padding:14px;text-align:center;"><div style="font-family:\'Bebas Neue\',sans-serif;font-size:24px;color:var(--red-light);">R$ ' + Math.abs(saidas).toFixed(2) + '</div><div style="font-family:\'Oswald\',sans-serif;font-size:9px;letter-spacing:2px;color:#666;">SAÍDAS</div></div>'
+    + '<div style="background:' + (caixa.saldo>=0?'rgba(46,204,113,0.08)':'rgba(204,26,26,0.08)') + ';border:1px solid ' + (caixa.saldo>=0?'rgba(46,204,113,0.2)':'rgba(204,26,26,0.2)') + ';padding:14px;text-align:center;"><div style="font-family:\'Bebas Neue\',sans-serif;font-size:24px;color:' + saldoColor + ';">R$ ' + caixa.saldo.toFixed(2) + '</div><div style="font-family:\'Oswald\',sans-serif;font-size:9px;letter-spacing:2px;color:#666;">SALDO</div></div>'
+    + '</div>'
+    + '<div style="display:grid;grid-template-columns:2fr 1fr auto auto;gap:8px;align-items:end;margin-bottom:16px;flex-wrap:wrap;">'
+    + '<div class="form-group" style="margin:0;"><label>DESCRIÇÃO</label><input type="text" id="txDesc" placeholder="Ex: Mensalidades março, Compra de bola..." style="background:var(--mid);border:1px solid #444;color:var(--white);padding:8px 10px;font-family:Oswald,sans-serif;font-size:13px;width:100%;outline:none;"></div>'
+    + '<div class="form-group" style="margin:0;"><label>VALOR (R$)</label><input type="number" id="txValor" step="0.01" placeholder="0.00" style="background:var(--mid);border:1px solid #444;color:var(--white);padding:8px 10px;font-family:Oswald,sans-serif;font-size:13px;width:100%;outline:none;"></div>'
+    + '<button onclick="addTransacao(1)" class="btn btn-primary" style="padding:8px 14px;white-space:nowrap;">+ ENTRADA</button>'
+    + '<button onclick="addTransacao(-1)" style="padding:8px 14px;white-space:nowrap;background:rgba(204,26,26,0.15);border:1px solid rgba(204,26,26,0.4);color:var(--red-light);cursor:pointer;font-family:\'Bebas Neue\',sans-serif;font-size:15px;letter-spacing:1px;">− SAÍDA</button>'
+    + '</div>'
+    + (caixa.transacoes.length
+      ? '<table class="data-table"><thead><tr><th>Data</th><th>Descrição</th><th style="text-align:right;">Valor</th><th style="text-align:center;">Del</th></tr></thead><tbody>'
+        + [...caixa.transacoes].reverse().slice(0,30).map(t =>
+          '<tr><td style="font-size:11px;color:#666;white-space:nowrap;">' + t.data + '</td>'
+          + '<td>' + t.desc + '</td>'
+          + '<td style="text-align:right;font-family:\'Bebas Neue\',sans-serif;font-size:18px;color:' + (t.valor>0?'var(--green)':'var(--red-light)') + ';">' + (t.valor>0?'+':'') + 'R$ ' + Math.abs(t.valor).toFixed(2) + '</td>'
+          + '<td style="text-align:center;"><button onclick="deleteTransacao(' + t.id + ')" style="background:rgba(180,0,0,0.2);border:1px solid rgba(180,0,0,0.35);color:#ff6666;cursor:pointer;padding:3px 8px;font-size:13px;">🗑️</button></td></tr>'
+        ).join('')
+        + '</tbody></table>'
+      : '<p style="font-family:Oswald,sans-serif;font-size:12px;letter-spacing:2px;color:#555;text-align:center;padding:20px 0;">Nenhuma transação registrada ainda.</p>')
+    + '</div></div>';
+}
+
+// Patch addTransacao to call renderCaixa
+function _renderActiveCaixa() {
+  const el = document.getElementById('pane-caixa');
+  if (el && el.classList.contains('active')) renderCaixa(el);
+  else renderPane('financeiro'); // fallback
+}
+
+// ─── MENSALIDADES ─────────────────────────────────────────────
+function renderMensalidades(el) {
+  const { u, isManager, months, stIcon, stBg, stColor, players } = _finSetup();
+  const totalPaid = p => months.filter(m => p.monthlyPayments[m]===true).length;
+  const overallPaid = players.filter(p => totalPaid(p)>=6).length;
+
+  if (!isManager) {
+    // visão do atleta: seus próprios meses
+    const p = u;
+    let cells = '<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-top:8px;">';
+    months.forEach(m => {
+      const st = (p.monthlyPayments||{})[m];
+      cells += '<div style="background:' + stBg(st) + ';border:1px solid ' + (st===true?'rgba(46,204,113,0.3)':st==='skip'?'#2a2a2a':'rgba(204,26,26,0.2)') + ';padding:10px 6px;text-align:center;">'
+        + '<div style="font-family:Oswald,sans-serif;font-size:10px;letter-spacing:2px;color:' + stColor(st) + ';margin-bottom:5px;">' + m + '</div>'
+        + '<div style="font-size:18px;">' + stIcon(st) + '</div></div>';
+    });
+    cells += '</div><div style="margin-top:16px;padding:14px;background:var(--mid);border:1px solid #333;">'
+      + '<div style="font-family:Oswald,sans-serif;font-size:12px;letter-spacing:2px;color:var(--gold);margin-bottom:6px;">RESUMO</div>'
+      + '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:32px;color:' + (totalPaid(p)>=6?'var(--green)':totalPaid(p)>=3?'var(--gold)':'var(--red-light)') + ';">' + totalPaid(p) + '/12 meses pagos</div></div>';
+    el.innerHTML = '<div class="panel"><div class="panel-header"><span class="panel-title">💳 MINHAS MENSALIDADES</span></div><div class="panel-body">' + cells + '</div></div>';
+    return;
+  }
+
+  // Tabela manager
+  let thCells = '<th>Atleta</th>';
+  months.forEach(m => { thCells += '<th style="text-align:center;padding:6px 3px;font-size:10px;">' + m + '</th>'; });
+  thCells += '<th style="text-align:center;">Pago</th>';
+
+  let rows = '';
+  players.forEach(p => {
+    const paid = totalPaid(p);
+    const paidColor = paid>=6?'var(--green)':paid>=3?'var(--gold)':'var(--red-light)';
+    let cells = '';
+    months.forEach(m => {
+      const st = p.monthlyPayments[m];
+      cells += '<td style="text-align:center;padding:3px;"><button onclick="cycleMonth(' + p.id + ',' + JSON.stringify(m) + ')"'
+        + ' style="width:30px;height:28px;border-radius:3px;border:none;cursor:pointer;font-size:13px;background:' + stBg(st) + ';color:' + stColor(st) + ';transition:all .15s;">'
+        + stIcon(st) + '</button></td>';
+    });
+    const photoHtml = p.photo ? '<img src="' + p.photo + '" style="width:22px;height:22px;border-radius:50%;object-fit:cover;vertical-align:middle;margin-right:6px;">' : '';
+    rows += '<tr><td style="white-space:nowrap;font-size:13px;">' + photoHtml + p.name.split(' ')[0] + (p.suspended?'<span style="font-size:11px;">🚫</span>':'') + '</td>'
+      + cells
+      + '<td style="text-align:center;font-family:\'Bebas Neue\',sans-serif;font-size:18px;color:' + paidColor + ';">' + paid + '/12</td></tr>';
+  });
+
+  el.innerHTML = '<div class="panel"><div class="panel-header">'
+    + '<span class="panel-title">💳 MENSALIDADES ATLETAS — 2026</span>'
+    + '<span class="badge badge-green">' + overallPaid + '/' + players.length + ' em dia</span>'
+    + '</div><div class="panel-body">'
+    + '<div style="overflow-x:auto;-webkit-overflow-scrolling:touch;">'
+    + '<p style="font-family:Oswald,sans-serif;font-size:11px;letter-spacing:2px;color:#666;margin-bottom:12px;">Clique → ✅ Pago · Novamente → — Sem cobrança · Novamente → ⭕ Pendente</p>'
+    + '<table class="data-table" style="min-width:750px;"><thead><tr>' + thCells + '</tr></thead><tbody>' + rows + '</tbody></table>'
+    + '</div></div></div>';
+}
+
+// ─── SÓCIOS ───────────────────────────────────────────────────
+function renderSocios(el) {
+  const { isManager, months, stIcon, stBg, stColor, socios } = _finSetup();
+  const valorMensal = DB.socioMensalidadeValor || 20;
+  el.innerHTML = buildSociosTable(socios, months, stIcon, stBg, stColor, valorMensal)
+    + (isManager ? buildAddSocioForm() : '');
+}
+
+// ─── CONFIGURAR VALORES ───────────────────────────────────────
+function renderValoresConfig(el) {
+  el.innerHTML = '<div class="panel"><div class="panel-header"><span class="panel-title">⚙️ VALORES DE MENSALIDADE</span></div>'
+    + '<div class="panel-body">'
+    + '<div style="display:flex;align-items:flex-end;gap:24px;flex-wrap:wrap;">'
+    + '<div class="form-group" style="margin:0;"><label>MENSALIDADE ATLETA (R$)</label>'
+    + '<input type="number" id="mensValorInput" step="0.01" min="0" value="' + (DB.mensalidadeValor||30) + '"'
+    + ' style="width:140px;background:var(--mid);border:1px solid #444;color:var(--white);padding:8px 10px;font-family:Oswald,sans-serif;font-size:22px;outline:none;text-align:center;"></div>'
+    + '<div class="form-group" style="margin:0;"><label>MENSALIDADE SÓCIO (R$)</label>'
+    + '<input type="number" id="socioValorInput" step="0.01" min="0" value="' + (DB.socioMensalidadeValor||20) + '"'
+    + ' style="width:140px;background:var(--mid);border:1px solid #444;color:var(--white);padding:8px 10px;font-family:Oswald,sans-serif;font-size:22px;outline:none;text-align:center;"></div>'
+    + '<button onclick="salvarMensalidadeValor()" class="btn btn-primary" style="padding:10px 20px;">💾 SALVAR VALORES</button>'
+    + '</div>'
+    + '<p style="font-family:Oswald,sans-serif;font-size:11px;letter-spacing:1px;color:#555;margin-top:14px;">'
+    + 'Ao marcar uma mensalidade como paga, o valor é lançado automaticamente no Fluxo de Caixa.</p>'
+    + '</div></div>';
+}
+
+
 function renderFinanceiro(el) {
   ensureMonthlyPayments();
   const u = currentUser;
@@ -5154,7 +5365,7 @@ function addTransacao(sinal) {
   DB.caixa.transacoes.push({ id:Date.now(), desc, valor:v, data });
   DB.caixa.saldo = parseFloat((DB.caixa.saldo + v).toFixed(2));
   sbSaveConfig('caixa');
-  renderPane('financeiro');
+  renderPane(document.getElementById('pane-caixa')?.classList.contains('active') ? 'caixa' : 'financeiro');
   showNotif(`✅ ${sinal>0?'Entrada':'Saída'} de R$ ${valor.toFixed(2)} registrada.`);
 }
 
@@ -5166,7 +5377,7 @@ function deleteTransacao(id) {
   DB.caixa.saldo = parseFloat((DB.caixa.saldo - tx.valor).toFixed(2));
   DB.caixa.transacoes = DB.caixa.transacoes.filter(t => t.id !== id);
   sbSaveConfig('caixa');
-  renderPane('financeiro');
+  renderPane(document.getElementById('pane-caixa')?.classList.contains('active') ? 'caixa' : 'financeiro');
   showNotif('🗑️ Lançamento removido e saldo ajustado.');
 }
 
@@ -5193,7 +5404,12 @@ function cycleMonth(playerId, month, isSocio) {
     sbSaveConfig('caixa');
   }
   if (isSocio) sbSaveSocios(); else sbSavePlayers([playerId]);
-  renderPane('financeiro');
+  // Refresh whichever financial pane is currently active
+  const _activeFin = ['mensalidades','socios','financeiro'].find(id => {
+    const el = document.getElementById('pane-' + id);
+    return el && el.classList.contains('active');
+  });
+  renderPane(_activeFin || 'financeiro');
 }
 
 function toggleMonth(playerId, month) { cycleMonth(playerId, month); }
