@@ -1681,8 +1681,9 @@ async function renderLanding() {
 }
 
 function navigateToTeam(slug) {
-  window.history.pushState({}, '', '/' + slug);
-  initSaaS();
+  // URL correta para GitHub Pages: /gestaofc/?team=slug
+  const base = window.location.pathname.replace(/\/?$/, '/');
+  window.location.href = base + '?team=' + encodeURIComponent(slug);
 }
 
        // ex: https://xyzxyz.supabase.co
