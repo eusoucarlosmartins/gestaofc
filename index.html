@@ -1941,9 +1941,9 @@ async function sbLoad() {
 
     // ── config ───────────────────────────────────────────
     cfg.forEach(c => {
-      if (c.key === 'uniform')           DB.uniform          = c.value;
+      if (c.key === 'uniform')           { try { const _u = JSON.parse(c.value); DB.uniform = (typeof _u === 'object' && _u !== null) ? _u : { active: false, color: c.value }; } catch(e){ DB.uniform = { active: false, color: c.value }; } }
       if (c.key === 'vote_window')       DB.voteWindow       = c.value;
-      if (c.key === 'sponsors')          DB.sponsors         = c.value;
+      if (c.key === 'sponsors')          { try { DB.sponsors = JSON.parse(c.value); } catch(e){ DB.sponsors = []; } }
       if (c.key === 'convocados')        { try { DB.convocados    = JSON.parse(c.value); } catch(e){} }
       if (c.key === 'caixa')             { try { DB.caixa         = JSON.parse(c.value); } catch(e){} }
       if (c.key === 'mensalidade_valor')       DB.mensalidadeValor = parseFloat(c.value) || 30;
@@ -1974,26 +1974,30 @@ async function sbLoad() {
     renderPublicSite();
   } catch(e) {
     showLoadingOverlay(false);
+    console.error('[GestãoFC] sbLoad erro:', e.name, e.message, e.stack?.split('\n')[1]);
     const isNetworkErr = e.message && (e.message.includes('fetch') || e.message.includes('network') || e.message.includes('ERR_'));
     if (isNetworkErr) {
       console.warn('Supabase offline — modo local ativo.', e.message);
-      // Show subtle offline badge, not a scary red error
       const tag = document.getElementById('localModeTag');
-      if (tag) { tag.style.display = 'inline'; tag.textContent = '🔴 OFFLINE'; tag.title = 'Sem conexão com Supabase. Abra o arquivo localmente para sincronizar.'; }
+      if (tag) { tag.style.display = 'inline'; tag.textContent = '🔴 OFFLINE'; }
       renderPublicSite();
     } else {
-      console.error('Supabase load error:', e);
-      // Mostra mensagem mais útil com o motivo real
+      // Mostra o erro real no console e uma mensagem útil
       const errMsg = e.message || String(e);
+      console.error('[GestãoFC] Erro completo:', errMsg);
       const tableMatch = errMsg.match(/GET (\w+): (\d+)/);
       if (tableMatch) {
         const [, tbl, code] = tableMatch;
-        if (code === '404') showNotif('⚠️ Tabela "' + tbl + '" não existe no Supabase. Execute as migrações SQL.', true);
-        else if (code === '401' || code === '403') showNotif('⚠️ Acesso negado na tabela "' + tbl + '". Verifique as políticas RLS.', true);
-        else showNotif('⚠️ Erro na tabela "' + tbl + '" (HTTP ' + code + '). Verifique o Supabase.', true);
+        if (code === '404') showNotif('⚠️ Tabela "' + tbl + '" não existe. Execute fix_supabase_complete.sql', true);
+        else if (code === '401' || code === '403') showNotif('⚠️ Sem acesso à tabela "' + tbl + '". Verifique RLS.', true);
+        else showNotif('⚠️ Erro na tabela "' + tbl + '" (HTTP ' + code + ').', true);
+      } else if (e instanceof TypeError) {
+        // TypeError = erro de código JS no processamento, não do Supabase
+        showNotif('⚠️ Erro ao processar dados: ' + errMsg.substring(0, 100) + ' — veja console (F12)', true);
       } else {
-        showNotif('⚠️ Erro ao carregar dados: ' + errMsg.substring(0, 80), true);
+        showNotif('⚠️ ' + errMsg.substring(0, 100), true);
       }
+      // Carrega mesmo assim com dados locais
       renderPublicSite();
     }
   }
@@ -2601,6 +2605,7 @@ function renderPublicSite() {
   // ── Patrocinadores ──
   const spEl = document.getElementById('pubSponsorsGrid');
   if (spEl) {
+    if (!Array.isArray(DB.sponsors)) DB.sponsors = [];
     const spCards = DB.sponsors.map(s => {
       // Build href: prefer site, then instagram, then whatsapp
       const href = s.site ? (s.site.startsWith('http') ? s.site : 'https://' + s.site)
