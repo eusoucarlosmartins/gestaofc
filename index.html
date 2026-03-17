@@ -2613,29 +2613,71 @@ function renderPublicSite() {
 
   // ── Hall da Fama por temporada ──
   const hofTabs = document.getElementById('hofSeasonTabs');
-  if (hofTabs) hofTabs.innerHTML = pubSeasonTabsHtml('hof', pubHofSeason, 'setPubHofSeason');
-  // Hall da Fama: stats calculados dos dossiers do ano selecionado
-  const hofPlayers = getStatsBySeason(pubHofSeason || currentSeason);
-  const hof = document.getElementById('pubHofGrid');
-  if (hof && hofPlayers.length) {
-    const art  = [...hofPlayers].sort((a,b)=>b.goals-a.goals)[0];
-    const gar  = [...hofPlayers].sort((a,b)=>b.assists-a.assists)[0];
-    const mvp  = [...hofPlayers].sort((a,b)=>b.mvpPts-a.mvpPts)[0];
-    const pres = [...hofPlayers].sort((a,b)=>b.attendance-a.attendance)[0];
-    hof.innerHTML = [
-      { crown:'⚽', title:'Artilheiro',       p:art,  stat: art.goals + ' gols' },
-      { crown:'🎯', title:'Garçom do Time',   p:gar,  stat: gar.assists + ' assist.' },
-      { crown:'🏆', title:'MVP da Temporada', p:mvp,  stat: mvp.mvpPts + ' pts' },
-      { crown:'📅', title:'Presença Total',   p:pres, stat: pres.attendance + '%' }
-    ].map(h => {
-      const photoEl = h.p.photo
-        ? '<img src="' + h.p.photo + '" style="width:60px;height:60px;border-radius:50%;object-fit:cover;border:2px solid var(--gold);margin:8px auto;">'
-        : '<div class="hof-avatar" style="font-family:Bebas Neue,sans-serif;font-size:22px;">' + h.p.name.split(' ')[0].substring(0,2).toUpperCase() + '</div>';
-      return '<div class="hof-card"><div class="hof-crown">' + h.crown + '</div>' +
-        '<div class="hof-title">' + h.title + '</div>' + photoEl +
-        '<div class="hof-name">' + h.p.name.split(' ')[0] + '</div>' +
-        '<div class="hof-stat"><strong>' + h.stat + '</strong></div></div>';
-    }).join('');
+
+  // Seleção inteligente: recua para o último ano com súmulas se o selecionado estiver vazio
+  const _dossByYear = function(yr) {
+    return (DB.dossies||[]).filter(function(d){
+      return (d.date||d.scheduleDate||'').split('/')[2] === String(yr);
+    });
+  };
+  let _hofYearEff = pubHofSeason || currentSeason;
+  if (_dossByYear(_hofYearEff).length === 0) {
+    var _yrs = getAvailableSeasons().slice().sort(function(a,b){return b-a;});
+    var _found = _yrs.find(function(yr){ return _dossByYear(yr).length > 0; });
+    if (_found) _hofYearEff = _found;
+  }
+
+  if (hofTabs) hofTabs.innerHTML = pubSeasonTabsHtml('hof', _hofYearEff, 'setPubHofSeason');
+
+  var hofPlayers = getStatsBySeason(_hofYearEff);
+  var hof = document.getElementById('pubHofGrid');
+
+  if (hof) {
+    var _hofDossies = _dossByYear(_hofYearEff);
+
+    if (_hofDossies.length === 0) {
+      // Temporada sem súmulas — aviso visual
+      hof.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px 20px;">'
+        + '<div style="font-size:40px;margin-bottom:12px;">⏳</div>'
+        + '<div style="font-family:Bebas Neue,sans-serif;font-size:24px;letter-spacing:3px;color:var(--white);margin-bottom:8px;">TEMPORADA EM ANDAMENTO</div>'
+        + '<div style="font-family:Barlow,sans-serif;font-size:14px;color:#555;">Os destaques aparecerão aqui após a primeira súmula ser registrada.</div>'
+        + '</div>';
+    } else {
+      // Só aponta campeão se tem pontos reais (evita "0 gols" no Hall)
+      var _best = function(arr, key) {
+        var sorted = arr.slice().sort(function(a,b){ return b[key]-a[key]; });
+        return (sorted[0] && sorted[0][key] > 0) ? sorted[0] : null;
+      };
+      var art  = _best(hofPlayers, 'goals');
+      var gar  = _best(hofPlayers, 'assists');
+      var mvp  = _best(hofPlayers, 'mvpPts');
+      var pres = hofPlayers.slice().sort(function(a,b){return b.attendance-a.attendance;})[0] || null;
+
+      var mkHofCard = function(crown, title, p, stat) {
+        if (!p) {
+          return '<div class="hof-card" style="opacity:.45;">'
+            + '<div class="hof-crown">' + crown + '</div>'
+            + '<div class="hof-title">' + title + '</div>'
+            + '<div class="hof-avatar" style="font-family:Bebas Neue,sans-serif;font-size:22px;">—</div>'
+            + '<div class="hof-name" style="color:#555;">Sem dados</div>'
+            + '<div class="hof-stat"><strong>—</strong></div></div>';
+        }
+        var photoEl = p.photo
+          ? '<img src="' + p.photo + '" style="width:60px;height:60px;border-radius:50%;object-fit:cover;border:2px solid var(--gold);margin:8px auto;">'
+          : '<div class="hof-avatar" style="font-family:Bebas Neue,sans-serif;font-size:22px;">' + p.name.split(' ')[0].substring(0,2).toUpperCase() + '</div>';
+        return '<div class="hof-card"><div class="hof-crown">' + crown + '</div>'
+          + '<div class="hof-title">' + title + '</div>' + photoEl
+          + '<div class="hof-name">' + p.name.split(' ')[0] + '</div>'
+          + '<div class="hof-stat"><strong>' + stat + '</strong></div></div>';
+      };
+
+      hof.innerHTML = [
+        mkHofCard('⚽', 'Artilheiro',       art,  art  ? art.goals + ' gol' + (art.goals !== 1 ? 's' : '')  : ''),
+        mkHofCard('🎯', 'Garçom do Time',   gar,  gar  ? gar.assists + ' assist.'   : ''),
+        mkHofCard('🏆', 'MVP da Temporada', mvp,  mvp  ? mvp.mvpPts + ' pts'        : ''),
+        mkHofCard('📅', 'Presença Total',   pres, pres ? pres.attendance + '%'       : ''),
+      ].join('');
+    }
   }
 
   // ── Elenco por temporada ──
@@ -3845,7 +3887,7 @@ function renderRanking(el) {
     const lbl = yr === 'geral' ? 'GERAL' : String(yr);
     const active = (adminRankingSeason === yr) || (adminRankingSeason === 'current' && yr === currentSeason);
     return '<button onclick="adminRankingSeason=\'' + yr + '\';renderPane(\'ranking\')"'
-      + ' style="font-family:\'Bebas Neue\',sans-serif;font-size:14px;letter-spacing:2px;padding:5px 14px;border:1px solid '
+      + ' style="font-family:Bebas Neue,sans-serif;font-size:14px;letter-spacing:2px;padding:5px 14px;border:1px solid '
       + (active?'var(--red)':'#333') + ';background:' + (active?'var(--red)':'transparent') + ';color:' + (active?'#fff':'#888') + ';cursor:pointer;transition:all .15s;">' + lbl + '</button>';
   }).join('');
 
@@ -3883,7 +3925,7 @@ function renderRanking(el) {
       const list = [...ps].sort((a,b)=>b.goals-a.goals).filter(p=>p.goals>0);
       tableHtml = list.length
         ? mkTable(['#','Atleta','Gols','Jogos'],
-            list.map((p,i)=>'<tr><td>'+medal(i)+'</td><td><strong>'+p.name.split(' ')[0]+'</strong></td><td><span style="font-family:\'Bebas Neue\',sans-serif;font-size:22px;color:var(--gold);">'+p.goals+'</span></td><td style="color:#666;font-size:12px;">'+p.games+'</td></tr>').join(''))
+            list.map((p,i)=>'<tr><td>'+medal(i)+'</td><td><strong>'+p.name.split(' ')[0]+'</strong></td><td><span style="font-family:Bebas Neue,sans-serif;font-size:22px;color:var(--gold);">'+p.goals+'</span></td><td style="color:#666;font-size:12px;">'+p.games+'</td></tr>').join(''))
         : empty('Nenhum gol registrado.');
       break;
     }
@@ -3891,14 +3933,14 @@ function renderRanking(el) {
       const list = [...ps].sort((a,b)=>b.assists-a.assists).filter(p=>p.assists>0);
       tableHtml = list.length
         ? mkTable(['#','Atleta','Assist.','Jogos'],
-            list.map((p,i)=>'<tr><td>'+medal(i)+'</td><td><strong>'+p.name.split(' ')[0]+'</strong></td><td><span style="font-family:\'Bebas Neue\',sans-serif;font-size:22px;color:#3498db;">'+p.assists+'</span></td><td style="color:#666;font-size:12px;">'+p.games+'</td></tr>').join(''))
+            list.map((p,i)=>'<tr><td>'+medal(i)+'</td><td><strong>'+p.name.split(' ')[0]+'</strong></td><td><span style="font-family:Bebas Neue,sans-serif;font-size:22px;color:#3498db;">'+p.assists+'</span></td><td style="color:#666;font-size:12px;">'+p.games+'</td></tr>').join(''))
         : empty('Nenhuma assistência registrada.');
       break;
     }
     case 'mvp': {
       const list = [...ps].sort((a,b)=>b.mvpPts-a.mvpPts);
       tableHtml = mkTable(['#','Atleta','Gols','Pts MVP'],
-        list.map((p,i)=>'<tr><td>'+medal(i)+'</td><td><strong>'+p.name.split(' ')[0]+'</strong></td><td style="color:var(--gold);">'+p.goals+'</td><td><span style="font-family:\'Bebas Neue\',sans-serif;font-size:20px;color:var(--gold-light);">'+p.mvpPts+'</span></td></tr>').join(''));
+        list.map((p,i)=>'<tr><td>'+medal(i)+'</td><td><strong>'+p.name.split(' ')[0]+'</strong></td><td style="color:var(--gold);">'+p.goals+'</td><td><span style="font-family:Bebas Neue,sans-serif;font-size:20px;color:var(--gold-light);">'+p.mvpPts+'</span></td></tr>').join(''));
       break;
     }
     default: { // attendance
@@ -5301,7 +5343,7 @@ function buildSociosTable(socios, months, stIcon, stBg, stColor, valorMensal) {
       + '<span style="font-size:11px;color:#4a9eff;margin-right:6px;">\uD83E\uDD1D</span>'
       + s.name.split(' ')[0] + since + '</td>'
       + cells
-      + '<td style="text-align:center;font-family:\'Bebas Neue\',sans-serif;font-size:18px;color:' + paidColor + ';">' + paid + '/12</td>'
+      + '<td style="text-align:center;font-family:Bebas Neue,sans-serif;font-size:18px;color:' + paidColor + ';">' + paid + '/12</td>'
       + '<td style="text-align:center;"><button onclick="' + rmOnclk + '" title="Remover"'
       + ' style="background:rgba(180,0,0,0.2);border:1px solid rgba(180,0,0,0.35);'
       + 'color:#ff6666;cursor:pointer;padding:3px 8px;font-size:13px;">\uD83D\uDDD1\uFE0F</button></td>'
@@ -5373,25 +5415,25 @@ function renderCaixa(el) {
 
   el.innerHTML = '<div class="panel">'
     + '<div class="panel-header"><span class="panel-title">💰 CAIXA DO CLUBE</span>'
-    + '<span class="badge" style="background:' + (caixa.saldo>=0?'rgba(46,204,113,0.2)':'rgba(204,26,26,0.2)') + ';color:' + saldoColor + ';font-family:\'Bebas Neue\',sans-serif;font-size:18px;padding:4px 12px;">R$ ' + caixa.saldo.toFixed(2) + '</span>'
+    + '<span class="badge" style="background:' + (caixa.saldo>=0?'rgba(46,204,113,0.2)':'rgba(204,26,26,0.2)') + ';color:' + saldoColor + ';font-family:Bebas Neue,sans-serif;font-size:18px;padding:4px 12px;">R$ ' + caixa.saldo.toFixed(2) + '</span>'
     + '</div><div class="panel-body">'
     + '<div class="grid-3col-sm" style="margin-bottom:20px;">'
-    + '<div style="background:rgba(46,204,113,0.08);border:1px solid rgba(46,204,113,0.2);padding:14px;text-align:center;"><div style="font-family:\'Bebas Neue\',sans-serif;font-size:24px;color:var(--green);">R$ ' + entradas.toFixed(2) + '</div><div style="font-family:\'Oswald\',sans-serif;font-size:9px;letter-spacing:2px;color:#666;">ENTRADAS</div></div>'
-    + '<div style="background:rgba(204,26,26,0.08);border:1px solid rgba(204,26,26,0.2);padding:14px;text-align:center;"><div style="font-family:\'Bebas Neue\',sans-serif;font-size:24px;color:var(--red-light);">R$ ' + Math.abs(saidas).toFixed(2) + '</div><div style="font-family:\'Oswald\',sans-serif;font-size:9px;letter-spacing:2px;color:#666;">SAÍDAS</div></div>'
-    + '<div style="background:' + (caixa.saldo>=0?'rgba(46,204,113,0.08)':'rgba(204,26,26,0.08)') + ';border:1px solid ' + (caixa.saldo>=0?'rgba(46,204,113,0.2)':'rgba(204,26,26,0.2)') + ';padding:14px;text-align:center;"><div style="font-family:\'Bebas Neue\',sans-serif;font-size:24px;color:' + saldoColor + ';">R$ ' + caixa.saldo.toFixed(2) + '</div><div style="font-family:\'Oswald\',sans-serif;font-size:9px;letter-spacing:2px;color:#666;">SALDO</div></div>'
+    + '<div style="background:rgba(46,204,113,0.08);border:1px solid rgba(46,204,113,0.2);padding:14px;text-align:center;"><div style="font-family:Bebas Neue,sans-serif;font-size:24px;color:var(--green);">R$ ' + entradas.toFixed(2) + '</div><div style="font-family:\'Oswald\',sans-serif;font-size:9px;letter-spacing:2px;color:#666;">ENTRADAS</div></div>'
+    + '<div style="background:rgba(204,26,26,0.08);border:1px solid rgba(204,26,26,0.2);padding:14px;text-align:center;"><div style="font-family:Bebas Neue,sans-serif;font-size:24px;color:var(--red-light);">R$ ' + Math.abs(saidas).toFixed(2) + '</div><div style="font-family:\'Oswald\',sans-serif;font-size:9px;letter-spacing:2px;color:#666;">SAÍDAS</div></div>'
+    + '<div style="background:' + (caixa.saldo>=0?'rgba(46,204,113,0.08)':'rgba(204,26,26,0.08)') + ';border:1px solid ' + (caixa.saldo>=0?'rgba(46,204,113,0.2)':'rgba(204,26,26,0.2)') + ';padding:14px;text-align:center;"><div style="font-family:Bebas Neue,sans-serif;font-size:24px;color:' + saldoColor + ';">R$ ' + caixa.saldo.toFixed(2) + '</div><div style="font-family:\'Oswald\',sans-serif;font-size:9px;letter-spacing:2px;color:#666;">SALDO</div></div>'
     + '</div>'
     + '<div style="display:grid;grid-template-columns:2fr 1fr auto auto;gap:8px;align-items:end;margin-bottom:16px;flex-wrap:wrap;">'
     + '<div class="form-group" style="margin:0;"><label>DESCRIÇÃO</label><input type="text" id="txDesc" placeholder="Ex: Mensalidades março, Compra de bola..." style="background:var(--mid);border:1px solid #444;color:var(--white);padding:8px 10px;font-family:Oswald,sans-serif;font-size:13px;width:100%;outline:none;"></div>'
     + '<div class="form-group" style="margin:0;"><label>VALOR (R$)</label><input type="number" id="txValor" step="0.01" placeholder="0.00" style="background:var(--mid);border:1px solid #444;color:var(--white);padding:8px 10px;font-family:Oswald,sans-serif;font-size:13px;width:100%;outline:none;"></div>'
     + '<button onclick="addTransacao(1)" class="btn btn-primary" style="padding:8px 14px;white-space:nowrap;">+ ENTRADA</button>'
-    + '<button onclick="addTransacao(-1)" style="padding:8px 14px;white-space:nowrap;background:rgba(204,26,26,0.15);border:1px solid rgba(204,26,26,0.4);color:var(--red-light);cursor:pointer;font-family:\'Bebas Neue\',sans-serif;font-size:15px;letter-spacing:1px;">− SAÍDA</button>'
+    + '<button onclick="addTransacao(-1)" style="padding:8px 14px;white-space:nowrap;background:rgba(204,26,26,0.15);border:1px solid rgba(204,26,26,0.4);color:var(--red-light);cursor:pointer;font-family:Bebas Neue,sans-serif;font-size:15px;letter-spacing:1px;">− SAÍDA</button>'
     + '</div>'
     + (caixa.transacoes.length
       ? '<table class="data-table"><thead><tr><th>Data</th><th>Descrição</th><th style="text-align:right;">Valor</th><th style="text-align:center;">Del</th></tr></thead><tbody>'
         + [...caixa.transacoes].reverse().slice(0,30).map(t =>
           '<tr><td style="font-size:11px;color:#666;white-space:nowrap;">' + t.data + '</td>'
           + '<td>' + t.desc + '</td>'
-          + '<td style="text-align:right;font-family:\'Bebas Neue\',sans-serif;font-size:18px;color:' + (t.valor>0?'var(--green)':'var(--red-light)') + ';">' + (t.valor>0?'+':'') + 'R$ ' + Math.abs(t.valor).toFixed(2) + '</td>'
+          + '<td style="text-align:right;font-family:Bebas Neue,sans-serif;font-size:18px;color:' + (t.valor>0?'var(--green)':'var(--red-light)') + ';">' + (t.valor>0?'+':'') + 'R$ ' + Math.abs(t.valor).toFixed(2) + '</td>'
           + '<td style="text-align:center;"><button onclick="deleteTransacao(' + t.id + ')" style="background:rgba(180,0,0,0.2);border:1px solid rgba(180,0,0,0.35);color:#ff6666;cursor:pointer;padding:3px 8px;font-size:13px;">🗑️</button></td></tr>'
         ).join('')
         + '</tbody></table>'
@@ -5424,7 +5466,7 @@ function renderMensalidades(el) {
     });
     cells += '</div><div style="margin-top:16px;padding:14px;background:var(--mid);border:1px solid #333;">'
       + '<div style="font-family:Oswald,sans-serif;font-size:12px;letter-spacing:2px;color:var(--gold);margin-bottom:6px;">RESUMO</div>'
-      + '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:32px;color:' + (totalPaid(p)>=6?'var(--green)':totalPaid(p)>=3?'var(--gold)':'var(--red-light)') + ';">' + totalPaid(p) + '/12 meses pagos</div></div>';
+      + '<div style="font-family:Bebas Neue,sans-serif;font-size:32px;color:' + (totalPaid(p)>=6?'var(--green)':totalPaid(p)>=3?'var(--gold)':'var(--red-light)') + ';">' + totalPaid(p) + '/12 meses pagos</div></div>';
     el.innerHTML = '<div class="panel"><div class="panel-header"><span class="panel-title">💳 MINHAS MENSALIDADES</span></div><div class="panel-body">' + cells + '</div></div>';
     return;
   }
@@ -5441,7 +5483,7 @@ function renderMensalidades(el) {
     let cells = '';
     months.forEach(m => {
       const st = p.monthlyPayments[m];
-      const _oc = 'cycleMonth(' + p.id + ',"' + m + '")';
+      const _oc = 'cycleMonth(' + p.id + ",\'" + m + "\')"; // single quotes around month avoids onclick attr conflict
       cells += '<td style="text-align:center;padding:3px;">'
         + '<button onclick="' + _oc + '"'
         + ' style="width:30px;height:28px;border-radius:3px;border:none;cursor:pointer;font-size:13px;background:' + stBg(st) + ';color:' + stColor(st) + ';transition:all .15s;">'
@@ -5451,7 +5493,7 @@ function renderMensalidades(el) {
     const roleDot = '<span style="font-size:11px;margin-right:4px;color:#4a9eff;">⚽</span>';
     rows += '<tr><td style="white-space:nowrap;font-size:13px;">' + roleDot + photoHtml + p.name.split(' ')[0] + (p.suspended?'<span style="font-size:11px;">🚫</span>':'') + '</td>'
       + cells
-      + '<td style="text-align:center;font-family:\'Bebas Neue\',sans-serif;font-size:18px;color:' + paidColor + ';">' + paid + '/12</td></tr>';
+      + '<td style="text-align:center;font-family:Bebas Neue,sans-serif;font-size:18px;color:' + paidColor + ';">' + paid + '/12</td></tr>';
   });
 
   el.innerHTML = '<div class="panel"><div class="panel-header">'
@@ -6143,7 +6185,7 @@ function renderPatrocinadores(el) {
         const valorBadge = s.gratuito
           ? '<span style="font-family:Oswald,sans-serif;font-size:9px;letter-spacing:1px;color:var(--gold);background:rgba(200,150,62,0.1);border:1px solid rgba(200,150,62,0.3);padding:2px 7px;margin-left:6px;">PERMUTA</span>'
           : (s.valor > 0
-            ? '<span style="font-family:\'Bebas Neue\',sans-serif;font-size:14px;color:var(--green);margin-left:6px;">R$ ' + Number(s.valor).toFixed(2) + '/mês</span>'
+            ? '<span style="font-family:Bebas Neue,sans-serif;font-size:14px;color:var(--green);margin-left:6px;">R$ ' + Number(s.valor).toFixed(2) + '/mês</span>'
             : '');
 
         return '<div style="border:1px solid #1e1e1e;margin-bottom:8px;background:var(--mid);">'
