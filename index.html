@@ -6619,13 +6619,28 @@ function showModal(html) {
 // ══════════════════════════════════════════════
 function showViewRaw(v) {
   if (v === 'blocked') console.trace('[GestãoFC] showViewRaw(blocked) chamado por:');
+
+  // superadmin-login: mostra view-superadmin + abre overlay sem passar pelo site do time
+  if (v === 'superadmin-login') {
+    document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
+    var _saV = document.getElementById('view-superadmin');
+    if (_saV) _saV.classList.add('active');
+    var _navSA = document.querySelector('.top-nav');
+    var _banSA = document.getElementById('uniformBanner');
+    if (_navSA) _navSA.style.display = 'none';
+    if (_banSA) _banSA.style.display = 'none';
+    window.scrollTo(0,0);
+    showSaLoginOverlay();
+    return;
+  }
+
   document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
-  const el = document.getElementById('view-' + v);
+  var el = document.getElementById('view-' + v);
   if (el) el.classList.add('active');
-  // Nav só aparece nas páginas dos times (site/admin), não na landing nem superadmin
-  const nav = document.querySelector('.top-nav');
-  const banner = document.getElementById('uniformBanner');
-  const showNav = (v === 'site' || v === 'admin');
+  // Nav só aparece nas páginas dos times (site/admin)
+  var nav = document.querySelector('.top-nav');
+  var banner = document.getElementById('uniformBanner');
+  var showNav = (v === 'site' || v === 'admin');
   if (nav) nav.style.display = showNav ? '' : 'none';
   if (banner) banner.style.display = showNav ? '' : 'none';
   window.scrollTo(0,0);
@@ -6642,6 +6657,11 @@ function doSaLogin() {
     // Esconde TODAS as views antes de mostrar o superadmin
     document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
     document.getElementById('view-superadmin').classList.add('active');
+    // Garante navbar do time oculta no super admin
+    const _nav = document.querySelector('.top-nav');
+    const _ban = document.getElementById('uniformBanner');
+    if (_nav) _nav.style.display = 'none';
+    if (_ban) _ban.style.display = 'none';
     window.scrollTo(0,0);
     document.getElementById('saUserLabel').textContent = 'Logado como: ' + SA_USER;
     // Ativa a aba Times e renderiza
@@ -8056,11 +8076,9 @@ async function initSaaS() {
   // ── Super Admin ──
   if (slug === 'admin') {
     console.log('[GestãoFC] → Super Admin detectado');
-    applyTeamBranding(TEAM_CONFIG);
-    showViewRaw('site');
-    renderPublicSite();
-    showSaLoginOverlay();
-    return; // IMPORTANTE: não cai no renderLanding abaixo
+    // Vai direto para a view institucional — sem navbar de time
+    showViewRaw('superadmin-login');
+    return;
   }
 
   // ── Sem slug = Landing Page de vendas ──
@@ -8857,10 +8875,14 @@ async function confirmActivateTeam(teamId) {
 </script>
 <!-- ══ SUPER ADMIN ══ -->
 <div id="view-superadmin" class="view sa-view">
-  <div class="sa-header">
-    <div>
-      <div class="sa-header-title">GESTÃO FC <span>/ SUPER ADMIN</span></div>
-      <div style="font-family:'Oswald',sans-serif;font-size:11px;letter-spacing:2px;color:#555;margin-top:2px;" id="saUserLabel">–</div>
+  <div class="sa-header" style="background:#000407;border-bottom:2px solid #EDB518;">
+    <div style="display:flex;align-items:center;gap:14px;">
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:4px;color:#F5F7F7;">GESTÃO<span style="color:#EDB518;">FC</span></div>
+      <div style="width:1px;height:28px;background:#1a1a1a;"></div>
+      <div>
+        <div style="font-family:'Oswald',sans-serif;font-size:11px;letter-spacing:3px;color:#EDB518;">SUPER ADMIN</div>
+        <div style="font-family:'Oswald',sans-serif;font-size:9px;letter-spacing:2px;color:#333;margin-top:1px;" id="saUserLabel">–</div>
+      </div>
     </div>
     <div style="display:flex;gap:10px;align-items:center;">
       <span id="saMrrBadge" style="font-family:'Oswald',sans-serif;font-size:11px;letter-spacing:2px;color:var(--gold);background:rgba(200,150,62,0.1);border:1px solid rgba(200,150,62,0.2);padding:4px 10px;">MRR: R$ 0</span>
