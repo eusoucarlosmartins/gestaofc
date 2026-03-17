@@ -2297,10 +2297,18 @@ function getSeasonStats(yr) {
 
 // Resultados filtrados por temporada
 function getResultsBySeason(yr) {
+  // Garante que DB.results está atualizado com os dossiers
+  if (!DB.results || DB.results.length === 0) recalcResultsFromDossies();
   if (!yr || yr === 'geral') return [...DB.results].sort((a,b) => dateToMs(b.date)-dateToMs(a.date));
   const games = (DB.scheduleAll && DB.scheduleAll[yr]) || [];
   const dates = new Set(games.map(g => g.date));
-  return DB.results.filter(r => dates.has(r.date)).sort((a,b) => dateToMs(b.date)-dateToMs(a.date));
+  const byDate = DB.results.filter(r => dates.has(r.date)).sort((a,b) => dateToMs(b.date)-dateToMs(a.date));
+  // Fallback: se não achar por temporada, filtra por ano do date
+  if (!byDate.length && yr) {
+    return DB.results.filter(r => r.date && r.date.endsWith('/' + yr))
+      .sort((a,b) => dateToMs(b.date)-dateToMs(a.date));
+  }
+  return byDate;
 }
 
 function dateToMs(s) {
@@ -3032,9 +3040,25 @@ function renderDjConv() {
     // Ícone e cor por categoria
   const catIcon  = p.role === 'convidado' ? '🎟️' : p.role === 'diretoria' ? '🛡️' : '⚽';
   const catColor = p.role === 'convidado' ? '#888' : p.role === 'diretoria' ? 'var(--gold)' : '#4a9eff';
-  const paidBadge = group === 'atleta' && p.monthlyPayments
-      ? (Object.values(p.monthlyPayments).filter(v=>v===true).length >= 3 ? '<span style="font-size:9px;color:#2ecc71;">✓pago</span>' : '')
-      : '';
+
+  // Verifica inadimplência: olha os últimos 3 meses do calendário
+  const _allMonths = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  const _curMonth  = new Date().getMonth(); // 0-indexed
+  const _last3     = [(_curMonth-2+12)%12, (_curMonth-1+12)%12, _curMonth].map(i => _allMonths[i]);
+  const _paidRecent = group === 'atleta' && p.monthlyPayments
+    ? _last3.filter(m => p.monthlyPayments[m] === true).length
+    : 3; // convidados/diretoria não têm cobrança
+  const _isOverdue  = group === 'atleta' && _paidRecent === 0;
+  const _isPartial  = group === 'atleta' && _paidRecent > 0 && _paidRecent < 3;
+  const _totalPaid  = p.monthlyPayments ? Object.values(p.monthlyPayments).filter(v=>v===true).length : 0;
+
+  const paidBadge = group === 'atleta'
+    ? (_isOverdue
+        ? '<span style="font-size:9px;font-family:Oswald,sans-serif;letter-spacing:1px;background:rgba(204,26,26,0.25);color:var(--red-light);border:1px solid rgba(204,26,26,0.5);padding:1px 5px;margin-left:4px;border-radius:2px;">⚠ INADIMP.</span>'
+        : _isPartial
+        ? '<span style="font-size:9px;font-family:Oswald,sans-serif;letter-spacing:1px;color:var(--gold);margin-left:4px;">⚡ ' + _paidRecent + '/3</span>'
+        : '<span style="font-size:9px;color:#2ecc71;margin-left:4px;">✓ em dia</span>')
+    : '';
     return `<div onclick="${isSusp ? `showNotif('${p.name.split(' ')[0]} suspenso!',true)` : `djToggleConv(${p.id})`}"
       style="display:flex;align-items:center;gap:10px;padding:9px 12px;background:${isConv?'rgba(200,150,62,0.1)':isSusp?'rgba(204,26,26,0.05)':'#0f0f0f'};border:1px solid ${isConv?'rgba(200,150,62,0.35)':isSusp?'rgba(204,26,26,0.2)':'#1e1e1e'};cursor:${isSusp?'not-allowed':'pointer'};transition:all .15s;">
       ${photo}
@@ -3058,7 +3082,18 @@ function renderDjConv() {
 
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start;">
       <div>
-        <div style="font-family:'Oswald',sans-serif;font-size:10px;letter-spacing:3px;color:var(--gold);border-bottom:1px solid #222;padding-bottom:8px;margin-bottom:10px;">💰 MENSALISTAS (${allAtletas.length})</div>
+        <div style="font-family:'Oswald',sans-serif;font-size:10px;letter-spacing:3px;color:var(--gold);border-bottom:1px solid #222;padding-bottom:8px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;">
+          <span>💰 MENSALISTAS (${allAtletas.length})</span>
+          ${(() => {
+            const _months2 = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+            const _cm2 = new Date().getMonth();
+            const _l3  = [(_cm2-2+12)%12,(_cm2-1+12)%12,_cm2].map(i=>_months2[i]);
+            const inadimp = allAtletas.filter(p => _l3.filter(m=>(p.monthlyPayments||{})[m]===true).length===0).length;
+            return inadimp > 0
+              ? '<span style="font-family:Oswald,sans-serif;font-size:9px;letter-spacing:1px;background:rgba(204,26,26,0.2);color:var(--red-light);border:1px solid rgba(204,26,26,0.4);padding:3px 8px;border-radius:2px;">⚠ ' + inadimp + ' INADIMPLENTE' + (inadimp>1?'S':'') + '</span>'
+              : '<span style="font-size:9px;color:#2ecc71;">✅ TODOS EM DIA</span>';
+          })()}
+        </div>
         <div style="display:flex;flex-direction:column;gap:4px;">${allAtletas.map(p=>buildCard(p,'atleta')).join('') || '<p style="color:#444;font-family:Oswald,sans-serif;font-size:11px;padding:12px 0;">Nenhum atleta cadastrado.</p>'}</div>
       </div>
       <div>
@@ -4655,6 +4690,44 @@ function dossie_setSlotPlayer(key, val) {
 // a partir dos dossiers. Chamado após salvar súmula e após load.
 // É a fonte de verdade: evita acúmulo duplo em edições.
 // ════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════
+// DOSSIER como fonte única — reconstrói DB.results dos dossiers
+// Evita divergência entre súmula e resultados públicos
+// ════════════════════════════════════════════════════════════
+function recalcResultsFromDossies() {
+  const dossies = DB.dossies || [];
+  const players = DB.players.filter(p => p.role !== 'admin');
+
+  DB.results = dossies.map(d => {
+    const scorerText = (d.scorers || [])
+      .filter(sc => !sc.gc)
+      .map(sc => {
+        const p = players.find(x => x.id == sc.id);
+        return p ? p.name.split(' ')[0] + (sc.qty > 1 ? ' (' + sc.qty + ')' : '') : '';
+      }).filter(Boolean);
+
+    const assistText = (d.assists || []).map(pid => {
+      const p = players.find(x => x.id == pid);
+      return p ? p.name.split(' ')[0] : '';
+    }).filter(Boolean);
+
+    // Busca logo do adversário na agenda
+    const allGames = Object.values(DB.scheduleAll || {}).flat().concat(DB.schedule || []);
+    const gameRef = allGames.find(g => g.date === (d.date||d.scheduleDate) && g.adversary === (d.adversary||d.scheduleAdv));
+
+    return {
+      id:           d.id,
+      adversary:    d.adversary || d.scheduleAdv || '',
+      score_us:     d.us,
+      score_them:   d.them,
+      date:         d.date || d.scheduleDate || '',
+      scorers:      scorerText,
+      assists:      assistText,
+      adversaryLogo: d.adversaryLogo || gameRef?.adversaryLogo || null,
+    };
+  }).sort((a, b) => dateToMs(b.date) - dateToMs(a.date));
+}
+
 function recalcStatsFromDossies() {
   const dossies = DB.dossies || [];
   const players = DB.players.filter(p => p.role !== 'admin');
@@ -4719,6 +4792,9 @@ function recalcStatsFromDossies() {
       if ((p.yellowCards||0) >= 3 || (p.redCards||0) > 0) p.suspended = true;
     }
   });
+
+  // Reconstrói resultados públicos a partir dos mesmos dossiers
+  recalcResultsFromDossies();
 }
 
 
