@@ -1771,7 +1771,7 @@ let _dbSaveTimeline, _dbSaveSchedule, _dbSaveLineup, _dbSaveConfig, _dbSaveSpons
 // Inicializadas em initDebouncedSaves() chamado após page load
 function initDebouncedSaves() {
   _dbSaveTimeline  = debounce(sbSaveTimeline,      600);
-  _dbSaveSchedule  = debounce(sbSaveAllSchedule,   600);
+  // _dbSaveSchedule — sbSaveAllSchedule não existe, salva por linha via sbSaveScheduleRow
   _dbSaveLineup    = debounce(sbSaveLineup,         400);
   _dbSaveSponsors  = debounce(() => { sbSaveConfig('sponsors'); renderPublicSite(); }, 500);
   _dbSavePlayers   = debounce(sbSavePlayers, 600);
