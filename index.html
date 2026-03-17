@@ -1191,8 +1191,8 @@ input, select, textarea, button { -webkit-tap-highlight-color: transparent; }
     <p class="club-sub" id="heroSub">"A resenha começa no campo, mas nunca termina."</p>
     <div class="hero-divider"></div>
     <div class="hero-stats">
-      <div class="stat"><div class="stat-number" id="heroYearsNum">–</div><div class="stat-label">Anos de História</div></div>
-      <div class="stat"><div class="stat-number" id="heroFoundedYear">–</div><div class="stat-label">Fundação</div></div>
+      <div class="stat"><div class="stat-number" id="heroYearsNum">35</div><div class="stat-label">Anos de História</div></div>
+      <div class="stat"><div class="stat-number" id="heroFoundedYear">1991</div><div class="stat-label">Fundação</div></div>
       <div class="stat"><div class="stat-number">100%</div><div class="stat-label">Futebol Raiz</div></div>
     </div>
   </div>
@@ -1572,7 +1572,7 @@ function applyTeamBranding(cfg) {
   const anosFund = cfg.foundedYear || 2000;
   const anosHist = new Date().getFullYear() - anosFund;
   const heroYN = document.getElementById('heroYearsNum');
-  if (heroYN) heroYN.textContent = anosHist;
+  if (heroYN) heroYN.textContent = anosHist + '+';
   const heroFY = document.getElementById('heroFoundedYear');
   if (heroFY) heroFY.textContent = anosFund;
   const heroYB = document.getElementById('heroYearBadge');
@@ -1630,11 +1630,15 @@ async function loadTeamBySlug(slug) {
       colorPrimary: t.color_primary || '#CC1A1A',
       colorSecondary: t.color_secondary || '#C8963E',
       colorTemplate: t.color_template || 'personalizado',
-      city: t.city || '', state: t.state || '',
-      neighborhood: t.neighborhood || '',
-      foundedYear: t.founded_year || 2000,
-      instagram: t.instagram || '', whatsapp: t.whatsapp || '',
-      slogan: t.slogan || '', tagline: t.tagline || '',
+      city: t.city || TEAM_CONFIG.city || '',
+      state: t.state || TEAM_CONFIG.state || '',
+      neighborhood: t.neighborhood || TEAM_CONFIG.neighborhood || '',
+      foundedYear: t.founded_year || TEAM_CONFIG.foundedYear || 2000,
+      _foundedYearReal: !!t.founded_year, // flag: indica se veio do banco de verdade
+      instagram: t.instagram || TEAM_CONFIG.instagram || '',
+      whatsapp:  t.whatsapp  || TEAM_CONFIG.whatsapp  || '',
+      slogan:    t.slogan    || TEAM_CONFIG.slogan    || '',
+      tagline:   t.tagline   || TEAM_CONFIG.tagline   || '',
       active: t.active !== false, // null ou true = ativo; só false = bloqueado
       status: (t.status === 'suspended' || t.active === false) ? 'suspended' : (t.status === 'trial' ? 'trial' : 'active'),
       billingCycle: t.billing_cycle || 'monthly',
@@ -1652,7 +1656,8 @@ async function loadTeamBySlug(slug) {
 async function loadAllTeams() {
   if (!SB_READY) return [];
   try {
-    return await sbGet('teams', '?active=eq.true&order=name');
+    // Inclui times com active=true OU active=null (apenas false = bloqueado)
+    return await sbGet('teams', '?active=neq.false&order=name');
   } catch(e) { return []; }
 }
 
@@ -5105,7 +5110,7 @@ function buildSociosTable(socios, months, stIcon, stBg, stColor, valorMensal) {
     let cells = '';
     months.forEach(function(m) {
       const st = s.monthlyPayments[m];
-      const onclk = 'cycleMonth(' + s.id + ',' + JSON.stringify(m) + ',true)';
+      const onclk = 'cycleMonth(' + s.id + ",\'" + m + "\',true)";
       cells += '<td style="text-align:center;padding:3px;">'
         + '<button onclick="' + onclk + '"'
         + ' style="width:30px;height:28px;border-radius:3px;border:none;cursor:pointer;font-size:13px;'
@@ -5168,7 +5173,8 @@ function buildAddSocioForm() {
 // ─── HELPERS FINANCEIRO (compartilhados) ─────────────────────
 function _finSetup() {
   ensureMonthlyPayments();
-  const u = currentUser;
+  // currentUser pode ser null se admin acessa via ?admin ou super-admin
+  const u = currentUser || { role: 'admin', name: 'Admin', id: 0 };
   const isManager = u.role === 'admin' || u.role === 'diretoria';
   const months = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
   const stIcon  = st => st===true?'✅':st==='skip'?'—':'⭕';
@@ -5260,7 +5266,7 @@ function renderMensalidades(el) {
     let cells = '';
     months.forEach(m => {
       const st = p.monthlyPayments[m];
-      cells += '<td style="text-align:center;padding:3px;"><button onclick="cycleMonth(' + p.id + ',' + JSON.stringify(m) + ')"'
+      cells += '<td style="text-align:center;padding:3px;"><button onclick="cycleMonth(' + p.id + ",'" + m + "')"'
         + ' style="width:30px;height:28px;border-radius:3px;border:none;cursor:pointer;font-size:13px;background:' + stBg(st) + ';color:' + stColor(st) + ';transition:all .15s;">'
         + stIcon(st) + '</button></td>';
     });
@@ -5939,65 +5945,118 @@ function promoteUser(id) { changeUserRole(id, 1); }
 
 // ─── PATROCINADORES ───
 function renderPatrocinadores(el) {
-  const inputStyle = 'background:var(--mid);border:1px solid #444;color:var(--white);padding:7px 10px;font-family:Oswald,sans-serif;font-size:13px;width:100%;outline:none;';
+  const inp = 'background:var(--mid);border:1px solid #444;color:var(--white);padding:7px 10px;font-family:Oswald,sans-serif;font-size:13px;width:100%;outline:none;box-sizing:border-box;';
+  const inpSm = inp + 'font-size:12px;padding:5px 8px;';
 
-  // Lista de patrocinadores cadastrados
+  // ── Lista de patrocinadores ──────────────────────────────────
   const listHtml = DB.sponsors.length === 0
-    ? '<p style="color:#555;font-family:Oswald,sans-serif;font-size:13px;letter-spacing:2px;">Nenhum patrocinador cadastrado.</p>'
-    : DB.sponsors.map((s,i) => {
+    ? '<p style="color:#555;font-family:Oswald,sans-serif;font-size:13px;letter-spacing:2px;padding:20px 0;">Nenhum patrocinador cadastrado ainda.</p>'
+    : DB.sponsors.map((s, i) => {
         const logoHtml = s.logo
           ? '<img src="' + s.logo + '" style="width:100%;height:100%;object-fit:contain;padding:4px;">'
-          : '<span style="font-size:20px;">🏢</span>';
-        const linksHtml = [
-          s.site      ? '<a href="' + (s.site.startsWith('http')?s.site:'https://'+s.site) + '" target="_blank" style="color:var(--gold);font-size:11px;font-family:Oswald,sans-serif;letter-spacing:1px;text-decoration:none;">🌐 Site</a>' : '',
-          s.instagram ? '<a href="https://instagram.com/' + s.instagram + '" target="_blank" style="color:#e1306c;font-size:11px;font-family:Oswald,sans-serif;letter-spacing:1px;text-decoration:none;">📸 @' + s.instagram + '</a>' : '',
-          s.whatsapp  ? '<a href="https://wa.me/' + s.whatsapp.replace(/\D/g,'') + '" target="_blank" style="color:#25d366;font-size:11px;font-family:Oswald,sans-serif;letter-spacing:1px;text-decoration:none;">💬 WhatsApp</a>' : '',
-        ].filter(Boolean).join('<span style="color:#333;margin:0 4px;">·</span>');
-        const valorHtml = s.gratuito
-          ? '<span style="font-family:Oswald,sans-serif;font-size:10px;letter-spacing:1px;color:var(--gold);background:rgba(200,150,62,0.1);border:1px solid rgba(200,150,62,0.3);padding:2px 7px;">PERMUTA/GRATUITO</span>'
-          : (s.valor > 0 ? '<span style="font-family:\'Bebas Neue\',sans-serif;font-size:16px;color:var(--green);">R$ ' + (s.valor).toFixed(2) + '/mês</span>' : '');
-        return '<div style="display:flex;align-items:center;gap:14px;padding:14px 0;border-bottom:1px solid #1e1e1e;">'
-          + '<div style="width:52px;height:52px;background:var(--mid);border:1px solid #333;display:flex;align-items:center;justify-content:center;flex-shrink:0;">' + logoHtml + '</div>'
+          : '<span style="font-size:22px;">🏢</span>';
+
+        const linksLine = [
+          s.site      ? '🌐 ' + s.site.replace(/^https?:\/\//,'').substring(0,22)          : '',
+          s.instagram ? '📸 @' + s.instagram  : '',
+          s.whatsapp  ? '💬 ' + s.whatsapp     : '',
+        ].filter(Boolean).join('  ·  ');
+
+        const valorBadge = s.gratuito
+          ? '<span style="font-family:Oswald,sans-serif;font-size:9px;letter-spacing:1px;color:var(--gold);background:rgba(200,150,62,0.1);border:1px solid rgba(200,150,62,0.3);padding:2px 7px;margin-left:6px;">PERMUTA</span>'
+          : (s.valor > 0
+            ? '<span style="font-family:\'Bebas Neue\',sans-serif;font-size:14px;color:var(--green);margin-left:6px;">R$ ' + Number(s.valor).toFixed(2) + '/mês</span>'
+            : '');
+
+        return '<div style="border:1px solid #1e1e1e;margin-bottom:8px;background:var(--mid);">'
+          // ── Linha resumo ──
+          + '<div style="display:flex;align-items:center;gap:12px;padding:12px 14px;">'
+          + '<div style="width:48px;height:48px;background:#111;border:1px solid #2a2a2a;display:flex;align-items:center;justify-content:center;flex-shrink:0;">' + logoHtml + '</div>'
           + '<div style="flex:1;min-width:0;">'
-          + '<input type="text" value="' + s.name + '" style="' + inputStyle + 'border:none;border-bottom:1px solid #333;background:transparent;font-size:14px;margin-bottom:4px;" onchange="DB.sponsors[' + i + '].name=this.value;sbSaveConfig(\'sponsors\');renderPublicSite();">'
-          + '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">' + (linksHtml || '<span style="font-family:Oswald,sans-serif;font-size:10px;color:#444;">sem links</span>') + '</div>'
-          + (valorHtml ? '<div style="margin-top:4px;">' + valorHtml + '</div>' : '')
+          + '<div style="font-family:Oswald,sans-serif;font-size:14px;color:var(--white);letter-spacing:1px;">' + s.name + valorBadge + '</div>'
+          + (linksLine ? '<div style="font-family:Oswald,sans-serif;font-size:10px;color:#555;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + linksLine + '</div>' : '')
           + '</div>'
-          + '<label style="cursor:pointer;color:var(--gold);font-size:16px;" title="Trocar logo">📷<input type="file" accept="image/*" style="display:none" onchange="updateSponsorLogo(' + i + ',this)"></label>'
-          + '<button style="background:none;border:1px solid #333;color:#666;padding:4px 10px;cursor:pointer;font-size:11px;" onclick="removeSponsor(' + i + ')">✕</button>'
+          // Botão editar / remover
+          + '<button onclick="spToggleEdit(' + i + ')" id="spEditBtn' + i + '" style="font-family:Oswald,sans-serif;font-size:10px;letter-spacing:2px;padding:5px 12px;background:transparent;border:1px solid #444;color:#888;cursor:pointer;white-space:nowrap;">✏️ EDITAR</button>'
+          + '<button onclick="removeSponsor(' + i + ')" style="background:none;border:1px solid #333;color:#555;padding:5px 10px;cursor:pointer;font-size:12px;margin-left:4px;" title="Remover">✕</button>'
+          + '</div>'
+          // ── Painel de edição (oculto por padrão) ──
+          + '<div id="spEditPanel' + i + '" style="display:none;padding:14px;border-top:1px solid #2a2a2a;background:rgba(0,0,0,0.2);">'
+          + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">'
+          + '<div class="form-group" style="margin:0;"><label>NOME</label><input id="spE_name' + i + '" type="text" value="' + s.name + '" style="' + inpSm + '"></div>'
+          + '<div class="form-group" style="margin:0;"><label>SITE</label><input id="spE_site' + i + '" type="text" value="' + (s.site||'') + '" placeholder="https://..." style="' + inpSm + '"></div>'
+          + '<div class="form-group" style="margin:0;"><label>INSTAGRAM</label><input id="spE_insta' + i + '" type="text" value="' + (s.instagram||'') + '" placeholder="@usuario" style="' + inpSm + '"></div>'
+          + '<div class="form-group" style="margin:0;"><label>WHATSAPP</label><input id="spE_wa' + i + '" type="text" value="' + (s.whatsapp||'') + '" placeholder="5548999..." style="' + inpSm + '"></div>'
+          + '</div>'
+          + '<div style="display:flex;gap:10px;align-items:flex-end;margin-bottom:12px;flex-wrap:wrap;">'
+          + '<div class="form-group" style="margin:0;flex:1;min-width:100px;"><label>VALOR/MÊS (R$)</label><input id="spE_valor' + i + '" type="number" step="0.01" min="0" value="' + (s.valor||0) + '" style="' + inpSm + '"></div>'
+          + '<label style="display:flex;align-items:center;gap:6px;font-family:Oswald,sans-serif;font-size:11px;color:var(--gold);cursor:pointer;padding-bottom:2px;white-space:nowrap;">'
+          + '<input type="checkbox" id="spE_grat' + i + '"' + (s.gratuito?' checked':'') + ' style="accent-color:var(--gold);"> PERMUTA/GRATUITO</label>'
+          + '</div>'
+          + '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">'
+          + '<label style="cursor:pointer;font-family:Oswald,sans-serif;font-size:10px;letter-spacing:2px;padding:6px 12px;border:1px solid #444;color:var(--gold);background:transparent;">📷 TROCAR LOGO<input type="file" accept="image/*" style="display:none" onchange="updateSponsorLogo(' + i + ',this)"></label>'
+          + '<button onclick="spSaveEdit(' + i + ')" class="btn btn-primary" style="padding:6px 16px;font-size:11px;">💾 SALVAR</button>'
+          + '<button onclick="spToggleEdit(' + i + ')" style="font-family:Oswald,sans-serif;font-size:10px;letter-spacing:2px;padding:6px 12px;background:transparent;border:1px solid #333;color:#555;cursor:pointer;">CANCELAR</button>'
+          + '</div>'
+          + '</div>'
           + '</div>';
       }).join('');
 
   el.innerHTML = '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:20px;">'
-    // Formulário
-    + '<div class="panel"><div class="panel-header"><span class="panel-title">➕ ADICIONAR PATROCINADOR</span></div>'
+    // ── Painel Adicionar ──
+    + '<div class="panel"><div class="panel-header"><span class="panel-title">➕ NOVO PATROCINADOR</span></div>'
     + '<div class="panel-body">'
-    + '<div class="form-group"><label>Nome da Empresa</label><input type="text" id="spName" placeholder="Ex: Padaria do João" style="' + inputStyle + '"></div>'
-    // Logo upload
+    + '<div class="form-group"><label>Nome da Empresa</label><input type="text" id="spName" placeholder="Ex: Padaria do João" style="' + inp + '"></div>'
     + '<div class="form-group"><label>Logo</label>'
     + '<div style="border:2px dashed #444;padding:16px;text-align:center;cursor:pointer;transition:border-color .2s;" onclick="document.getElementById(\'spLogoInput\').click()" onmouseover="this.style.borderColor=\'var(--gold)\'" onmouseout="this.style.borderColor=\'#444\'">'
     + '<div id="spLogoPreview" style="font-size:28px;color:#444;margin-bottom:4px;">🏢</div>'
     + '<div style="font-family:Oswald,sans-serif;font-size:10px;letter-spacing:2px;color:#555;">Clique para selecionar</div>'
     + '<input type="file" id="spLogoInput" accept="image/*" style="display:none" onchange="previewSponsorLogo(this)"></div></div>'
-    // Valor / Gratuito
     + '<div style="display:flex;gap:10px;align-items:flex-end;margin-bottom:14px;flex-wrap:wrap;">'
-    + '<div class="form-group" style="margin:0;flex:1;min-width:100px;"><label>VALOR/MÊS (R$)</label><input type="number" id="spValor" step="0.01" min="0" placeholder="0.00" style="' + inputStyle + '"></div>'
+    + '<div class="form-group" style="margin:0;flex:1;min-width:100px;"><label>VALOR/MÊS (R$)</label><input type="number" id="spValor" step="0.01" min="0" placeholder="0.00" style="' + inp + '"></div>'
     + '<label style="display:flex;align-items:center;gap:6px;font-family:Oswald,sans-serif;font-size:11px;letter-spacing:2px;color:var(--gold);cursor:pointer;padding-bottom:8px;white-space:nowrap;">'
     + '<input type="checkbox" id="spGratuito" style="accent-color:var(--gold);width:16px;height:16px;"> PERMUTA/GRATUITO</label>'
     + '</div>'
-    // Links
-    + '<div class="form-group"><label>SITE</label><input type="text" id="spSite" placeholder="https://..." style="' + inputStyle + '"></div>'
+    + '<div class="form-group"><label>SITE</label><input type="text" id="spSite" placeholder="https://..." style="' + inp + '"></div>'
     + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;">'
-    + '<div class="form-group" style="margin:0;"><label>INSTAGRAM</label><input type="text" id="spInstagram" placeholder="@usuario" style="' + inputStyle + '"></div>'
-    + '<div class="form-group" style="margin:0;"><label>WHATSAPP</label><input type="text" id="spWhatsapp" placeholder="5548999999999" style="' + inputStyle + '"></div>'
+    + '<div class="form-group" style="margin:0;"><label>INSTAGRAM</label><input type="text" id="spInstagram" placeholder="@usuario" style="' + inp + '"></div>'
+    + '<div class="form-group" style="margin:0;"><label>WHATSAPP</label><input type="text" id="spWhatsapp" placeholder="5548999999999" style="' + inp + '"></div>'
     + '</div>'
     + '<button class="btn btn-primary" onclick="addSponsor()">➕ ADICIONAR</button>'
     + '</div></div>'
-    // Lista
-    + '<div class="panel"><div class="panel-header"><span class="panel-title">PATROCINADORES CADASTRADOS</span>'
+    // ── Lista de patrocinadores ──
+    + '<div class="panel" style="min-width:0;">'
+    + '<div class="panel-header"><span class="panel-title">PATROCINADORES CADASTRADOS</span>'
     + '<span class="badge badge-gold">' + DB.sponsors.length + '</span></div>'
-    + '<div class="panel-body">' + listHtml + '</div></div>'
+    + '<div class="panel-body" style="padding:0 16px;">' + listHtml + '</div>'
+    + '</div>'
     + '</div>';
+}
+
+// Toggle painel de edição inline
+function spToggleEdit(i) {
+  const panel = document.getElementById('spEditPanel' + i);
+  const btn   = document.getElementById('spEditBtn' + i);
+  if (!panel) return;
+  const open = panel.style.display !== 'none';
+  panel.style.display = open ? 'none' : 'block';
+  if (btn) btn.textContent = open ? '✏️ EDITAR' : '✖ FECHAR';
+}
+
+// Salvar edição do patrocinador
+function spSaveEdit(i) {
+  const s = DB.sponsors[i];
+  if (!s) return;
+  s.name      = safeText(document.getElementById('spE_name'  + i)?.value.trim() || s.name);
+  s.site      = document.getElementById('spE_site'  + i)?.value.trim() || '';
+  s.instagram = (document.getElementById('spE_insta' + i)?.value.trim() || '').replace(/^@/,'');
+  s.whatsapp  = document.getElementById('spE_wa'    + i)?.value.trim() || '';
+  s.valor     = parseFloat(document.getElementById('spE_valor'+ i)?.value) || 0;
+  s.gratuito  = document.getElementById('spE_grat'  + i)?.checked || false;
+  sbSaveConfig('sponsors');
+  renderPublicSite();
+  renderPane('patrocinadores');
+  showNotif('✅ Patrocinador "' + s.name + '" atualizado!');
 }
 
 
@@ -7120,7 +7179,13 @@ async function initSaaS() {
 
   if (teamCfg) {
     // Aplica branding independente do status — visitante público sempre vê o site
-    Object.assign(TEAM_CONFIG, teamCfg);
+    // Preserva valores locais se Supabase trouxe defaults genéricos
+    const _mergedCfg = Object.assign({}, TEAM_CONFIG, teamCfg);
+    // foundedYear: só sobrescreve se Supabase trouxe valor real (> 2000 ou explícito)
+    if (!teamCfg._foundedYearReal && TEAM_CONFIG.foundedYear && TEAM_CONFIG.foundedYear > 2000) {
+      _mergedCfg.foundedYear = TEAM_CONFIG.foundedYear;
+    }
+    Object.assign(TEAM_CONFIG, _mergedCfg);
     currentTeamId = teamCfg.id;
     applyTeamBranding(TEAM_CONFIG);
 
