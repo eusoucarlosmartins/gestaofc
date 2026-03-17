@@ -6684,8 +6684,13 @@ async function saPatchTeam(id, data) {
 async function getAllOpponents() {
   if (!SB_READY) return [];
   try {
-    return await sbGet('opponents', '?order=name');
-  } catch(e) { console.warn('opponents table:', e.message); return []; }
+    // Base de adversários = times cadastrados SEM plano pago (type='base' ou sem slug)
+    const all = await sbGet('teams', '?order=name');
+    return all.filter(t => t.type === 'base' || (!t.slug && !t.admin_user));
+  } catch(e) {
+    // Fallback: tenta tabela opponents legada
+    try { return await sbGet('opponents', '?order=name'); } catch(e2) { return []; }
+  }
 }
 
 async function renderSaAdversarios(el) {
@@ -6775,7 +6780,10 @@ async function renderSaAdversarios(el) {
             + (o.mando ? '<span style="font-size:10px;font-family:Oswald,sans-serif;color:var(--gold);">🏠 ' + o.mando + '</span>' : '')
             + (o.whatsapp ? '<a href="https://wa.me/' + o.whatsapp.replace(/\D/g,'') + '" target="_blank" style="font-size:10px;font-family:Oswald,sans-serif;color:#25d366;text-decoration:none;">💬 WhatsApp</a>' : '')
             + '</div></div>'
-            + '<button onclick="deleteAdversario(' + o.id + ')" title="Remover" style="background:rgba(180,0,0,0.2);border:1px solid rgba(180,0,0,0.3);color:#ff6666;cursor:pointer;padding:3px 8px;font-size:13px;flex-shrink:0;">🗑</button>'
+            + (o.type === 'active' || o.active
+              ? '<span style="font-family:Oswald,sans-serif;font-size:9px;letter-spacing:1px;padding:3px 8px;background:rgba(46,204,113,0.1);border:1px solid rgba(46,204,113,0.3);color:#2ecc71;flex-shrink:0;">✅ ATIVO</span>'
+              : '<button onclick="saActivateBaseTeam(' + o.id + ')" style="font-family:Oswald,sans-serif;font-size:9px;letter-spacing:1px;padding:4px 10px;background:rgba(200,150,62,0.1);border:1px solid rgba(200,150,62,0.4);color:var(--gold);cursor:pointer;white-space:nowrap;flex-shrink:0;">⚡ ATIVAR PLANO</button>')
+          + '<button onclick="deleteAdversario(' + o.id + ')" title="Remover" style="background:rgba(180,0,0,0.2);border:1px solid rgba(180,0,0,0.3);color:#ff6666;cursor:pointer;padding:3px 8px;font-size:13px;flex-shrink:0;margin-left:4px;">🗑</button>'
             + '</div>';
         }).join('')
       + '</div>';
@@ -6783,8 +6791,9 @@ async function renderSaAdversarios(el) {
   el.innerHTML = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:start;">'
     + form
     + '<div class="panel"><div class="panel-header">'
-    + '<span class="panel-title">⚔️ ADVERSÁRIOS CADASTRADOS</span>'
-    + '<span class="badge badge-gold">' + opponents.length + '</span>'
+    + '<span class="panel-title">⚔️ BASE DE TIMES</span>'
+    + '<span class="badge badge-gold">' + opponents.length + ' total</span>'
+    + '<span style="font-family:Oswald,sans-serif;font-size:9px;letter-spacing:1px;color:#2ecc71;margin-left:6px;">' + opponents.filter(function(o){return o.type==='active'||o.active;}).length + ' ativos</span>'
     + '</div><div class="panel-body" id="saOppListBody">' + searchBar + '<div id="saOppListItems">' + listHtml + '</div></div></div>'
     + '</div>';
 }
@@ -6815,22 +6824,49 @@ async function saveAdversario() {
     mando,
     type:         'opponent',
   };
+  // Salva em teams com type='base' — unifica as duas bases
+  const teamRow = {
+    name:           row.name,
+    short_name:     row.short_name,
+    city:           row.city,
+    neighborhood:   row.neighborhood,
+    state:          row.state,
+    logo_url:       row.logo_url,
+    whatsapp:       row.whatsapp,
+    instagram:      row.instagram,
+    available_days: row.available_days,
+    time_from:      row.time_from,
+    time_to:        row.time_to,
+    mando:          row.mando,
+    type:           'base',
+    active:         false,  // sem plano = inativo para portal
+    status:         'base',
+  };
   try {
-    await sbUpsert('opponents', [row]);
-    showNotif('✅ Adversário "' + name + '" cadastrado!');
+    await sbUpsert('teams', [teamRow]);
+    showNotif('✅ Time "' + name + '" adicionado à base!');
     renderSaPane('adversarios');
   } catch(e) {
-    showNotif('⚠️ Erro ao salvar: ' + e.message, true);
+    // Fallback: tenta opponents legada
+    try {
+      await sbUpsert('opponents', [row]);
+      showNotif('✅ Adversário "' + name + '" cadastrado!');
+      renderSaPane('adversarios');
+    } catch(e2) {
+      showNotif('⚠️ Erro ao salvar: ' + e.message, true);
+    }
   }
 }
 
 async function deleteAdversario(id) {
-  if (!confirm('Remover este adversário da base?')) return;
+  if (!confirm('Remover este time da base?')) return;
   try {
-    await sbDelete('opponents', 'id=eq.' + id);
-    showNotif('Adversário removido.');
+    await sbDelete('teams', 'id=eq.' + id);
+    showNotif('Time removido da base.');
     renderSaPane('adversarios');
   } catch(e) {
+    // Fallback opponents
+    try { await sbDelete('opponents', 'id=eq.' + id); renderSaPane('adversarios'); } catch(e2){}
     showNotif('⚠️ Erro: ' + e.message, true);
   }
 }
@@ -6838,7 +6874,9 @@ async function deleteAdversario(id) {
 
 async function renderSaTimes(el) {
   el.innerHTML = '<div style="font-family:Oswald,sans-serif;font-size:12px;letter-spacing:2px;color:#555;padding:20px 0;">⏳ CARREGANDO TIMES...</div>';
-  const teams = await getAllTeams();
+  const _allTeams = await getAllTeams();
+  // Mostra apenas times com plano ativo (exclui base sem portal)
+  const teams = _allTeams.filter(t => t.type === 'active' || (t.type !== 'base' && t.slug && t.admin_user));
 
   if (!teams.length) {
     el.innerHTML = `<div style="text-align:center;padding:60px 20px;">
@@ -7212,6 +7250,7 @@ async function saCreateTeam() {
     admin_user: (document.getElementById('saNewAdminUser')?.value||'admin').trim(),
     admin_pass: adminPass,
     active: true,
+    type: 'active',
     billing_day: new Date().getDate(),
     next_billing: nextBilling,
     notes: (document.getElementById('saNewNotes')?.value||'').trim(),
@@ -8017,7 +8056,10 @@ function filterSaAdversarios(q) {
           + '<div style="font-family:Oswald,sans-serif;font-size:10px;color:#555;">' + [o.neighborhood,o.city,o.state].filter(Boolean).join(' · ') + '</div>'
           + '<div style="margin-top:4px;font-family:Oswald,sans-serif;font-size:10px;color:#888;">📅 ' + diasStr + ' · ⏰ ' + timeStr + (o.mando?' · 🏠 '+o.mando:'') + '</div>'
           + '</div>'
-          + '<button onclick="deleteAdversario(' + o.id + ')" style="background:rgba(180,0,0,0.15);border:1px solid rgba(180,0,0,0.3);color:#ff6666;cursor:pointer;padding:3px 7px;font-size:12px;flex-shrink:0;">🗑</button>'
+          + (o.type === 'active' || o.active
+              ? '<span style="font-family:Oswald,sans-serif;font-size:9px;padding:3px 8px;background:rgba(46,204,113,0.1);border:1px solid rgba(46,204,113,0.3);color:#2ecc71;flex-shrink:0;">✅ ATIVO</span>'
+              : '<button onclick="saActivateBaseTeam(' + o.id + ')" style="font-family:Oswald,sans-serif;font-size:9px;letter-spacing:1px;padding:4px 10px;background:rgba(200,150,62,0.1);border:1px solid rgba(200,150,62,0.4);color:var(--gold);cursor:pointer;white-space:nowrap;flex-shrink:0;">⚡ ATIVAR PLANO</button>')
+          + '<button onclick="deleteAdversario(' + o.id + ')" style="background:rgba(180,0,0,0.15);border:1px solid rgba(180,0,0,0.3);color:#ff6666;cursor:pointer;padding:3px 7px;font-size:12px;flex-shrink:0;margin-left:4px;">🗑</button>'
           + '</div>';
       }).join('')
     + '</div>';
@@ -8294,6 +8336,150 @@ function _renderMmGrid(list) {
       + (ctaBtns ? '<div class="mm-card-cta">' + ctaBtns + '</div>' : '')
       + '</div>';
   }).join('');
+}
+
+
+// ── ATIVAR PLANO PARA TIME DA BASE ───────────────────────────
+function closeActivateModal() {
+  var m = document.getElementById('saActivateModal');
+  if (m) m.remove();
+}
+
+async function saActivateBaseTeam(teamId) {
+  closeActivateModal();
+
+  // Fetch current team data to pre-fill
+  let teamData = {};
+  try {
+    const rows = await sbGet('teams', '?id=eq.' + teamId + '&limit=1');
+    teamData = rows[0] || {};
+  } catch(e) {}
+
+  const sugSlug = (teamData.name || '').toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .replace(/[^a-z0-9]/g,'').substring(0, 20);
+  const sugPass = Math.random().toString(36).slice(-8).toUpperCase();
+  const defDate = new Date(Date.now()+30*86400000).toISOString().split('T')[0];
+
+  const modal = document.createElement('div');
+  modal.id = 'saActivateModal';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:99999;display:flex;align-items:center;justify-content:center;';
+  modal.addEventListener('click', function(e){ if(e.target===modal) closeActivateModal(); });
+
+  const teamName = (teamData.name || 'TIME').toUpperCase();
+
+  // Build form using createElement to avoid all quote issues
+  const box = document.createElement('div');
+  box.style.cssText = 'background:#0d0d0d;border:1px solid #2a2a2a;width:min(520px,95vw);max-height:90vh;overflow-y:auto;';
+
+  box.innerHTML = [
+    '<div style="padding:16px 20px;border-bottom:1px solid #1e1e1e;display:flex;align-items:center;justify-content:space-between;">',
+      '<span style="font-family:Bebas Neue,sans-serif;font-size:20px;letter-spacing:2px;color:#fff;">⚡ ATIVAR — ' + teamName + '</span>',
+      '<button id="actCloseBtn" style="background:none;border:none;color:#666;font-size:22px;cursor:pointer;line-height:1;">✕</button>',
+    '</div>',
+    '<div style="padding:20px;">',
+      '<div style="background:rgba(200,150,62,0.06);border:1px solid rgba(200,150,62,0.2);padding:10px 14px;margin-bottom:20px;font-family:Barlow,sans-serif;font-size:12px;color:#888;">',
+        'Todos os dados já cadastrados (nome, cidade, logo, disponibilidade) serão mantidos.',
+      '</div>',
+
+      '<div style="background:#111;border:1px solid #2a2a2a;padding:10px 14px;margin-bottom:14px;">',
+        '<div style="font-family:Oswald,sans-serif;font-size:10px;letter-spacing:2px;color:var(--gold);margin-bottom:4px;">URL DE ACESSO</div>',
+        '<div style="font-family:monospace;font-size:13px;color:#fff;">gestaofc.com.br/?team=<span id="actSlugPreview" style="color:var(--gold);">' + sugSlug + '</span></div>',
+      '</div>',
+
+      '<div class="grid-2col">',
+        '<div class="form-group"><label>SLUG (URL) *</label>',
+          '<input type="text" id="actSlug" value="' + sugSlug + '" style="font-family:monospace;">',
+        '</div>',
+        '<div class="form-group"><label>LOGIN ADMIN *</label>',
+          '<input type="text" id="actAdminUser" value="admin">',
+        '</div>',
+      '</div>',
+      '<div class="form-group"><label>SENHA ADMIN *</label>',
+        '<div style="display:flex;gap:8px;">',
+          '<input type="text" id="actAdminPass" value="' + sugPass + '" style="flex:1;">',
+          '<button id="actGenPassBtn" style="padding:6px 12px;background:#222;border:1px solid #333;color:#888;cursor:pointer;font-family:Oswald,sans-serif;font-size:10px;letter-spacing:1px;">GERAR</button>',
+        '</div>',
+      '</div>',
+
+      '<div style="font-family:Oswald,sans-serif;font-size:10px;letter-spacing:2px;color:#555;margin:16px 0 12px;padding-bottom:6px;border-bottom:1px solid #1a1a1a;">▸ PLANO</div>',
+      '<div class="grid-2col">',
+        '<div class="form-group"><label>PLANO</label>',
+          '<select id="actPlan">',
+            '<option value="basic">Basic — R$49/mês</option>',
+            '<option value="pro">Pro — R$89/mês</option>',
+            '<option value="premium" selected>Premium — R$149/mês</option>',
+          '</select>',
+        '</div>',
+        '<div class="form-group"><label>PERIODICIDADE</label>',
+          '<select id="actCycle">',
+            '<option value="monthly">Mensal</option>',
+            '<option value="quarterly">Trimestral</option>',
+            '<option value="semiannual">Semestral</option>',
+            '<option value="annual">Anual</option>',
+          '</select>',
+        '</div>',
+      '</div>',
+      '<div class="form-group"><label>DATA 1º VENCIMENTO</label>',
+        '<input type="date" id="actNextBilling" value="' + defDate + '">',
+      '</div>',
+
+      '<div style="display:flex;gap:10px;margin-top:20px;">',
+        '<button id="actConfirmBtn" style="flex:1;padding:12px;background:var(--red);border:none;color:#fff;font-family:Oswald,sans-serif;font-size:14px;letter-spacing:2px;cursor:pointer;">⚡ CONFIRMAR ATIVAÇÃO</button>',
+        '<button id="actCancelBtn" style="padding:12px 20px;background:transparent;border:1px solid #333;color:#666;cursor:pointer;font-family:Oswald,sans-serif;font-size:12px;letter-spacing:1px;">CANCELAR</button>',
+      '</div>',
+    '</div>',
+  ].join('');
+
+  modal.appendChild(box);
+  document.body.appendChild(modal);
+
+  // Wire up events after DOM insertion
+  document.getElementById('actCloseBtn').addEventListener('click', closeActivateModal);
+  document.getElementById('actCancelBtn').addEventListener('click', closeActivateModal);
+  document.getElementById('actGenPassBtn').addEventListener('click', function(){
+    document.getElementById('actAdminPass').value = Math.random().toString(36).slice(-8).toUpperCase();
+  });
+  document.getElementById('actSlug').addEventListener('input', function(){
+    this.value = this.value.toLowerCase().replace(/[^a-z0-9]/g,'');
+    var prev = document.getElementById('actSlugPreview');
+    if (prev) prev.textContent = this.value || 'slug';
+  });
+  document.getElementById('actConfirmBtn').addEventListener('click', function(){
+    confirmActivateTeam(teamId);
+  });
+}
+
+
+async function confirmActivateTeam(teamId) {
+  const slug      = (document.getElementById('actSlug')?.value || '').trim().toLowerCase().replace(/[^a-z0-9]/g,'');
+  const adminUser = (document.getElementById('actAdminUser')?.value || 'admin').trim();
+  const adminPass = (document.getElementById('actAdminPass')?.value || 'admin123').trim();
+  const plan      = document.getElementById('actPlan')?.value || 'basic';
+  const cycle     = document.getElementById('actCycle')?.value || 'monthly';
+  const nextBill  = document.getElementById('actNextBilling')?.value || '';
+
+  if (!slug)      { showNotif('Slug é obrigatório!', true); return; }
+  if (!adminPass) { showNotif('Senha é obrigatória!', true); return; }
+
+  try {
+    await fetch(SUPABASE_URL + '/rest/v1/teams?id=eq.' + teamId, {
+      method: 'PATCH',
+      headers: { apikey: SUPABASE_KEY, Authorization: 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+      body: JSON.stringify({
+        slug, admin_user: adminUser, admin_pass: adminPass,
+        plan, billing_cycle: cycle, next_billing: nextBill,
+        type: 'active', active: true, status: 'trial',
+        billing_day: new Date().getDate(),
+      })
+    });
+    document.getElementById('saActivateModal')?.remove();
+    showNotif('✅ Time ativado! Acesso: ?team=' + slug);
+    renderSaPane('adversarios');
+    renderSaPane('times');
+  } catch(e) {
+    showNotif('⚠️ Erro: ' + e.message, true);
+  }
 }
 
 
