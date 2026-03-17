@@ -6670,7 +6670,6 @@ async function renderSaPane(id) {
   const el = document.getElementById('sa-pane-'+id);
   if (!el) return;
   if (id === 'times')        await renderSaTimes(el);
-  if (id === 'adversarios')  await renderSaAdversarios(el);
   if (id === 'cobrancas') await renderSaCobrancas(el);
   if (id === 'novo')      renderSaNovo(el);
   if (id === 'stats')     await renderSaStats(el);
@@ -6892,8 +6891,8 @@ async function deleteAdversario(id) {
 async function renderSaTimes(el) {
   el.innerHTML = '<div style="font-family:Oswald,sans-serif;font-size:12px;letter-spacing:2px;color:#555;padding:20px 0;">⏳ CARREGANDO TIMES...</div>';
   const _allTeams = await getAllTeams();
-  // Mostra apenas times com plano ativo (exclui base sem portal)
-  const teams = _allTeams.filter(t => t.type === 'active' || (t.type !== 'base' && t.slug && t.admin_user));
+  // Mostra TODOS os times — sem portal (base/free) aparecem com badge visual
+  const teams = _allTeams;
 
   if (!teams.length) {
     el.innerHTML = `<div style="text-align:center;padding:60px 20px;">
@@ -7045,6 +7044,7 @@ async function renderSaCobrancas(el) {
               <button class="btn btn-sm" style="font-size:10px;padding:3px 8px;background:rgba(46,204,113,0.15);color:#2ecc71;border:1px solid rgba(46,204,113,0.3);" onclick="saRegisterPayment('${t.id}','${t.name}','${t.plan}','${cycle}')">✓ Pago</button>
               <button class="btn btn-sm btn-secondary" style="font-size:10px;padding:3px 8px;" onclick="saChangePlan('${t.id}','${t.plan||'basic'}','${cycle}','${t.name}')">Plano</button>
               <button class="btn btn-sm btn-secondary" style="font-size:10px;padding:3px 8px;" onclick="saChangeStatus('${t.id}','${ts}','${t.name}')">Status</button>
+              <button class="btn btn-sm btn-secondary" style="font-size:10px;padding:3px 8px;" onclick="saEditTeam('${t.id}')">✏️ Editar</button>
             </td>
           </tr>`;
         }).join('')}
@@ -7150,23 +7150,6 @@ function renderSaNovo(el) {
       </div>
       <div id="saColorPreviewBar" style="height:6px;background:linear-gradient(90deg,#CC1A1A 50%,#C8963E 50%);margin-bottom:16px;border-radius:2px;"></div>
 
-      <div style="font-family:Oswald,sans-serif;font-size:11px;letter-spacing:2px;color:#666;margin:20px 0 16px;padding-bottom:8px;border-bottom:1px solid #222;">▸ DISPONIBILIDADE (MATCHMAKING)</div>
-      <div class="form-group">
-        <label>DIAS PREFERIDOS</label>
-        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;">
-          ${['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'].map((d,i)=>'<label style="display:flex;align-items:center;gap:4px;font-family:Oswald,sans-serif;font-size:11px;cursor:pointer;padding:5px 10px;border:1px solid #2a2a2a;background:transparent;" id="saNewDayLbl'+i+'"><input type="checkbox" value="'+i+'" id="saNewDay'+i+'" style="accent-color:var(--red);" onchange="saNewDayToggle(this)"> '+d+'</label>').join('')}
-        </div>
-      </div>
-      <div class="grid-2col">
-        <div class="form-group"><label>HORÁRIO INÍCIO</label><input type="time" id="saNewTimeFrom" value="16:00"></div>
-        <div class="form-group"><label>HORÁRIO FIM</label><input type="time" id="saNewTimeTo" value="18:00"></div>
-      </div>
-      <div class="form-group">
-        <label>MANDO DE CAMPO</label>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px;">
-          ${['casa','visitante','ambos'].map(v=>'<label style="display:flex;align-items:center;gap:5px;font-family:Oswald,sans-serif;font-size:11px;cursor:pointer;padding:6px 12px;border:1px solid #2a2a2a;"><input type="radio" name="saNewMando" value="'+v+'" '+(v==='ambos'?'checked':'')+' style="accent-color:var(--red);"> '+{casa:'🏠 Casa',visitante:'✈️ Visitante',ambos:'🏠✈️ Ambos'}[v]+'</label>').join('')}
-        </div>
-      </div>
 
       <div style="font-family:Oswald,sans-serif;font-size:11px;letter-spacing:2px;color:#666;margin:20px 0 16px;padding-bottom:8px;border-bottom:1px solid #222;">▸ DISPONIBILIDADE (MATCHMAKING)</div>
       <div class="form-group">
@@ -7511,51 +7494,222 @@ async function saApplyPlanChange(id, name) {
 }
 
 function saEditTeam(id) {
-  // Abre modal de edição rápida
-  showModal(`
-    <div style="font-family:Oswald,sans-serif;font-size:14px;letter-spacing:2px;color:#fff;margin-bottom:20px;">EDITAR TIME</div>
-    <div id="saEditContent" style="font-family:Barlow,sans-serif;font-size:13px;color:#666;">Carregando...</div>
-  `);
+  // Abre painel lateral de edição completa — usa createElement para evitar quote hell
+  const existing = document.getElementById('saEditPanel');
+  if (existing) existing.remove();
+
+  const panel = document.createElement('div');
+  panel.id = 'saEditPanel';
+  panel.style.cssText = 'position:fixed;top:0;right:0;width:min(520px,100vw);height:100vh;background:#0a0a0a;border-left:1px solid #2a2a2a;z-index:99999;overflow-y:auto;display:flex;flex-direction:column;box-shadow:-8px 0 32px rgba(0,0,0,0.6);';
+
+  // Loading state
+  panel.innerHTML = '<div style="padding:24px;"><div style="font-family:Oswald,sans-serif;font-size:12px;letter-spacing:2px;color:#555;">⏳ CARREGANDO...</div></div>';
+  document.body.appendChild(panel);
+
   getAllTeams().then(teams => {
-    const t = teams.find(x=>x.id===id);
-    if (!t) { document.getElementById('saEditContent').textContent = 'Time não encontrado.'; return; }
-    document.getElementById('saEditContent').innerHTML = `
-      <div class="form-group"><label>Nome</label><input type="text" id="seeName" value="${t.name||''}" style="width:100%;"></div>
-      <div class="form-group"><label>Slug</label><input type="text" id="seeSlug" value="${t.slug||''}" style="width:100%;font-family:monospace;"></div>
-      <div class="grid-2col">
-        <div class="form-group"><label>Cidade</label><input type="text" id="seeCity" value="${t.city||''}" style="width:100%;"></div>
-        <div class="form-group"><label>Estado</label><input type="text" id="seeState" value="${t.state||''}" style="width:100%;" maxlength="2"></div>
-      </div>
-      <div class="grid-2col">
-        <div class="form-group"><label>Admin User</label><input type="text" id="seeAdminUser" value="${t.admin_user||''}" style="width:100%;"></div>
-        <div class="form-group"><label>Admin Pass</label><input type="text" id="seeAdminPass" value="${t.admin_pass||''}" style="width:100%;"></div>
-      </div>
-      <div class="form-group"><label>WhatsApp</label><input type="text" id="seeWhatsapp" value="${t.whatsapp||''}" style="width:100%;"></div>
-      <div class="form-group"><label>Notas Internas</label><textarea id="seeNotes" style="width:100%;height:60px;resize:vertical;">${t.notes||''}</textarea></div>
-      <div style="display:flex;gap:10px;margin-top:16px;">
-        <button class="btn-red" onclick="saEditSave('${id}')" style="flex:1;">SALVAR</button>
-        <button class="btn btn-secondary" onclick="closeModal()" style="padding:10px 20px;">CANCELAR</button>
-      </div>`;
+    const t = teams.find(x => String(x.id) === String(id));
+    if (!t) { panel.innerHTML = '<div style="padding:24px;color:#f66;">Time não encontrado.</div>'; return; }
+
+    const IS = 'background:#111;border:1px solid #2a2a2a;color:#fff;padding:8px 10px;font-family:Oswald,sans-serif;font-size:13px;outline:none;width:100%;box-sizing:border-box;';
+    const FG = 'margin-bottom:14px;';
+    const LB = 'font-family:Oswald,sans-serif;font-size:9px;letter-spacing:2px;color:#666;display:block;margin-bottom:4px;';
+    const SEC = 'font-family:Oswald,sans-serif;font-size:10px;letter-spacing:2px;color:#555;margin:20px 0 12px;padding-bottom:6px;border-bottom:1px solid #1a1a1a;';
+    const dias = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+
+    const daysChecked = Array.isArray(t.available_days) ? t.available_days : [];
+
+    panel.innerHTML = [
+      // Header
+      '<div style="padding:16px 20px;border-bottom:1px solid #1e1e1e;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:#0a0a0a;z-index:10;">',
+        '<div>',
+          '<div style="font-family:Bebas Neue,sans-serif;font-size:20px;letter-spacing:2px;color:#fff;">✏️ EDITAR TIME</div>',
+          '<div style="font-family:Oswald,sans-serif;font-size:10px;letter-spacing:2px;color:#555;margin-top:2px;">'+(t.name||'')+'</div>',
+        '</div>',
+        '<button id="saEditCloseBtn" style="background:none;border:none;color:#555;font-size:22px;cursor:pointer;padding:4px 8px;">✕</button>',
+      '</div>',
+
+      // Body
+      '<div style="padding:20px;flex:1;">',
+
+        // ▸ IDENTIFICAÇÃO
+        '<div style="'+SEC+'">▸ IDENTIFICAÇÃO</div>',
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">',
+          '<div><label style="'+LB+'">NOME COMPLETO *</label><input type="text" id="see_name" value="'+( t.name||'').replace(/"/g,'&quot;')+'" style="'+IS+'"></div>',
+          '<div><label style="'+LB+'">NOME CURTO</label><input type="text" id="see_short" value="'+(t.short_name||'').replace(/"/g,'&quot;')+'" style="'+IS+'"></div>',
+        '</div>',
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">',
+          '<div><label style="'+LB+'">SLUG (URL)</label><input type="text" id="see_slug" value="'+(t.slug||'')+'" style="'+IS+'font-family:monospace;"></div>',
+          '<div><label style="'+LB+'">ANO FUNDAÇÃO</label><input type="number" id="see_year" value="'+(t.founded_year||'')+'" style="'+IS+'"></div>',
+        '</div>',
+        '<div style="'+FG+'"><label style="'+LB+'">SLOGAN</label><input type="text" id="see_slogan" value="'+(t.slogan||'').replace(/"/g,'&quot;')+'" style="'+IS+'"></div>',
+        '<div style="'+FG+'"><label style="'+LB+'">TAGLINE</label><input type="text" id="see_tagline" value="'+(t.tagline||'').replace(/"/g,'&quot;')+'" style="'+IS+'"></div>',
+        '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:14px;">',
+          '<div><label style="'+LB+'">CIDADE</label><input type="text" id="see_city" value="'+(t.city||'').replace(/"/g,'&quot;')+'" style="'+IS+'"></div>',
+          '<div><label style="'+LB+'">BAIRRO</label><input type="text" id="see_neigh" value="'+(t.neighborhood||'').replace(/"/g,'&quot;')+'" style="'+IS+'"></div>',
+          '<div><label style="'+LB+'">UF</label><input type="text" id="see_state" value="'+(t.state||'')+'" maxlength="2" style="'+IS+'text-transform:uppercase;"></div>',
+        '</div>',
+
+        // ▸ CONTATO
+        '<div style="'+SEC+'">▸ CONTATO E REDES</div>',
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">',
+          '<div><label style="'+LB+'">WHATSAPP</label><input type="text" id="see_wa" value="'+(t.whatsapp||'')+'" style="'+IS+'"></div>',
+          '<div><label style="'+LB+'">INSTAGRAM</label><input type="text" id="see_insta" value="'+(t.instagram||'')+'" style="'+IS+'"></div>',
+        '</div>',
+        '<div style="'+FG+'"><label style="'+LB+'">LOGO URL</label>',
+          '<div style="display:flex;gap:8px;align-items:center;">',
+            '<div id="see_logo_prev" style="width:40px;height:40px;border-radius:50%;background:#111;border:1px solid #333;flex-shrink:0;overflow:hidden;display:flex;align-items:center;justify-content:center;font-family:Bebas Neue,sans-serif;font-size:14px;color:#555;">'+(t.logo_url?'<img src="'+t.logo_url+'" style="width:100%;height:100%;object-fit:contain;">': (t.name||'?').substring(0,2).toUpperCase())+'</div>',
+            '<input type="text" id="see_logo" value="'+(t.logo_url||'').replace(/"/g,'&quot;')+'" placeholder="https://..." style="'+IS+'flex:1;" oninput="saEditLogoPreview(this.value)">',
+          '</div>',
+        '</div>',
+
+        // ▸ PLANO E ACESSO
+        '<div style="'+SEC+'">▸ PLANO E ACESSO</div>',
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">',
+          '<div><label style="'+LB+'">PLANO</label><select id="see_plan" style="'+IS+'">',
+            '<option value="free"'+(t.plan==='free'?' selected':'')+'>Free</option>',
+            '<option value="basic"'+(t.plan==='basic'?' selected':'')+'>Basic — R$49</option>',
+            '<option value="pro"'+(t.plan==='pro'?' selected':'')+'>Pro — R$89</option>',
+            '<option value="premium"'+(t.plan==='premium'?' selected':'')+'>Premium — R$149</option>',
+          '</select></div>',
+          '<div><label style="'+LB+'">PERIODICIDADE</label><select id="see_cycle" style="'+IS+'">',
+            '<option value="monthly"'+(t.billing_cycle==='monthly'?' selected':'')+'>Mensal</option>',
+            '<option value="quarterly"'+(t.billing_cycle==='quarterly'?' selected':'')+'>Trimestral</option>',
+            '<option value="semiannual"'+(t.billing_cycle==='semiannual'?' selected':'')+'>Semestral</option>',
+            '<option value="annual"'+(t.billing_cycle==='annual'?' selected':'')+'>Anual</option>',
+          '</select></div>',
+        '</div>',
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">',
+          '<div><label style="'+LB+'">STATUS</label><select id="see_status" style="'+IS+'">',
+            '<option value="active"'+(t.status==='active'?' selected':'')+'>Ativo</option>',
+            '<option value="trial"'+(t.status==='trial'?' selected':'')+'>Trial</option>',
+            '<option value="suspended"'+(t.status==='suspended'?' selected':'')+'>Suspenso</option>',
+            '<option value="free"'+(t.status==='free'?' selected':'')+'>Free</option>',
+          '</select></div>',
+          '<div><label style="'+LB+'">PRÓX. VENCIMENTO</label><input type="date" id="see_billing" value="'+(t.next_billing||'')+'" style="'+IS+'"></div>',
+        '</div>',
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">',
+          '<div><label style="'+LB+'">LOGIN ADMIN</label><input type="text" id="see_admin" value="'+(t.admin_user||'')+'" style="'+IS+'"></div>',
+          '<div><label style="'+LB+'">SENHA ADMIN</label>',
+            '<div style="display:flex;gap:6px;">',
+              '<input type="text" id="see_pass" value="'+(t.admin_pass||'')+'" style="'+IS+'flex:1;">',
+              '<button id="see_genpass" style="padding:6px 10px;background:#222;border:1px solid #333;color:#888;cursor:pointer;font-family:Oswald,sans-serif;font-size:10px;letter-spacing:1px;white-space:nowrap;">GERAR</button>',
+            '</div>',
+          '</div>',
+        '</div>',
+
+        // ▸ DISPONIBILIDADE
+        '<div style="'+SEC+'">▸ DISPONIBILIDADE (MATCHMAKING)</div>',
+        '<div style="'+FG+'"><label style="'+LB+'">DIAS PREFERIDOS</label>',
+          '<div style="display:flex;flex-wrap:wrap;gap:6px;" id="see_dias">',
+            dias.map((d,i) => {
+              const chk = daysChecked.includes(i);
+              return '<label style="display:flex;align-items:center;gap:4px;font-family:Oswald,sans-serif;font-size:11px;cursor:pointer;padding:5px 10px;border:1px solid '+(chk?'var(--red)':'#2a2a2a')+';background:'+(chk?'rgba(204,26,26,0.1)':'transparent')+';transition:all .15s;" id="see_day_lbl'+i+'"><input type="checkbox" value="'+i+'" '+(chk?'checked':'')+' style="accent-color:var(--red);" onchange="saEditDayToggle(this)"> '+d+'</label>';
+            }).join(''),
+          '</div>',
+        '</div>',
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">',
+          '<div><label style="'+LB+'">HORÁRIO INÍCIO</label><input type="time" id="see_tfrom" value="'+(t.time_from||'16:00')+'" style="'+IS+'"></div>',
+          '<div><label style="'+LB+'">HORÁRIO FIM</label><input type="time" id="see_tto" value="'+(t.time_to||'18:00')+'" style="'+IS+'"></div>',
+        '</div>',
+        '<div style="'+FG+'"><label style="'+LB+'">MANDO DE CAMPO</label>',
+          '<div style="display:flex;gap:8px;flex-wrap:wrap;">',
+            ['casa','visitante','ambos'].map(v => {
+              const sel = (t.mando||'ambos') === v;
+              return '<label style="display:flex;align-items:center;gap:5px;font-family:Oswald,sans-serif;font-size:11px;cursor:pointer;padding:6px 12px;border:1px solid '+(sel?'var(--red)':'#2a2a2a')+';background:'+(sel?'rgba(204,26,26,0.1)':'transparent')+';"><input type="radio" name="see_mando" value="'+v+'" '+(sel?'checked':'')+' style="accent-color:var(--red);"> '+{casa:'🏠 Casa',visitante:'✈️ Visitante',ambos:'🏠✈️ Ambos'}[v]+'</label>';
+            }).join(''),
+          '</div>',
+        '</div>',
+
+        // ▸ CORES
+        '<div style="'+SEC+'">▸ CORES</div>',
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">',
+          '<div><label style="'+LB+'">COR PRINCIPAL</label><input type="color" id="see_c1" value="'+(t.color_primary||'#CC1A1A')+'" style="height:40px;width:100%;cursor:pointer;border:1px solid #333;background:#111;"></div>',
+          '<div><label style="'+LB+'">COR SECUNDÁRIA</label><input type="color" id="see_c2" value="'+(t.color_secondary||'#C8963E')+'" style="height:40px;width:100%;cursor:pointer;border:1px solid #333;background:#111;"></div>',
+        '</div>',
+
+        // ▸ NOTAS
+        '<div style="'+SEC+'">▸ NOTAS INTERNAS</div>',
+        '<div style="'+FG+'"><textarea id="see_notes" style="'+IS+'height:70px;resize:vertical;">'+(t.notes||'')+'</textarea></div>',
+
+      '</div>',
+
+      // Footer sticky
+      '<div style="padding:14px 20px;border-top:1px solid #1e1e1e;display:flex;gap:10px;position:sticky;bottom:0;background:#0a0a0a;">',
+        '<button id="saEditSaveBtn" style="flex:1;padding:11px;background:var(--red);border:none;color:#fff;font-family:Oswald,sans-serif;font-size:13px;letter-spacing:2px;cursor:pointer;">💾 SALVAR ALTERAÇÕES</button>',
+        '<button id="saEditCancelBtn" style="padding:11px 18px;background:transparent;border:1px solid #333;color:#666;cursor:pointer;font-family:Oswald,sans-serif;font-size:12px;letter-spacing:1px;">FECHAR</button>',
+      '</div>',
+    ].join('');
+
+    // Wire events
+    const closePanel = () => { const p=document.getElementById('saEditPanel'); if(p) p.remove(); };
+    document.getElementById('saEditCloseBtn').addEventListener('click', closePanel);
+    document.getElementById('saEditCancelBtn').addEventListener('click', closePanel);
+    document.getElementById('see_genpass').addEventListener('click', () => {
+      document.getElementById('see_pass').value = Math.random().toString(36).slice(-10).toUpperCase();
+    });
+    document.getElementById('saEditSaveBtn').addEventListener('click', () => saEditSave(id));
   });
 }
 
+function saEditLogoPreview(url) {
+  const prev = document.getElementById('see_logo_prev');
+  if (!prev) return;
+  if (url) { const img=document.createElement('img'); img.src=url; img.style.cssText='width:100%;height:100%;object-fit:contain;'; prev.innerHTML=''; prev.appendChild(img); }
+  else prev.textContent = '?';
+}
+
+function saEditDayToggle(cb) {
+  const lbl = cb.closest('label');
+  if (!lbl) return;
+  lbl.style.borderColor = cb.checked ? 'var(--red)' : '#2a2a2a';
+  lbl.style.background  = cb.checked ? 'rgba(204,26,26,0.1)' : 'transparent';
+}
+
+
 async function saEditSave(id) {
+  const _g = sel => document.getElementById(sel)?.value?.trim() || '';
+  const days = [...document.querySelectorAll('#see_dias input[type=checkbox]:checked')].map(cb=>parseInt(cb.value));
+  const mando = document.querySelector('input[name="see_mando"]:checked')?.value || 'ambos';
+  const isPaid = _g('see_plan') !== 'free';
+
   const data = {
-    name:       document.getElementById('seeName')?.value.trim(),
-    slug:       document.getElementById('seeSlug')?.value.trim().toLowerCase().replace(/[^a-z0-9]/g,''),
-    city:       document.getElementById('seeCity')?.value.trim(),
-    state:      document.getElementById('seeState')?.value.trim().toUpperCase(),
-    admin_user: document.getElementById('seeAdminUser')?.value.trim(),
-    admin_pass: document.getElementById('seeAdminPass')?.value.trim(),
-    whatsapp:   document.getElementById('seeWhatsapp')?.value.trim(),
-    notes:      document.getElementById('seeNotes')?.value.trim(),
+    name:           _g('see_name'),
+    short_name:     _g('see_short'),
+    slug:           _g('see_slug').toLowerCase().replace(/[^a-z0-9]/g,''),
+    founded_year:   parseInt(_g('see_year')) || null,
+    slogan:         _g('see_slogan'),
+    tagline:        _g('see_tagline'),
+    city:           _g('see_city'),
+    neighborhood:   _g('see_neigh'),
+    state:          _g('see_state').toUpperCase(),
+    whatsapp:       _g('see_wa'),
+    instagram:      _g('see_insta').replace(/^@/,''),
+    logo_url:       _g('see_logo'),
+    plan:           _g('see_plan'),
+    billing_cycle:  _g('see_cycle'),
+    status:         _g('see_status'),
+    next_billing:   _g('see_billing') || null,
+    admin_user:     _g('see_admin') || null,
+    admin_pass:     _g('see_pass') || null,
+    color_primary:  _g('see_c1'),
+    color_secondary:_g('see_c2'),
+    available_days: days,
+    time_from:      _g('see_tfrom'),
+    time_to:        _g('see_tto'),
+    mando,
+    notes:          _g('see_notes'),
+    active:         _g('see_status') !== 'suspended',
+    type:           isPaid ? 'active' : 'base',
   };
+
   try {
     await saPatchTeam(id, data);
-    closeModal();
-    showNotif('✅ Time atualizado!');
+    const panel = document.getElementById('saEditPanel');
+    if (panel) panel.remove();
+    showNotif('✅ Time "' + data.name + '" atualizado!');
     renderSaPane('times');
-  } catch(e) { showNotif('Erro: '+e.message, true); }
+    renderSaPane('cobrancas');
+  } catch(e) { showNotif('❌ Erro: ' + e.message, true); }
 }
 
 async function saAccessTeam(slug) {
@@ -8703,7 +8857,6 @@ async function confirmActivateTeam(teamId) {
     <button class="sa-tab active" onclick="switchSaTab('times',this)">Times</button>
     <button class="sa-tab" onclick="switchSaTab('cobrancas',this)">Cobranças</button>
     <button class="sa-tab" onclick="switchSaTab('novo',this)">+ Cadastrar Time</button>
-    <button class="sa-tab" onclick="switchSaTab('adversarios',this)">⚔️ Base de Adversários</button>
     <button class="sa-tab" onclick="switchSaTab('stats',this)">Estatísticas</button>
 
   </div>
@@ -8711,7 +8864,6 @@ async function confirmActivateTeam(teamId) {
     <div id="sa-pane-times"></div>
     <div id="sa-pane-cobrancas" style="display:none;"></div>
     <div id="sa-pane-novo" style="display:none;"></div>
-    <div id="sa-pane-adversarios" style="display:none;"></div>
     <div id="sa-pane-stats" style="display:none;"></div>
   </div>
 </div>
