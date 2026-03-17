@@ -6908,8 +6908,12 @@ async function renderSaTimes(el) {
   const total   = teams.length;
   const ativos  = teams.filter(t=>t.active).length;
   const blocked = total - ativos;
-  const mrr = teams.filter(t=>t.active).reduce((s,t)=>s+({basic:49,pro:89,premium:149}[t.plan]||49),0);
+  const mrr = teams.filter(t=>t.active).reduce((s,t)=>s+({free:0,basic:49,pro:89,premium:149}[t.plan]||49),0);
   document.getElementById('saMrrBadge').textContent = 'MRR: R$ ' + mrr.toLocaleString('pt-BR');
+  _saAllTeams = teams;
+  window._saTimesFilter = 'todos';
+  _saAllTeams = teams; // cache para filtros
+  window._saTimesFilter = 'todos';
 
   // Alertas de vencimento
   const hoje = new Date();
@@ -6920,11 +6924,27 @@ async function renderSaTimes(el) {
 
   el.innerHTML = `
     ${alertHtml}${warnHtml}
-    <div class="sa-stat-grid" style="margin-bottom:24px;">
-      <div class="sa-stat-card"><div class="sa-stat-number">${total}</div><div class="sa-stat-label">TOTAL</div></div>
-      <div class="sa-stat-card"><div class="sa-stat-number" style="color:var(--green);">${ativos}</div><div class="sa-stat-label">ATIVOS</div></div>
-      <div class="sa-stat-card"><div class="sa-stat-number" style="color:var(--red);">${blocked}</div><div class="sa-stat-label">BLOQUEADOS</div></div>
+    <div class="sa-stat-grid" style="margin-bottom:16px;">
+      <div class="sa-stat-card" style="cursor:pointer;" onclick="saFilterTimes('todos')"><div class="sa-stat-number">${total}</div><div class="sa-stat-label">TOTAL</div></div>
+      <div class="sa-stat-card" style="cursor:pointer;" onclick="saFilterTimes('ativos')"><div class="sa-stat-number" style="color:var(--green);">${ativos}</div><div class="sa-stat-label">ATIVOS</div></div>
+      <div class="sa-stat-card" style="cursor:pointer;" onclick="saFilterTimes('bloqueados')"><div class="sa-stat-number" style="color:var(--red);">${blocked}</div><div class="sa-stat-label">BLOQUEADOS</div></div>
+      <div class="sa-stat-card" style="cursor:pointer;" onclick="saFilterTimes('atraso')"><div class="sa-stat-number" style="color:var(--red-light);">${vencidos.length}</div><div class="sa-stat-label">EM ATRASO</div></div>
       <div class="sa-stat-card"><div class="sa-stat-number" style="color:var(--gold);">R$${mrr.toLocaleString('pt-BR')}</div><div class="sa-stat-label">MRR</div></div>
+      <div class="sa-stat-card"><div class="sa-stat-number" style="color:#4a9eff;">${teams.filter(t=>t.plan==='free').length}</div><div class="sa-stat-label">FREE</div></div>
+      <div class="sa-stat-card"><div class="sa-stat-number">${teams.filter(t=>t.plan==='basic').length}</div><div class="sa-stat-label">BASIC</div></div>
+      <div class="sa-stat-card"><div class="sa-stat-number" style="color:var(--gold);">${teams.filter(t=>t.plan==='pro').length}</div><div class="sa-stat-label">PRO</div></div>
+      <div class="sa-stat-card"><div class="sa-stat-number" style="color:var(--green);">${teams.filter(t=>t.plan==='premium').length}</div><div class="sa-stat-label">PREMIUM</div></div>
+    </div>
+
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
+      <span style="font-family:Oswald,sans-serif;font-size:10px;letter-spacing:2px;color:#555;">FILTRAR:</span>
+      ${['todos','ativos','bloqueados','atraso','free','basic','pro','premium'].map(f =>
+        '<button onclick="saFilterTimes(\'' + f + '\')" id="saFilterBtn_' + f + '"'
+        + ' style="font-family:Oswald,sans-serif;font-size:10px;letter-spacing:1px;padding:4px 10px;border:1px solid #2a2a2a;background:'+(f==='todos'?'var(--red)':'transparent')+';color:'+(f==='todos'?'#fff':'#666')+';cursor:pointer;">'
+        + f.toUpperCase() + '</button>'
+      ).join('')}
+      <input type="text" id="saTimesSearch" placeholder="🔍 buscar por nome..." oninput="saFilterTimes()"
+        style="margin-left:auto;background:#0d0d0d;border:1px solid #2a2a2a;color:#ccc;padding:5px 10px;font-family:Oswald,sans-serif;font-size:11px;outline:none;width:180px;">
     </div>
 
     <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:12px;">
@@ -6932,8 +6952,8 @@ async function renderSaTimes(el) {
       <button class="btn btn-sm" onclick="switchSaTab('novo',document.querySelectorAll('.sa-tab')[2])" style="background:var(--red);color:#fff;border:none;">+ NOVO TIME</button>
     </div>
 
-    <div style="overflow-x:auto;">
-    <table class="sa-teams-table">
+    <div style="overflow-x:auto;" id="saTimesTableWrap">
+    <table class="sa-teams-table" id="saTimesTable">
       <thead><tr>
         <th>TIME</th><th>URL</th><th>PLANO</th><th>STATUS</th><th>VENCIMENTO</th><th>ADMIN</th><th>AÇÕES</th>
       </tr></thead>
@@ -6945,13 +6965,14 @@ async function renderSaTimes(el) {
             : '<span class="sa-badge-active">ATIVO</span>';
           const cycle = t.billing_cycle || 'monthly';
           const cycleShort = {monthly:'Mensal',quarterly:'Trim.',semiannual:'Sem.',annual:'Anual'}[cycle]||'';
-          const planBadge = `<span class="sa-plan-badge">${(t.plan||'basic').toUpperCase()}</span> <span style="font-size:10px;color:#555;">${cycleShort}</span>`;
+          const _planColor = {free:'#555',basic:'var(--gold)',pro:'#4a9eff',premium:'var(--green)'}[t.plan||'basic']||'var(--gold)';
+          const planBadge = '<span class="sa-plan-badge" style="color:'+_planColor+';">'+((t.plan||'basic').toUpperCase())+'</span> <span style="font-size:10px;color:#555;">'+cycleShort+'</span>';
           const nb = t.next_billing ? new Date(t.next_billing).toLocaleDateString('pt-BR') : '–';
           const isOverdue  = t.next_billing && new Date(t.next_billing) < hoje;
           const isExpiring = !isOverdue && t.next_billing && new Date(t.next_billing) < new Date(Date.now()+7*86400000);
           const nbHtml = isOverdue ? `<span class="sa-badge-blocked">${nb}</span>` : isExpiring ? `<span class="sa-badge-warn">${nb}</span>` : `<span style="font-size:12px;">${nb}</span>`;
           const logoHtml = t.logo_url
-            ? `<img src="${t.logo_url}" style="width:28px;height:28px;border-radius:50%;object-fit:contain;background:#111;border:1px solid #333;vertical-align:middle;margin-right:8px;" onerror="this.style.display='none'">`
+            ? `<img src="${t.logo_url}" style="width:28px;height:28px;border-radius:50%;object-fit:contain;background:#111;border:1px solid #333;vertical-align:middle;margin-right:8px;" onerror="this.style.display=&quot;none&quot;">`
             : `<span style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;background:${t.color_primary||'#CC1A1A'}22;border:1px solid ${t.color_primary||'#CC1A1A'}44;font-family:Bebas Neue,sans-serif;font-size:11px;color:${t.color_primary||'#CC1A1A'};margin-right:8px;vertical-align:middle;">${(t.name||'').substring(0,2).toUpperCase()}</span>`;
           return `<tr>
             <td>${logoHtml}<strong style="color:#fff;">${t.name}</strong><br><span style="font-size:11px;color:#555;margin-left:36px;">${t.city||''}${t.state?' · '+t.state:''}</span></td>
@@ -7070,34 +7091,47 @@ function renderSaNovo(el) {
         <img id="saLogoPreview" src="" style="display:none;width:48px;height:48px;border-radius:50%;object-fit:contain;background:#111;border:2px solid #333;margin-top:8px;" onerror="this.style.display='none'">
       </div>
 
-      <div style="font-family:Oswald,sans-serif;font-size:11px;letter-spacing:2px;color:#666;margin:20px 0 16px;padding-bottom:8px;border-bottom:1px solid #222;">▸ PLANO E ACESSO</div>
-      <div class="grid-2col">
-        <div class="form-group"><label>Plano</label>
-          <select id="saNewPlan" onchange="saUpdatePlanInfo(this.value)">
-            <option value="basic">Basic — R$49/mês</option>
-            <option value="pro">Pro — R$89/mês</option>
-            <option value="premium" selected>Premium — R$149/mês</option>
-          </select>
+      <div style="font-family:Oswald,sans-serif;font-size:11px;letter-spacing:2px;color:#666;margin:20px 0 16px;padding-bottom:8px;border-bottom:1px solid #222;">▸ PLANO</div>
+      <div class="form-group">
+        <label>TIPO DE CADASTRO</label>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <label style="display:flex;align-items:center;gap:6px;font-family:Oswald,sans-serif;font-size:12px;cursor:pointer;padding:7px 14px;border:1px solid #2a2a2a;background:transparent;" id="planTypeLbl_free">
+            <input type="radio" name="saNewPlanType" value="free" onchange="saTogglePlanFields()" style="accent-color:var(--red);"> 🆓 FREE — Só base
+          </label>
+          <label style="display:flex;align-items:center;gap:6px;font-family:Oswald,sans-serif;font-size:12px;cursor:pointer;padding:7px 14px;border:1px solid rgba(200,150,62,0.4);background:rgba(200,150,62,0.06);" id="planTypeLbl_pago">
+            <input type="radio" name="saNewPlanType" value="pago" checked onchange="saTogglePlanFields()" style="accent-color:var(--red);"> 💰 PAGO — Com portal
+          </label>
         </div>
-        <div class="form-group"><label>Periodicidade</label>
-          <select id="saNewCycle" onchange="saUpdatePlanInfo(document.getElementById('saNewPlan').value)">
-            <option value="monthly">Mensal</option>
-            <option value="quarterly">Trimestral (10% off)</option>
-            <option value="semiannual">Semestral (20% off)</option>
-            <option value="annual">Anual (30% off)</option>
-          </select>
+      </div>
+      <div id="saPaidFields">
+        <div class="grid-2col">
+          <div class="form-group"><label>Plano</label>
+            <select id="saNewPlan" onchange="saUpdatePlanInfo(this.value)">
+              <option value="basic">Basic — R$49/mês</option>
+              <option value="pro">Pro — R$89/mês</option>
+              <option value="premium" selected>Premium — R$149/mês</option>
+            </select>
+          </div>
+          <div class="form-group"><label>Periodicidade</label>
+            <select id="saNewCycle">
+              <option value="monthly">Mensal</option>
+              <option value="quarterly">Trimestral (10% off)</option>
+              <option value="semiannual">Semestral (20% off)</option>
+              <option value="annual">Anual (30% off)</option>
+            </select>
+          </div>
+          <div class="form-group"><label>Data 1º Vencimento</label><input type="date" id="saNewNextBilling" value="${new Date(Date.now()+30*86400000).toISOString().split('T')[0]}"></div>
         </div>
-        <div class="form-group"><label>Data 1º Vencimento</label><input type="date" id="saNewNextBilling" value="${new Date(Date.now()+30*86400000).toISOString().split('T')[0]}"></div>
-      </div>
-      <div id="saPlanInfo" style="font-family:Barlow,sans-serif;font-size:12px;color:#555;margin:-8px 0 16px;padding:8px 12px;background:#111;border-left:3px solid var(--gold);">
-        Premium: todas as funcionalidades desbloqueadas.
-      </div>
-      <div class="grid-2col">
-        <div class="form-group"><label>Login Admin do Time</label><input type="text" id="saNewAdminUser" placeholder="admin" value="admin"></div>
-        <div class="form-group"><label>Senha Admin</label>
-          <div style="position:relative;">
-            <input type="text" id="saNewAdminPass" placeholder="senha segura" value="">
-            <button onclick="saGenPassword()" style="position:absolute;right:4px;top:50%;transform:translateY(-50%);background:#333;border:none;color:#888;font-size:10px;font-family:Oswald,sans-serif;letter-spacing:1px;padding:3px 8px;cursor:pointer;">GERAR</button>
+        <div id="saPlanInfo" style="font-family:Barlow,sans-serif;font-size:12px;color:#555;margin:-8px 0 16px;padding:8px 12px;background:#111;border-left:3px solid var(--gold);">
+          Premium: todas as funcionalidades desbloqueadas.
+        </div>
+        <div class="grid-2col">
+          <div class="form-group"><label>Login Admin</label><input type="text" id="saNewAdminUser" placeholder="admin" value="admin"></div>
+          <div class="form-group"><label>Senha Admin</label>
+            <div style="position:relative;">
+              <input type="text" id="saNewAdminPass" placeholder="senha segura" value="">
+              <button onclick="saGenPassword()" style="position:absolute;right:4px;top:50%;transform:translateY(-50%);background:#333;border:none;color:#888;font-size:10px;font-family:Oswald,sans-serif;letter-spacing:1px;padding:3px 8px;cursor:pointer;">GERAR</button>
+            </div>
           </div>
         </div>
       </div>
@@ -7115,6 +7149,42 @@ function renderSaNovo(el) {
         <div class="form-group"><label>Cor Secundária</label><input type="color" id="saNewColor2" value="#C8963E" style="height:40px;" oninput="saColorPreview()"></div>
       </div>
       <div id="saColorPreviewBar" style="height:6px;background:linear-gradient(90deg,#CC1A1A 50%,#C8963E 50%);margin-bottom:16px;border-radius:2px;"></div>
+
+      <div style="font-family:Oswald,sans-serif;font-size:11px;letter-spacing:2px;color:#666;margin:20px 0 16px;padding-bottom:8px;border-bottom:1px solid #222;">▸ DISPONIBILIDADE (MATCHMAKING)</div>
+      <div class="form-group">
+        <label>DIAS PREFERIDOS</label>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;">
+          ${['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'].map((d,i)=>'<label style="display:flex;align-items:center;gap:4px;font-family:Oswald,sans-serif;font-size:11px;cursor:pointer;padding:5px 10px;border:1px solid #2a2a2a;background:transparent;" id="saNewDayLbl'+i+'"><input type="checkbox" value="'+i+'" id="saNewDay'+i+'" style="accent-color:var(--red);" onchange="saNewDayToggle(this)"> '+d+'</label>').join('')}
+        </div>
+      </div>
+      <div class="grid-2col">
+        <div class="form-group"><label>HORÁRIO INÍCIO</label><input type="time" id="saNewTimeFrom" value="16:00"></div>
+        <div class="form-group"><label>HORÁRIO FIM</label><input type="time" id="saNewTimeTo" value="18:00"></div>
+      </div>
+      <div class="form-group">
+        <label>MANDO DE CAMPO</label>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px;">
+          ${['casa','visitante','ambos'].map(v=>'<label style="display:flex;align-items:center;gap:5px;font-family:Oswald,sans-serif;font-size:11px;cursor:pointer;padding:6px 12px;border:1px solid #2a2a2a;"><input type="radio" name="saNewMando" value="'+v+'" '+(v==='ambos'?'checked':'')+' style="accent-color:var(--red);"> '+{casa:'🏠 Casa',visitante:'✈️ Visitante',ambos:'🏠✈️ Ambos'}[v]+'</label>').join('')}
+        </div>
+      </div>
+
+      <div style="font-family:Oswald,sans-serif;font-size:11px;letter-spacing:2px;color:#666;margin:20px 0 16px;padding-bottom:8px;border-bottom:1px solid #222;">▸ DISPONIBILIDADE (MATCHMAKING)</div>
+      <div class="form-group">
+        <label>DIAS PREFERIDOS</label>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;" id="saNewDiasWrap">
+          ${['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'].map((d,i)=>'<label style="display:flex;align-items:center;gap:4px;font-family:Oswald,sans-serif;font-size:11px;cursor:pointer;padding:5px 10px;border:1px solid #2a2a2a;" id="saNewDayLbl'+i+'"><input type="checkbox" value="'+i+'" style="accent-color:var(--red);" onchange="saNewDayToggle(this)"> '+d+'</label>').join('')}
+        </div>
+      </div>
+      <div class="grid-2col">
+        <div class="form-group"><label>HORÁRIO INÍCIO</label><input type="time" id="saNewTimeFrom" value="16:00"></div>
+        <div class="form-group"><label>HORÁRIO FIM</label><input type="time" id="saNewTimeTo" value="18:00"></div>
+      </div>
+      <div class="form-group">
+        <label>MANDO DE CAMPO</label>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px;">
+          ${['casa','visitante','ambos'].map(v=>'<label style="display:flex;align-items:center;gap:5px;font-family:Oswald,sans-serif;font-size:11px;cursor:pointer;padding:6px 12px;border:1px solid #2a2a2a;"><input type="radio" name="saNewMando" value="'+v+'" '+(v==='ambos'?'checked':'')+' style="accent-color:var(--red);"> '+{casa:'🏠 Casa',visitante:'✈️ Visitante',ambos:'🏠✈️ Ambos'}[v]+'</label>').join('')}
+        </div>
+      </div>
 
       <div style="font-family:Oswald,sans-serif;font-size:11px;letter-spacing:2px;color:#666;margin:4px 0 16px;padding-bottom:8px;border-bottom:1px solid #222;">▸ OBSERVAÇÕES INTERNAS</div>
       <div class="form-group"><label>Notas (visível só aqui)</label><textarea id="saNewNotes" placeholder="ex: Indicado por Fulano, WhatsApp para contrato: 48 99999-9999" style="height:70px;resize:vertical;"></textarea></div>
@@ -7193,18 +7263,33 @@ function saColorPreview() {
 
 function saResetForm() {
   ['saNewSlug','saNewName','saNewShortName','saNewCity','saNewState','saNewNeighborhood',
-   'saNewSlogan','saNewWhatsapp','saNewInsta','saNewLogo','saNewAdminUser','saNewAdminPass','saNewNotes']
+   'saNewSlogan','saNewWhatsapp','saNewInsta','saNewLogo','saNewAdminUser','saNewAdminPass','saNewNotes','saNewTimeFrom','saNewTimeTo']
     .forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
   document.getElementById('saNewAdminUser').value = 'admin';
   document.getElementById('saSlugPreview').textContent = 'slug';
   document.getElementById('saLogoPreview').style.display = 'none';
 }
 
+function saTogglePlanFields() {
+  const isPaid = document.querySelector('input[name="saNewPlanType"]:checked')?.value === 'pago';
+  const fields = document.getElementById('saPaidFields');
+  if (fields) fields.style.display = isPaid ? '' : 'none';
+}
+
+function saNewDayToggle(cb) {
+  const lbl = cb.closest('label');
+  if (lbl) {
+    lbl.style.borderColor = cb.checked ? 'var(--red)' : '#2a2a2a';
+    lbl.style.background  = cb.checked ? 'rgba(204,26,26,0.1)' : 'transparent';
+  }
+}
+
 function saUpdatePlanInfo(plan) {
   const info = {
-    basic: 'Basic: Agenda, Check-in, Resultados. Até 15 atletas.',
-    pro: 'Pro: tudo do Basic + Súmula, Escalação, Ranking, Financeiro básico.',
-    premium: 'Premium: todas as funcionalidades desbloqueadas + suporte prioritário.'
+    free:    'Free: time cadastrado na base de adversários. Sem portal administrativo.',
+    basic:   'Basic: Agenda, Check-in, Resultados. Até 15 atletas.',
+    pro:     'Pro: tudo do Basic + Súmula, Escalação, Ranking, Financeiro básico.',
+    premium: 'Premium: todas as funcionalidades desbloqueadas + suporte prioritário.',
   };
   const el = document.getElementById('saPlanInfo');
   if (el) el.textContent = info[plan] || '';
@@ -7248,6 +7333,11 @@ async function saCreateTeam() {
   const nextBilling = document.getElementById('saNewNextBilling')?.value || new Date(Date.now()+30*86400000).toISOString().split('T')[0];
   const adminPass = document.getElementById('saNewAdminPass')?.value || 'admin123';
 
+  const _isPaid  = document.querySelector('input[name="saNewPlanType"]:checked')?.value !== 'free';
+  const _newDays = [...document.querySelectorAll('#saNewDiasWrap input[type=checkbox]:checked')].map(cb=>parseInt(cb.value));
+  const _newMando = document.querySelector('input[name="saNewMando"]:checked')?.value || 'ambos';
+  const _plan = _isPaid ? (document.getElementById('saNewPlan')?.value || 'basic') : 'free';
+
   const row = {
     slug, name, short_name: shortName,
     city: (document.getElementById('saNewCity')?.value||'').trim(),
@@ -7258,18 +7348,22 @@ async function saCreateTeam() {
     whatsapp: (document.getElementById('saNewWhatsapp')?.value||'').trim(),
     instagram: (document.getElementById('saNewInsta')?.value||'').trim(),
     logo_url: (document.getElementById('saNewLogo')?.value||'').trim(),
-    plan: document.getElementById('saNewPlan')?.value || 'basic',
-    billing_cycle: document.getElementById('saNewCycle')?.value || 'monthly',
-    status: 'trial',
+    plan: _plan,
+    billing_cycle: _isPaid ? (document.getElementById('saNewCycle')?.value || 'monthly') : 'none',
+    status: _isPaid ? 'trial' : 'free',
     color_primary: colors.primary,
     color_secondary: colors.secondary,
     color_template: tpl,
-    admin_user: (document.getElementById('saNewAdminUser')?.value||'admin').trim(),
-    admin_pass: adminPass,
-    active: true,
-    type: 'active',
-    billing_day: new Date().getDate(),
-    next_billing: nextBilling,
+    admin_user: _isPaid ? (document.getElementById('saNewAdminUser')?.value||'admin').trim() : null,
+    admin_pass: _isPaid ? adminPass : null,
+    active: _isPaid,
+    type: _isPaid ? 'active' : 'base',
+    billing_day: _isPaid ? new Date().getDate() : null,
+    next_billing: _isPaid ? nextBilling : null,
+    available_days: _newDays,
+    time_from: document.getElementById('saNewTimeFrom')?.value || '',
+    time_to:   document.getElementById('saNewTimeTo')?.value   || '',
+    mando:     _newMando,
     notes: (document.getElementById('saNewNotes')?.value||'').trim(),
   };
 
@@ -8364,6 +8458,89 @@ function _renderMmGrid(list) {
   }).join('');
 }
 
+
+// ── FILTRO DE TIMES NO SA ──────────────────────────────────
+let _saAllTeams = []; // cache para filtragem local
+
+function saFilterTimes(filter) {
+  // Atualiza botão ativo
+  if (filter) {
+    document.querySelectorAll('[id^="saFilterBtn_"]').forEach(b => {
+      b.style.background = 'transparent'; b.style.color = '#666';
+    });
+    const activeBtn = document.getElementById('saFilterBtn_' + filter);
+    if (activeBtn) { activeBtn.style.background = 'var(--red)'; activeBtn.style.color = '#fff'; }
+    window._saTimesFilter = filter;
+  }
+
+  const f     = window._saTimesFilter || 'todos';
+  const q     = (document.getElementById('saTimesSearch')?.value || '').toLowerCase().trim();
+  const hoje  = new Date();
+
+  let list = _saAllTeams.filter(t => {
+    if (q && !(t.name||'').toLowerCase().includes(q)) return false;
+    if (f === 'ativos')    return t.active === true;
+    if (f === 'bloqueados') return t.active === false;
+    if (f === 'atraso')    return t.active && t.next_billing && new Date(t.next_billing) < hoje;
+    if (f === 'free')      return t.plan === 'free';
+    if (f === 'basic')     return t.plan === 'basic';
+    if (f === 'pro')       return t.plan === 'pro';
+    if (f === 'premium')   return t.plan === 'premium';
+    return true;
+  });
+
+  const tbody = document.querySelector('#saTimesTable tbody');
+  if (!tbody) return;
+
+  if (!list.length) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:24px;color:#555;font-family:Oswald,sans-serif;font-size:12px;letter-spacing:2px;">NENHUM TIME ENCONTRADO</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = list.map(t => {
+    const ts = t.status || (t.active===false ? 'suspended' : 'active');
+    const statusBadge = ts==='suspended' ? '<span class="sa-badge-blocked">SUSPENSO</span>'
+      : ts==='trial' ? '<span class="sa-badge-warn">TRIAL</span>'
+      : ts==='free'  ? '<span style="font-family:Oswald,sans-serif;font-size:9px;letter-spacing:1px;padding:2px 6px;background:#111;border:1px solid #333;color:#555;">FREE</span>'
+      : '<span class="sa-badge-active">ATIVO</span>';
+    const cycle = t.billing_cycle || 'monthly';
+    const cycleShort = {monthly:'Mensal',quarterly:'Trim.',semiannual:'Sem.',annual:'Anual',none:'—'}[cycle]||'';
+    const _planColor = {free:'#555',basic:'var(--gold)',pro:'#4a9eff',premium:'var(--green)'}[t.plan||'basic']||'var(--gold)';
+    const planBadge = '<span class="sa-plan-badge" style="color:'+_planColor+';">'+((t.plan||'basic').toUpperCase())+'</span> <span style="font-size:10px;color:#555;">'+cycleShort+'</span>';
+    const nb = t.next_billing ? new Date(t.next_billing).toLocaleDateString('pt-BR') : '–';
+    const isOverdue  = t.next_billing && new Date(t.next_billing) < hoje && t.plan !== 'free';
+    const isExpiring = !isOverdue && t.next_billing && new Date(t.next_billing) < new Date(Date.now()+7*86400000);
+
+    const tr = document.createElement('tr');
+    // Name cell
+    const tdN = document.createElement('td');
+    if (t.logo_url) { const img = document.createElement('img'); img.src=t.logo_url; img.style.cssText='width:28px;height:28px;border-radius:50%;object-fit:contain;vertical-align:middle;margin-right:8px;'; tdN.appendChild(img); }
+    else { const sp=document.createElement('span'); sp.style.cssText='display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;background:#1a1a1a;border:1px solid #333;font-family:Bebas Neue,sans-serif;font-size:11px;color:#555;margin-right:8px;vertical-align:middle;'; sp.textContent=(t.name||'').substring(0,2).toUpperCase(); tdN.appendChild(sp); }
+    tdN.insertAdjacentHTML('beforeend','<strong style="color:#fff;">'+t.name+'</strong><br><span style="font-size:11px;color:#555;margin-left:36px;">'+(t.city||'')+(t.state?' · '+t.state:'')+'</span>');
+    tr.appendChild(tdN);
+    // Slug
+    const tdSl=document.createElement('td'); tdSl.innerHTML='<a style="font-family:monospace;color:var(--gold);font-size:12px;text-decoration:none;" href="?team='+t.slug+'" target="_blank">'+t.slug+'</a>'; tr.appendChild(tdSl);
+    // Plan
+    const _pc={free:'#555',basic:'var(--gold)',pro:'#4a9eff',premium:'var(--green)'}[t.plan||'basic']||'var(--gold)';
+    const _cy={monthly:'Mensal',quarterly:'Trim.',semiannual:'Sem.',annual:'Anual',none:'—'}[t.billing_cycle||'monthly']||'';
+    const tdPl=document.createElement('td'); tdPl.innerHTML='<span class="sa-plan-badge" style="color:'+_pc+';">'+((t.plan||'basic').toUpperCase())+'</span> <span style="font-size:10px;color:#555;">'+_cy+'</span>'; tr.appendChild(tdPl);
+    // Status
+    const _ts=t.status||(t.active===false?'suspended':'active');
+    const tdSt=document.createElement('td'); tdSt.innerHTML=_ts==='suspended'?'<span class="sa-badge-blocked">SUSPENSO</span>':_ts==='trial'?'<span class="sa-badge-warn">TRIAL</span>':_ts==='free'?'<span style="font-family:Oswald,sans-serif;font-size:9px;padding:2px 6px;background:#111;border:1px solid #333;color:#555;">FREE</span>':'<span class="sa-badge-active">ATIVO</span>'; tr.appendChild(tdSt);
+    // Vencimento
+    const tdNb=document.createElement('td'); tdNb.innerHTML=isOverdue?'<span class="sa-badge-blocked">'+nb+'</span>':isExpiring?'<span class="sa-badge-warn">'+nb+'</span>':'<span style="font-size:12px;">'+nb+'</span>'; tr.appendChild(tdNb);
+    // Admin
+    const tdAd=document.createElement('td'); tdAd.style.cssText='font-family:monospace;font-size:11px;color:#666;'; tdAd.textContent=t.admin_user||'—'; tr.appendChild(tdAd);
+    // Actions
+    const tdAc=document.createElement('td'); tdAc.style.whiteSpace='nowrap';
+    const bSt=document.createElement('button'); bSt.className='btn btn-sm'; bSt.textContent='Status'; bSt.style.cssText='font-size:10px;padding:3px 8px;margin-right:3px;'; bSt.onclick=()=>saChangeStatus(t.id,_ts,t.name); tdAc.appendChild(bSt);
+    const bPl=document.createElement('button'); bPl.className='btn btn-sm btn-secondary'; bPl.textContent='Plano'; bPl.style.cssText='font-size:10px;padding:3px 8px;margin-right:3px;'; bPl.onclick=()=>saChangePlan(t.id,t.plan||'basic',t.billing_cycle||'monthly',t.name); tdAc.appendChild(bPl);
+    const bEd=document.createElement('button'); bEd.className='btn btn-sm btn-secondary'; bEd.textContent='✏️ Editar'; bEd.style.cssText='font-size:10px;padding:3px 8px;'; bEd.onclick=()=>saEditTeam(t.id); tdAc.appendChild(bEd);
+    tr.appendChild(tdAc);
+    return tr;
+  });
+  rows.forEach(r => tbody.appendChild(r));
+}
 
 // ── ATIVAR PLANO PARA TIME DA BASE ───────────────────────────
 function closeActivateModal() {
