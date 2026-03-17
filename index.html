@@ -2285,14 +2285,66 @@ const DB = {
 };
 
 // Retorna stats de uma temporada específica (players snapshot por ano)
+// ── Estatísticas calculadas ao vivo a partir dos dossiers ──────
+// year: número (ex: 2026) ou 'geral' para todos os anos
+function getStatsBySeason(year) {
+  const dossies = DB.dossies || [];
+  const players = DB.players.filter(p => p.role !== 'admin');
+
+  // Filtra dossiers pelo ano da data (dd/mm/YYYY)
+  const filtered = (year && year !== 'geral')
+    ? dossies.filter(d => {
+        const date = d.date || d.scheduleDate || '';
+        return date.split('/')[2] === String(year);
+      })
+    : dossies;
+
+  const totalJogos = filtered.length;
+
+  // Inicializa mapa de stats zerados para cada jogador
+  const statsMap = {};
+  players.forEach(p => {
+    statsMap[p.id] = { id:p.id, name:p.name, pos:p.pos, num:p.num,
+      photo:p.photo, role:p.role,
+      games:0, goals:0, assists:0, mvpPts:0, yellowCards:0, redCards:0, attendance:0 };
+  });
+
+  filtered.forEach(d => {
+    // Presenças
+    (d.playerIds || []).forEach(pid => {
+      if (statsMap[pid]) statsMap[pid].games++;
+    });
+    // Gols (sem contar gols contra)
+    (d.scorers || []).forEach(sc => {
+      if (!sc.gc && statsMap[sc.id]) statsMap[sc.id].goals += (sc.qty || 1);
+    });
+    // Assistências
+    (d.assists || []).forEach(pid => {
+      if (statsMap[pid]) statsMap[pid].assists++;
+    });
+    // MVP
+    if (d.mvp && statsMap[d.mvp]) statsMap[d.mvp].mvpPts += 5;
+    // Cartões
+    (d.events || []).forEach(ev => {
+      if (!statsMap[ev.playerId]) return;
+      if (ev.type === 'amarelo') statsMap[ev.playerId].yellowCards++;
+      if (ev.type === 'vermelho') statsMap[ev.playerId].redCards++;
+    });
+  });
+
+  // Attendance % relativo ao total de jogos do período
+  if (totalJogos > 0) {
+    Object.values(statsMap).forEach(s => {
+      s.attendance = Math.round((s.games / totalJogos) * 100);
+    });
+  }
+
+  return Object.values(statsMap);
+}
+
+// Alias para compatibilidade com código legado
 function getSeasonStats(yr) {
-  // Sempre usa DB.players (recalculado de dossiers) como fonte de verdade para ranking
-  // DB.seasons/elencoSeasons é snapshot do elenco (fotos, posições), não de stats
-  return DB.players.filter(p => p.role !== 'admin').map(p => ({
-    id: p.id, name: p.name, pos: p.pos, num: p.num, photo: p.photo,
-    games: p.games, goals: p.goals, assists: p.assists,
-    attendance: p.attendance, mvpPts: p.mvpPts, role: p.role
-  }));
+  return getStatsBySeason(yr && yr !== 'current' ? yr : currentSeason);
 }
 
 // Resultados filtrados por temporada
@@ -2562,7 +2614,8 @@ function renderPublicSite() {
   // ── Hall da Fama por temporada ──
   const hofTabs = document.getElementById('hofSeasonTabs');
   if (hofTabs) hofTabs.innerHTML = pubSeasonTabsHtml('hof', pubHofSeason, 'setPubHofSeason');
-  const hofPlayers = getSeasonStats(pubHofSeason);
+  // Hall da Fama: stats calculados dos dossiers do ano selecionado
+  const hofPlayers = getStatsBySeason(pubHofSeason || currentSeason);
   const hof = document.getElementById('pubHofGrid');
   if (hof && hofPlayers.length) {
     const art  = [...hofPlayers].sort((a,b)=>b.goals-a.goals)[0];
@@ -3814,8 +3867,11 @@ function renderRanking(el) {
       + f.icon + ' ' + f.label + '</button>';
   }).join('');
 
-  // Sempre lê de DB.players recalculado — única fonte de verdade
-  const ps = [...DB.players].filter(p => p.role !== 'admin');
+  // Calcula stats ao vivo a partir dos dossiers filtrados pela temporada
+  const _rankYear = (adminRankingSeason === 'current') ? currentSeason
+                  : (adminRankingSeason === 'geral')   ? 'geral'
+                  : adminRankingSeason;
+  const ps = getStatsBySeason(_rankYear);
 
   const medal = i => '<span class="badge ' + (i===0?'badge-gold':i===1?'badge-gray':i===2?'badge-red':'') + '">' + (i+1) + 'º</span>';
   const mkTable = (cols, rows) => '<table class="data-table"><thead><tr>' + cols.map(c=>'<th>'+c+'</th>').join('') + '</tr></thead><tbody>' + rows + '</tbody></table>';
@@ -4729,20 +4785,30 @@ function recalcResultsFromDossies() {
 }
 
 function recalcStatsFromDossies() {
-  const dossies = DB.dossies || [];
-  const players = DB.players.filter(p => p.role !== 'admin');
+  // Atualiza DB.players com stats da temporada ATUAL (currentSeason)
+  // Para ranking histórico use getStatsBySeason(year) diretamente
+  const currentStats = getStatsBySeason(currentSeason);
 
-  // Zera tudo
-  players.forEach(p => {
-    p.games    = 0;
-    p.goals    = 0;
-    p.assists  = 0;
-    p.mvpPts   = 0;
-    p.yellowCards = 0;
-    p.redCards    = 0;
-    // suspended é mantido manualmente — não resetar
+  DB.players.forEach(p => {
+    const s = currentStats.find(x => x.id === p.id);
+    if (!s) return;
+    p.games       = s.games;
+    p.goals       = s.goals;
+    p.assists     = s.assists;
+    p.mvpPts      = s.mvpPts;
+    p.attendance  = s.attendance;
+    p.yellowCards = s.yellowCards;
+    p.redCards    = s.redCards;
+    // suspended: 3+ amarelos ou vermelho na temporada atual
+    if (!p.suspended && (s.yellowCards >= 3 || s.redCards > 0)) p.suspended = true;
   });
 
+  // Reconstrói resultados públicos
+  recalcResultsFromDossies();
+  return; // restante do código original é substituído acima
+
+  const dossies = DB.dossies || [];
+  const players = DB.players.filter(p => p.role !== 'admin');
   const totalJogos = dossies.length;
 
   dossies.forEach(d => {
@@ -5430,12 +5496,12 @@ function renderFinanceiro(el) {
   const u = currentUser;
   const isManager = u.role === 'admin' || u.role === 'diretoria';
   const months = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
-  // Mensalidade: apenas atletas regulares (convidados não pagam mensalidade)
-  const players = (u.role === 'atleta' || u.role === 'diretoria')
+  // Mensalidade: admin e diretoria veem todos; atleta vê só a si mesmo; convidado não tem mensalidade
+  const players = (u.role === 'admin' || u.role === 'diretoria')
+    ? DB.players.filter(p => p.role !== 'admin' && p.role !== 'convidado').sort((a,b)=>a.name.localeCompare(b.name,'pt'))
+    : (u.role === 'atleta')
     ? [u]
-    : (u.role === 'convidado')
-    ? []  // convidados não têm mensalidade
-    : DB.players.filter(p => p.role !== 'admin' && p.role !== 'convidado').sort((a,b)=>a.name.localeCompare(b.name,'pt'));
+    : [];  // convidados não têm mensalidade
   // Sócios
   if (!DB.socios) DB.socios = [];
   const socios = DB.socios.slice().sort((a,b)=>a.name.localeCompare(b.name,'pt'));
@@ -5632,7 +5698,8 @@ function addSocio() {
   const telefone = document.getElementById('socioTel')?.value?.trim() || '';
   if (!name) { showNotif('Informe o nome do sócio!', true); return; }
   if (!DB.socios) DB.socios = [];
-  const id = Date.now();
+  // ID seguro: Math.floor evita overflow em sistemas que usem integer (max ~2.1bi)
+  const id = Math.floor(Date.now() / 1000) % 2147483647;
   const months = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
   const monthlyPayments = {};
   months.forEach(m => { monthlyPayments[m] = false; });
@@ -5679,7 +5746,7 @@ function deleteTransacao(id) {
 }
 
 // 3-state cycle: false → true → 'skip' → false
-function cycleMonth(playerId, month, isSocio) {
+async function cycleMonth(playerId, month, isSocio) {
   ensureMonthlyPayments();
   const list = isSocio ? (DB.socios||[]) : DB.players;
   const p = list.find(x => String(x.id) === String(playerId));
@@ -5704,7 +5771,7 @@ function cycleMonth(playerId, month, isSocio) {
     DB.caixa.saldo = parseFloat((DB.caixa.saldo + v).toFixed(2));
     sbSaveConfig('caixa');
   }
-  if (isSocio) sbSaveSocios(); else sbSavePlayers([Number(playerId)]);
+  if (isSocio) await sbSaveSocios(); else await sbSavePlayers([Number(playerId)]);
   // Refresh pane financeiro ativo
   const _panesOrder = ['mensalidades','socios','caixa','financeiro'];
   let _refreshed = false;
