@@ -728,6 +728,40 @@ input, select, textarea, button { -webkit-tap-highlight-color: transparent; }
 .team-card-name { font-family:'Oswald',sans-serif; font-size:13px; letter-spacing:2px; color:#F5F7F7; margin-bottom:4px; }
 .team-card-city { font-family:'Barlow',sans-serif; font-size:11px; color:rgba(245,247,247,0.22); }
 .team-card-badge { display:inline-flex; align-items:center; gap:4px; font-family:'Oswald',sans-serif; font-size:8px; letter-spacing:2px; padding:3px 8px; margin-top:10px; background:rgba(237,181,24,0.08); color:#EDB518; border:1px solid rgba(237,181,24,0.2); }
+.mm-view { background:#000407; min-height:100vh; color:#F5F7F7; }
+.mm-header { background:rgba(0,4,7,0.95); border-bottom:1px solid rgba(237,181,24,0.1); padding:18px 32px; display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap; position:sticky; top:0; z-index:50; }
+.mm-title { font-family:'Bebas Neue',sans-serif; font-size:26px; letter-spacing:3px; color:#F5F7F7; cursor:pointer; }
+.mm-title span { color:#EDB518; }
+.mm-filters { background:rgba(255,255,255,0.02); border-bottom:1px solid #0f0f0f; padding:16px 32px; display:flex; gap:12px; flex-wrap:wrap; align-items:flex-end; }
+.mm-filter-group { display:flex; flex-direction:column; gap:4px; }
+.mm-filter-label { font-family:'Oswald',sans-serif; font-size:9px; letter-spacing:2px; color:#555; }
+.mm-select { background:#0d0d0d; border:1px solid #2a2a2a; color:#ccc; padding:7px 12px; font-family:'Oswald',sans-serif; font-size:12px; letter-spacing:1px; outline:none; cursor:pointer; min-width:110px; }
+.mm-select:focus { border-color:rgba(237,181,24,0.4); color:#F5F7F7; }
+.mm-input { background:#0d0d0d; border:1px solid #2a2a2a; color:#ccc; padding:7px 12px; font-family:'Oswald',sans-serif; font-size:12px; outline:none; width:180px; }
+.mm-input:focus { border-color:rgba(237,181,24,0.4); color:#F5F7F7; }
+.mm-btn-clear { font-family:'Oswald',sans-serif; font-size:11px; letter-spacing:2px; padding:7px 14px; background:transparent; border:1px solid #2a2a2a; color:#555; cursor:pointer; transition:all .2s; white-space:nowrap; }
+.mm-btn-clear:hover { border-color:#EDB518; color:#EDB518; }
+.mm-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:1px; background:rgba(237,181,24,0.04); padding:0; }
+.mm-card { background:#000407; padding:24px; display:flex; flex-direction:column; gap:12px; transition:background .2s; cursor:default; }
+.mm-card:hover { background:#030b10; }
+.mm-card-top { display:flex; align-items:center; gap:14px; }
+.mm-card-logo { width:56px; height:56px; border-radius:50%; border:2px solid #1a1a1a; object-fit:contain; background:#0d0d0d; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-family:'Bebas Neue',sans-serif; font-size:18px; color:#333; }
+.mm-card-logo img { width:100%; height:100%; border-radius:50%; object-fit:contain; }
+.mm-card-name { font-family:'Bebas Neue',sans-serif; font-size:20px; letter-spacing:2px; color:#F5F7F7; line-height:1; }
+.mm-card-loc { font-family:'Oswald',sans-serif; font-size:11px; letter-spacing:1px; color:#555; margin-top:3px; }
+.mm-card-avail { display:flex; flex-wrap:wrap; gap:6px; }
+.mm-chip { font-family:'Oswald',sans-serif; font-size:10px; letter-spacing:1px; padding:3px 8px; border:1px solid #1a1a1a; color:#666; }
+.mm-chip-gold { border-color:rgba(237,181,24,0.3); color:#EDB518; background:rgba(237,181,24,0.05); }
+.mm-chip-green { border-color:rgba(46,204,113,0.3); color:#2ecc71; background:rgba(46,204,113,0.05); }
+.mm-card-cta { display:flex; gap:8px; margin-top:4px; }
+.mm-btn-wa { font-family:'Oswald',sans-serif; font-size:11px; letter-spacing:2px; padding:8px 16px; background:rgba(37,211,102,0.1); border:1px solid rgba(37,211,102,0.3); color:#25d366; cursor:pointer; text-decoration:none; transition:all .2s; flex:1; text-align:center; }
+.mm-btn-wa:hover { background:rgba(37,211,102,0.2); border-color:#25d366; }
+.mm-btn-insta { font-family:'Oswald',sans-serif; font-size:11px; letter-spacing:2px; padding:8px 16px; background:rgba(225,48,108,0.08); border:1px solid rgba(225,48,108,0.25); color:#e1306c; cursor:pointer; text-decoration:none; transition:all .2s; }
+.mm-btn-insta:hover { background:rgba(225,48,108,0.15); }
+.mm-empty { grid-column:1/-1; text-align:center; padding:80px 20px; }
+.mm-badge-active { font-family:'Oswald',sans-serif; font-size:9px; letter-spacing:2px; padding:2px 7px; background:rgba(46,204,113,0.1); border:1px solid rgba(46,204,113,0.3); color:#2ecc71; }
+.mm-badge-base { font-family:'Oswald',sans-serif; font-size:9px; letter-spacing:2px; padding:2px 7px; background:#0d0d0d; border:1px solid #222; color:#555; }
+@media(max-width:600px){.mm-filters{padding:12px 16px;gap:8px;}.mm-grid{grid-template-columns:1fr;}.mm-header{padding:14px 16px;}}
 .lp-footer { text-align:center; padding:48px 24px; border-top:1px solid rgba(237,181,24,0.07); font-family:'Oswald',sans-serif; font-size:10px; letter-spacing:3px; color:rgba(245,247,247,0.14); }
 .lp-footer a { color:rgba(245,247,247,0.22); text-decoration:none; transition:color .2s; }
 .lp-footer a:hover { color:#EDB518; }
@@ -812,7 +846,13 @@ input, select, textarea, button { -webkit-tap-highlight-color: transparent; }
   <!-- NAV -->
   <nav class="lp-nav">
     <div class="lp-nav-logo">GESTÃO<span>FC</span></div>
-    <button class="lp-nav-admin" onclick="window.location.href='?admin'">⚙ ADMIN</button>
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+      <button onclick="openMatchmaking()"
+        style="font-family:'Oswald',sans-serif;font-size:10px;letter-spacing:2px;padding:7px 16px;background:rgba(237,181,24,0.08);border:1px solid rgba(237,181,24,0.3);color:#EDB518;cursor:pointer;transition:all .2s;"
+        onmouseover="this.style.background='rgba(237,181,24,0.18)'"
+        onmouseout="this.style.background='rgba(237,181,24,0.08)'">⚔️ PARTIDAS</button>
+      <button class="lp-nav-admin" onclick="window.location.href='?admin'">⚙ ADMIN</button>
+    </div>
   </nav>
 
   <!-- HERO -->
@@ -1111,6 +1151,31 @@ input, select, textarea, button { -webkit-tap-highlight-color: transparent; }
   </div>
 
   <!-- FOOTER -->
+  <!-- CTA Matchmaking -->
+  <div style="background:#00060c;border-top:1px solid rgba(237,181,24,0.07);border-bottom:1px solid rgba(237,181,24,0.07);padding:60px 24px;text-align:center;">
+    <div style="font-family:'Oswald',sans-serif;font-size:11px;letter-spacing:4px;color:#EDB518;margin-bottom:16px;">⚔️ NOVO RECURSO</div>
+    <h2 style="font-family:'Bebas Neue',sans-serif;font-size:clamp(32px,5vw,56px);color:#F5F7F7;letter-spacing:2px;margin:0 0 16px;">Encontre seu Próximo <em style="color:#EDB518;font-style:normal;">Adversário</em></h2>
+    <p style="font-family:'Barlow Condensed',sans-serif;font-size:17px;color:rgba(245,247,247,0.4);max-width:520px;margin:0 auto 32px;line-height:1.6;">Chega de procurar jogo no grupo de WhatsApp. Veja os times disponíveis por cidade, dia e horário — e mande mensagem direto pro responsável.</p>
+    <button onclick="openMatchmaking()"
+      style="font-family:'Oswald',sans-serif;font-size:14px;letter-spacing:3px;padding:16px 40px;background:#EDB518;color:#000407;border:none;cursor:pointer;font-weight:700;transition:all .25s;"
+      onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 32px rgba(237,181,24,0.4)'"
+      onmouseout="this.style.transform='';this.style.boxShadow=''">
+      ⚔️ VER TIMES DISPONÍVEIS
+    </button>
+  </div>
+
+
+  <!-- CTA Matchmaking -->
+  <div style="background:#00060c;border-top:1px solid rgba(237,181,24,0.07);border-bottom:1px solid rgba(237,181,24,0.07);padding:60px 24px;text-align:center;">
+    <div style="font-family:Oswald,sans-serif;font-size:11px;letter-spacing:4px;color:#EDB518;margin-bottom:16px;">⚔️ NOVO RECURSO</div>
+    <h2 style="font-family:Bebas Neue,sans-serif;font-size:clamp(32px,5vw,56px);color:#F5F7F7;letter-spacing:2px;margin:0 0 16px;">Encontre seu Próximo <em style="color:#EDB518;font-style:normal;">Adversário</em></h2>
+    <p style="font-family:Barlow Condensed,sans-serif;font-size:17px;color:rgba(245,247,247,0.4);max-width:520px;margin:0 auto 32px;line-height:1.6;">Chega de procurar jogo no grupo de WhatsApp. Veja os times disponíveis por cidade, dia e horário — e mande mensagem direto pro responsável.</p>
+    <button onclick="openMatchmaking()"
+      style="font-family:Oswald,sans-serif;font-size:14px;letter-spacing:3px;padding:16px 40px;background:#EDB518;color:#000407;border:none;cursor:pointer;font-weight:700;">
+      ⚔️ VER TIMES DISPONÍVEIS
+    </button>
+  </div>
+
   <div class="lp-footer">
     <div style="margin-bottom:14px;font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:4px;color:#1a1a1a;">GESTAO<span style="color:#2a1a1a;">FC</span></div>
     GESTAOFC.COM.BR · FUTEBOL AMADOR BRASILEIRO · 2026<br>
@@ -5079,14 +5144,19 @@ function renderAgenda(el) {
         const isPast = gDate < today;
         const isNext = getNextGame()?.date === g.date && currentSeason === 2026;
         const logoThumb = g.adversaryLogo
-          ? `<img src="${g.adversaryLogo}" style="width:28px;height:28px;object-fit:contain;border-radius:3px;border:1px solid #444;flex-shrink:0;" alt="">`
-          : `<label style="width:28px;height:28px;border:1px dashed #444;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:13px;flex-shrink:0;" title="Subir logo do adversário">📷<input type="file" accept="image/*" style="display:none" onchange="uploadAdversaryLogoSeason(${g.idx},this,${currentSeason})"></label>`;
+          ? `<div id="adv-logo-${currentSeason}-${g.idx}" style="flex-shrink:0;"><img src="${g.adversaryLogo}" style="width:28px;height:28px;object-fit:contain;border-radius:3px;border:1px solid #444;" alt=""></div>`
+          : `<label id="adv-logo-${currentSeason}-${g.idx}" style="width:28px;height:28px;border:1px dashed #444;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:13px;flex-shrink:0;" title="Subir logo do adversário">📷<input type="file" accept="image/*" style="display:none" onchange="uploadAdversaryLogoSeason(${g.idx},this,${currentSeason})"></label>`;
         return `<div style="display:flex;align-items:center;gap:8px;padding:10px 0;border-bottom:1px solid #1a1a1a;opacity:${isPast?0.45:1};flex-wrap:wrap;">
           <div style="min-width:94px;font-family:'Oswald',sans-serif;font-size:12px;color:${isPast?'#555':'var(--cream)'};">${g.date}</div>
           ${logoThumb}
-          <input type="text" value="${g.adversary||''}" placeholder="Adversário..." title="Adversário"
-            style="flex:1;min-width:110px;background:${g.adversary?'var(--mid)':'rgba(200,150,62,0.06)'};border:1px solid ${g.adversary?'#333':'rgba(200,150,62,0.3)'};color:var(--white);padding:5px 9px;font-family:'Oswald',sans-serif;font-size:13px;outline:none;"
-            onchange="updateScheduleSeason(${g.idx},'adversary',this.value,${currentSeason})"/>
+          <div style="display:flex;gap:4px;flex:1;min-width:110px;">
+            <input type="text" value="${g.adversary||''}" placeholder="Adversário..." title="Adversário"
+              id="adv-input-${currentSeason}-${g.idx}"
+              style="flex:1;background:${g.adversary?'var(--mid)':'rgba(200,150,62,0.06)'};border:1px solid ${g.adversary?'#333':'rgba(200,150,62,0.3)'};color:var(--white);padding:5px 9px;font-family:'Oswald',sans-serif;font-size:13px;outline:none;"
+              onchange="updateScheduleSeason(${g.idx},'adversary',this.value,${currentSeason})"/>
+            <button onclick="openOpponentSearch(${g.idx},${currentSeason})" title="Buscar na base de adversários"
+              style="padding:4px 8px;background:rgba(200,150,62,0.1);border:1px solid rgba(200,150,62,0.3);color:var(--gold);cursor:pointer;font-size:13px;white-space:nowrap;">🔍</button>
+          </div>
           <input type="text" value="${g.time||'16:00h'}" placeholder="Hora" title="Horário"
             style="width:66px;background:var(--mid);border:1px solid #333;color:var(--cream);padding:5px 7px;font-family:'Oswald',sans-serif;font-size:12px;outline:none;"
             onchange="updateScheduleSeason(${g.idx},'time',this.value,${currentSeason})"/>
@@ -6581,7 +6651,8 @@ function switchSaTab(id, btn) {
 async function renderSaPane(id) {
   const el = document.getElementById('sa-pane-'+id);
   if (!el) return;
-  if (id === 'times')     await renderSaTimes(el);
+  if (id === 'times')        await renderSaTimes(el);
+  if (id === 'adversarios')  await renderSaAdversarios(el);
   if (id === 'cobrancas') await renderSaCobrancas(el);
   if (id === 'novo')      renderSaNovo(el);
   if (id === 'stats')     await renderSaStats(el);
@@ -6605,6 +6676,162 @@ async function saPatchTeam(id, data) {
 // ══════════════════════════════════════════════
 // SUPER ADMIN — ABA TIMES
 // ══════════════════════════════════════════════
+// ── BASE DE ADVERSÁRIOS ──────────────────────────────────────
+async function getAllOpponents() {
+  if (!SB_READY) return [];
+  try {
+    return await sbGet('opponents', '?order=name');
+  } catch(e) { console.warn('opponents table:', e.message); return []; }
+}
+
+async function renderSaAdversarios(el) {
+  el.innerHTML = '<div style="font-family:Oswald,sans-serif;font-size:12px;letter-spacing:2px;color:#555;padding:20px 0;">⏳ CARREGANDO...</div>';
+  const opponents = await getAllOpponents();
+
+  const IS = 'background:var(--mid);border:1px solid #444;color:var(--white);padding:8px 10px;font-family:Oswald,sans-serif;font-size:13px;width:100%;outline:none;box-sizing:border-box;';
+  const dias = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+
+  // Formulário de cadastro
+  const form = '<div class="panel" style="margin-bottom:24px;">'
+    + '<div class="panel-header"><span class="panel-title">➕ CADASTRAR ADVERSÁRIO</span></div>'
+    + '<div class="panel-body">'
+    + '<div style="display:grid;grid-template-columns:2fr 1fr;gap:12px;margin-bottom:12px;">'
+    + '<div class="form-group" style="margin:0;"><label>NOME DO TIME *</label><input type="text" id="oppName" placeholder="Ex: Atlético do Morro" style="' + IS + '"></div>'
+    + '<div class="form-group" style="margin:0;"><label>NOME CURTO</label><input type="text" id="oppShort" placeholder="Ex: ATLÉTICO" style="' + IS + '"></div>'
+    + '</div>'
+    + '<div class="form-group" style="margin-bottom:12px;"><label>LOGO DO TIME</label>'
+    + '<div style="display:flex;align-items:center;gap:12px;">'
+    + '<div id="oppLogoPreview" style="width:52px;height:52px;background:#111;border:1px solid #444;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;">⚽</div>'
+    + '<label style="cursor:pointer;font-family:Oswald,sans-serif;font-size:11px;letter-spacing:2px;color:var(--gold);border:1px solid rgba(200,150,62,0.3);padding:7px 14px;">📷 ESCOLHER LOGO<input type="file" id="oppLogoFile" accept="image/*" style="display:none" onchange="previewOppLogo(this)"></label>'
+    + '<span style="font-family:Oswald,sans-serif;font-size:10px;color:#555;">ou cole uma URL:</span>'
+    + '<input type="text" id="oppLogoUrl" placeholder="https://..." style="' + IS + 'flex:1;"></div></div>'
+    + '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:12px;">'
+    + '<div class="form-group" style="margin:0;"><label>CIDADE</label><input type="text" id="oppCity" placeholder="Palhoça" style="' + IS + '"></div>'
+    + '<div class="form-group" style="margin:0;"><label>BAIRRO</label><input type="text" id="oppNeighborhood" placeholder="Rio Grande" style="' + IS + '"></div>'
+    + '<div class="form-group" style="margin:0;"><label>UF</label><input type="text" id="oppState" placeholder="SC" maxlength="2" style="' + IS + 'text-transform:uppercase;"></div>'
+    + '</div>'
+    + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">'
+    + '<div class="form-group" style="margin:0;"><label>WHATSAPP RESPONSÁVEL</label><input type="text" id="oppWhatsapp" placeholder="5548999999999" style="' + IS + '"></div>'
+    + '<div class="form-group" style="margin:0;"><label>INSTAGRAM</label><input type="text" id="oppInstagram" placeholder="@time" style="' + IS + '"></div>'
+    + '</div>'
+    // Disponibilidade
+    + '<div class="panel-header" style="margin:16px -20px 12px;padding:8px 20px;"><span style="font-family:Oswald,sans-serif;font-size:11px;letter-spacing:2px;color:var(--gold);">📅 DISPONIBILIDADE</span></div>'
+    + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">'
+    + '<div><label style="font-family:Oswald,sans-serif;font-size:10px;letter-spacing:2px;color:#888;display:block;margin-bottom:6px;">DIAS PREFERIDOS</label>'
+    + '<div id="oppDias" style="display:flex;flex-wrap:wrap;gap:6px;">'
+    + dias.map((d,i) => '<label style="display:flex;align-items:center;gap:4px;font-family:Oswald,sans-serif;font-size:11px;cursor:pointer;padding:4px 8px;border:1px solid #333;background:#111;">'
+        + '<input type="checkbox" value="' + i + '" style="accent-color:var(--red);"> ' + d + '</label>').join('')
+    + '</div></div>'
+    + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">'
+    + '<div class="form-group" style="margin:0;"><label>HORÁRIO INÍCIO</label><input type="time" id="oppTimeFrom" value="16:00" style="' + IS + '"></div>'
+    + '<div class="form-group" style="margin:0;"><label>HORÁRIO FIM</label><input type="time" id="oppTimeTo" value="18:00" style="' + IS + '"></div>'
+    + '</div></div>'
+    // Mando
+    + '<div><label style="font-family:Oswald,sans-serif;font-size:10px;letter-spacing:2px;color:#888;display:block;margin-bottom:6px;">MANDO DE CAMPO</label>'
+    + '<div style="display:flex;gap:8px;">'
+    + ['casa','visitante','ambos'].map(v => '<label style="display:flex;align-items:center;gap:6px;font-family:Oswald,sans-serif;font-size:12px;cursor:pointer;padding:6px 14px;border:1px solid #333;background:#111;">'
+        + '<input type="radio" name="oppMando" value="' + v + '" style="accent-color:var(--red);"> ' + v.charAt(0).toUpperCase()+v.slice(1) + '</label>').join('')
+    + '</div></div>'
+    + '<div style="margin-top:16px;">'
+    + '<button class="btn btn-primary" onclick="saveAdversario()">💾 CADASTRAR ADVERSÁRIO</button>'
+    + '</div></div></div>';
+
+  // Lista de adversários
+  const searchBar = '<div style="margin-bottom:12px;">'
+    + '<input type="text" placeholder="🔍 Filtrar por nome, cidade, UF..."'
+    + ' oninput="filterSaAdversarios(this.value)"'
+    + ' style="width:100%;background:#111;border:1px solid #333;color:#fff;padding:8px 12px;font-family:Oswald,sans-serif;font-size:13px;outline:none;box-sizing:border-box;">'
+    + '</div>';
+
+  // Guarda lista completa para filtragem local
+  window._saOpponentsList = opponents;
+
+  // Store for local filtering
+  window._saOpponentsList = opponents;
+  const listHtml = opponents.length === 0
+    ? '<div style="text-align:center;padding:40px;color:#555;font-family:Oswald,sans-serif;font-size:13px;letter-spacing:2px;">Nenhum adversário cadastrado ainda.</div>'
+    : '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px;">'
+      + opponents.map(o => {
+          const diasStr = Array.isArray(o.available_days) && o.available_days.length
+            ? o.available_days.map(d => dias[d]||d).join(', ')
+            : '—';
+          const timeStr = (o.time_from && o.time_to) ? o.time_from + ' – ' + o.time_to : '—';
+          const logo = o.logo_url
+            ? '<img src="' + o.logo_url + '" style="width:44px;height:44px;border-radius:50%;object-fit:contain;border:1px solid #333;flex-shrink:0;">'
+            : '<div style="width:44px;height:44px;border-radius:50%;background:#1a1a1a;border:1px solid #333;display:flex;align-items:center;justify-content:center;font-family:Bebas Neue,sans-serif;font-size:16px;color:#555;flex-shrink:0;">' + (o.name||'?').substring(0,2).toUpperCase() + '</div>';
+          return '<div style="background:#0d0d0d;border:1px solid #1e1e1e;padding:14px;display:flex;gap:12px;align-items:flex-start;">'
+            + logo
+            + '<div style="flex:1;min-width:0;">'
+            + '<div style="font-family:Oswald,sans-serif;font-size:15px;color:#fff;">' + o.name + '</div>'
+            + '<div style="font-family:Oswald,sans-serif;font-size:10px;letter-spacing:1px;color:#555;margin-top:2px;">'
+            + [o.neighborhood, o.city, o.state].filter(Boolean).join(' · ') + '</div>'
+            + '<div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:6px;">'
+            + '<span style="font-size:10px;font-family:Oswald,sans-serif;color:#888;">📅 ' + diasStr + '</span>'
+            + '<span style="font-size:10px;font-family:Oswald,sans-serif;color:#888;">⏰ ' + timeStr + '</span>'
+            + (o.mando ? '<span style="font-size:10px;font-family:Oswald,sans-serif;color:var(--gold);">🏠 ' + o.mando + '</span>' : '')
+            + (o.whatsapp ? '<a href="https://wa.me/' + o.whatsapp.replace(/\D/g,'') + '" target="_blank" style="font-size:10px;font-family:Oswald,sans-serif;color:#25d366;text-decoration:none;">💬 WhatsApp</a>' : '')
+            + '</div></div>'
+            + '<button onclick="deleteAdversario(' + o.id + ')" title="Remover" style="background:rgba(180,0,0,0.2);border:1px solid rgba(180,0,0,0.3);color:#ff6666;cursor:pointer;padding:3px 8px;font-size:13px;flex-shrink:0;">🗑</button>'
+            + '</div>';
+        }).join('')
+      + '</div>';
+
+  el.innerHTML = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:start;">'
+    + form
+    + '<div class="panel"><div class="panel-header">'
+    + '<span class="panel-title">⚔️ ADVERSÁRIOS CADASTRADOS</span>'
+    + '<span class="badge badge-gold">' + opponents.length + '</span>'
+    + '</div><div class="panel-body" id="saOppListBody">' + searchBar + '<div id="saOppListItems">' + listHtml + '</div></div></div>'
+    + '</div>';
+}
+
+async function saveAdversario() {
+  const name = safeText(document.getElementById('oppName')?.value?.trim() || '');
+  if (!name) { showNotif('Informe o nome do adversário!', true); return; }
+  const diasChecked = [...document.querySelectorAll('#oppDias input:checked')].map(cb => parseInt(cb.value));
+  const mando = document.querySelector('input[name="oppMando"]:checked')?.value || 'ambos';
+  // Logo: preferência ao upload, fallback para URL digitada
+  const _oppLogoFile = window._oppLogoBase64 || null;
+  const _oppLogoUrl  = document.getElementById('oppLogoUrl')?.value?.trim() || '';
+  const logoUrl = _oppLogoFile || _oppLogoUrl || null;
+  window._oppLogoBase64 = null; // reset
+
+  const row = {
+    name,
+    logo_url:     logoUrl,
+    short_name:   safeText(document.getElementById('oppShort')?.value?.trim() || ''),
+    city:         safeText(document.getElementById('oppCity')?.value?.trim() || ''),
+    neighborhood: safeText(document.getElementById('oppNeighborhood')?.value?.trim() || ''),
+    state:        safeText(document.getElementById('oppState')?.value?.trim().toUpperCase() || ''),
+    whatsapp:     document.getElementById('oppWhatsapp')?.value?.trim() || '',
+    instagram:    (document.getElementById('oppInstagram')?.value?.trim() || '').replace(/^@/,''),
+    available_days: diasChecked,
+    time_from:    document.getElementById('oppTimeFrom')?.value || '',
+    time_to:      document.getElementById('oppTimeTo')?.value || '',
+    mando,
+    type:         'opponent',
+  };
+  try {
+    await sbUpsert('opponents', [row]);
+    showNotif('✅ Adversário "' + name + '" cadastrado!');
+    renderSaPane('adversarios');
+  } catch(e) {
+    showNotif('⚠️ Erro ao salvar: ' + e.message, true);
+  }
+}
+
+async function deleteAdversario(id) {
+  if (!confirm('Remover este adversário da base?')) return;
+  try {
+    await sbDelete('opponents', 'id=eq.' + id);
+    showNotif('Adversário removido.');
+    renderSaPane('adversarios');
+  } catch(e) {
+    showNotif('⚠️ Erro: ' + e.message, true);
+  }
+}
+
+
 async function renderSaTimes(el) {
   el.innerHTML = '<div style="font-family:Oswald,sans-serif;font-size:12px;letter-spacing:2px;color:#555;padding:20px 0;">⏳ CARREGANDO TIMES...</div>';
   const teams = await getAllTeams();
@@ -7607,6 +7834,333 @@ function enviarCadastroInteresse() {
   showNotif('✅ Redirecionando para o WhatsApp!');
 }
 
+// ── HELPERS ADVERSÁRIOS ─────────────────────────────────────
+function previewOppLogo(input) {
+  const file = input.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    window._oppLogoBase64 = e.target.result;
+    const prev = document.getElementById('oppLogoPreview');
+    if (prev) prev.innerHTML = '<img src="' + e.target.result + '" style="width:52px;height:52px;object-fit:contain;">';
+  };
+  reader.readAsDataURL(file);
+}
+
+function filterSaAdversarios(q) {
+  const list   = window._saOpponentsList || [];
+  const query  = q.toLowerCase().trim();
+  const dias   = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+  const filtered = query
+    ? list.filter(o =>
+        (o.name||'').toLowerCase().includes(query) ||
+        (o.city||'').toLowerCase().includes(query) ||
+        (o.neighborhood||'').toLowerCase().includes(query) ||
+        (o.state||'').toLowerCase().includes(query))
+    : list;
+
+  const container = document.getElementById('saOppListItems');
+  if (!container) return;
+
+  if (!filtered.length) {
+    container.innerHTML = '<div style="text-align:center;padding:30px;color:#555;font-family:Oswald,sans-serif;font-size:12px;letter-spacing:2px;">Nenhum resultado.</div>';
+    return;
+  }
+
+  container.innerHTML = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px;">'
+    + filtered.map(o => {
+        const diasStr = Array.isArray(o.available_days) && o.available_days.length
+          ? o.available_days.map(d => dias[d]||d).join(', ') : '—';
+        const timeStr = (o.time_from && o.time_to) ? o.time_from + ' – ' + o.time_to : '—';
+        const logo = o.logo_url
+          ? '<img src="' + o.logo_url + '" style="width:40px;height:40px;border-radius:50%;object-fit:contain;border:1px solid #333;flex-shrink:0;">'
+          : '<div style="width:40px;height:40px;border-radius:50%;background:#1a1a1a;border:1px solid #333;display:flex;align-items:center;justify-content:center;font-family:Bebas Neue,sans-serif;font-size:14px;color:#555;flex-shrink:0;">' + (o.name||'?').substring(0,2).toUpperCase() + '</div>';
+        return '<div style="background:#0d0d0d;border:1px solid #1e1e1e;padding:12px;display:flex;gap:10px;align-items:flex-start;">'
+          + logo
+          + '<div style="flex:1;min-width:0;">'
+          + '<div style="font-family:Oswald,sans-serif;font-size:14px;color:#fff;">' + o.name + '</div>'
+          + '<div style="font-family:Oswald,sans-serif;font-size:10px;color:#555;">' + [o.neighborhood,o.city,o.state].filter(Boolean).join(' · ') + '</div>'
+          + '<div style="margin-top:4px;font-family:Oswald,sans-serif;font-size:10px;color:#888;">📅 ' + diasStr + ' · ⏰ ' + timeStr + (o.mando?' · 🏠 '+o.mando:'') + '</div>'
+          + '</div>'
+          + '<button onclick="deleteAdversario(' + o.id + ')" style="background:rgba(180,0,0,0.15);border:1px solid rgba(180,0,0,0.3);color:#ff6666;cursor:pointer;padding:3px 7px;font-size:12px;flex-shrink:0;">🗑</button>'
+          + '</div>';
+      }).join('')
+    + '</div>';
+}
+
+// ── BUSCA DE ADVERSÁRIO NA AGENDA ────────────────────────────
+let _oppSearchIdx = null;
+let _oppSearchSeason = null;
+let _allOpponents = [];
+
+async function openOpponentSearch(gameIdx, season) {
+  _oppSearchIdx    = gameIdx;
+  _oppSearchSeason = season;
+  const modal = document.getElementById('opponentSearchModal');
+  if (!modal) return;
+  modal.style.display = 'flex';
+  document.getElementById('oppSearchInput').value = '';
+  document.getElementById('oppSearchResults').innerHTML =
+    '<div style="font-family:Oswald,sans-serif;font-size:12px;letter-spacing:2px;color:#555;padding:20px 0;text-align:center;">⏳ CARREGANDO...</div>';
+
+  // Carrega ambos: times ativos + adversários cadastrados
+  const [teams, opps] = await Promise.all([
+    SB_READY ? sbGet('teams', '?order=name').catch(()=>[]) : [],
+    SB_READY ? sbGet('opponents', '?order=name').catch(()=>[]) : [],
+  ]);
+  // Merge: evita duplicatas por nome+cidade
+  const activeTeams = teams
+    .filter(t => t.active !== false && t.slug !== (TEAM_CONFIG.slug||''))
+    .map(t => ({ id:t.id, name:t.name, short_name:t.short_name||t.name, city:t.city||'', neighborhood:t.neighborhood||'', state:t.state||'', logo_url:t.logo_url||null, whatsapp:t.whatsapp||'', type:'active' }));
+  const opponents = opps.map(o => ({...o, type:'opponent'}));
+  _allOpponents = [...activeTeams, ...opponents];
+
+  document.getElementById('oppSearchInput').focus();
+  filterOpponentSearch('');
+}
+
+function filterOpponentSearch(q) {
+  const results = document.getElementById('oppSearchResults');
+  if (!results) return;
+  const query = q.toLowerCase().trim();
+  const list  = query
+    ? _allOpponents.filter(o =>
+        (o.name||'').toLowerCase().includes(query) ||
+        (o.city||'').toLowerCase().includes(query) ||
+        (o.neighborhood||'').toLowerCase().includes(query) ||
+        (o.state||'').toLowerCase().includes(query))
+    : _allOpponents;
+
+  if (!list.length) {
+    results.innerHTML = '<div style="text-align:center;padding:30px;font-family:Oswald,sans-serif;font-size:12px;letter-spacing:2px;color:#555;">Nenhum resultado encontrado.</div>';
+    return;
+  }
+
+  results.innerHTML = list.slice(0, 30).map(o => {
+    const logo = o.logo_url
+      ? '<img src="' + o.logo_url + '" style="width:40px;height:40px;border-radius:50%;object-fit:contain;border:1px solid #333;flex-shrink:0;" onerror="this.style.display=&quot;none&quot;">'
+      : '<div style="width:40px;height:40px;border-radius:50%;background:#1a1a1a;border:1px solid #333;display:flex;align-items:center;justify-content:center;font-family:Bebas Neue,sans-serif;font-size:14px;color:#555;flex-shrink:0;">' + (o.name||'?').substring(0,2).toUpperCase() + '</div>';
+    const loc = [o.neighborhood, o.city, o.state].filter(Boolean).join(' · ');
+    const typeBadge = o.type === 'active'
+      ? '<span style="font-size:9px;font-family:Oswald,sans-serif;letter-spacing:1px;color:var(--green);background:rgba(46,204,113,0.1);border:1px solid rgba(46,204,113,0.3);padding:1px 5px;">ATIVO</span>'
+      : '<span style="font-size:9px;font-family:Oswald,sans-serif;letter-spacing:1px;color:#888;background:#111;border:1px solid #2a2a2a;padding:1px 5px;">BASE</span>';
+    const safeLogoUrl = (o.logo_url||'').replace(/'/g, "\'");
+    const safeName    = (o.name||'').replace(/'/g, "\'");
+    return '<div onclick="selectOpponent(' + "'" + safeName + "'," + "'" + safeLogoUrl + "'" + ')" '
+      + 'style="display:flex;align-items:center;gap:12px;padding:10px;cursor:pointer;border-bottom:1px solid #1a1a1a;transition:background .15s;" '
+      + ' style="cursor:pointer;border-bottom:1px solid #1a1a1a;transition:background .15s;"'
+      + logo
+      + '<div style="flex:1;min-width:0;">'
+      + '<div style="font-family:Oswald,sans-serif;font-size:14px;color:#fff;">' + o.name + ' ' + typeBadge + '</div>'
+      + '<div style="font-family:Oswald,sans-serif;font-size:10px;letter-spacing:1px;color:#555;margin-top:2px;">' + (loc||'Sem localização') + '</div>'
+      + '</div>'
+      + '<span style="font-size:20px;color:#2a2a2a;">›</span>'
+      + '</div>';
+  }).join('');
+}
+
+function selectOpponent(name, logoUrl) {
+  const idx    = _oppSearchIdx;
+  const season = _oppSearchSeason;
+  if (idx === null) return;
+
+  // Persiste na agenda
+  updateScheduleSeason(idx, 'adversary', name, season);
+  if (logoUrl) updateScheduleSeason(idx, 'adversaryLogo', logoUrl, season);
+
+  // Atualiza o input de texto sem re-render
+  const input = document.getElementById('adv-input-' + season + '-' + idx);
+  if (input) {
+    input.value = name;
+    input.style.background = 'var(--mid)';
+    input.style.borderColor = '#333';
+  }
+
+  // Atualiza o thumb do logo na agenda ao lado do input
+  const thumbId = 'adv-logo-' + season + '-' + idx;
+  const thumb = document.getElementById(thumbId);
+  if (thumb && logoUrl) {
+    thumb.innerHTML = '<img src="' + logoUrl + '" style="width:28px;height:28px;object-fit:contain;border-radius:3px;border:1px solid #444;" alt="">';
+  }
+
+  closeOpponentSearch();
+  showNotif('✅ ' + name + ' selecionado!');
+}
+
+function closeOpponentSearch() {
+  const modal = document.getElementById('opponentSearchModal');
+  if (modal) modal.style.display = 'none';
+  _oppSearchIdx = null;
+}
+
+// Fechar modal ao clicar fora
+document.addEventListener('click', function(e) {
+  const modal = document.getElementById('opponentSearchModal');
+  if (modal && e.target === modal) closeOpponentSearch();
+});
+
+
+// ════════════════════════════════════════════════════════════
+// FASE 3 — MATCHMAKING
+// ════════════════════════════════════════════════════════════
+let _mmAllTeams = []; // cache de todos os times carregados
+
+async function openMatchmaking() {
+  showViewRaw('matchmaking');
+  window.scrollTo(0,0);
+  const grid = document.getElementById('mmGrid');
+  if (grid) grid.innerHTML = '<div class="mm-empty"><div style="font-size:48px;margin-bottom:16px;">⏳</div><div style="font-family:Bebas Neue,sans-serif;font-size:20px;letter-spacing:3px;color:#333;">CARREGANDO TIMES...</div></div>';
+
+  // Carrega times ativos + base de adversários em paralelo
+  const [activeTeams, opponents] = await Promise.all([
+    SB_READY ? sbGet('teams', '?order=name').catch(()=>[]) : [],
+    SB_READY ? sbGet('opponents', '?order=name').catch(()=>[]) : [],
+  ]);
+
+  // Normaliza os dois tipos para o mesmo formato
+  const active = activeTeams
+    .filter(t => t.active !== false)
+    .map(t => ({
+      id:             t.id,
+      name:           t.name || '',
+      short_name:     t.short_name || t.name || '',
+      city:           t.city || '',
+      neighborhood:   t.neighborhood || '',
+      state:          t.state || '',
+      logo_url:       t.logo_url || null,
+      whatsapp:       t.whatsapp || '',
+      instagram:      t.instagram || '',
+      available_days: t.available_days || [],
+      time_from:      t.time_from || '',
+      time_to:        t.time_to || '',
+      mando:          t.mando || 'ambos',
+      type:           'active',
+      slug:           t.slug || '',
+    }));
+
+  const base = opponents.map(o => ({...o, type:'opponent'}));
+
+  _mmAllTeams = [...active, ...base];
+
+  // Popula selects de UF e Cidade
+  _populateMmSelects(_mmAllTeams);
+
+  applyMmFilters();
+}
+
+function _populateMmSelects(teams) {
+  const ufs    = [...new Set(teams.map(t => t.state).filter(Boolean))].sort();
+  const cities = [...new Set(teams.map(t => t.city).filter(Boolean))].sort();
+
+  const ufSel = document.getElementById('mmFilterUF');
+  const citySel = document.getElementById('mmFilterCity');
+  if (ufSel) {
+    const cur = ufSel.value;
+    ufSel.innerHTML = '<option value="">Todos</option>'
+      + ufs.map(u => '<option value="' + u + '"' + (u===cur?' selected':'') + '>' + u + '</option>').join('');
+  }
+  if (citySel) {
+    const cur = citySel.value;
+    citySel.innerHTML = '<option value="">Todas</option>'
+      + cities.map(c => '<option value="' + c + '"' + (c===cur?' selected':'') + '>' + c + '</option>').join('');
+  }
+}
+
+function applyMmFilters() {
+  const q     = (document.getElementById('mmSearchQ')?.value || '').toLowerCase().trim();
+  const uf    = document.getElementById('mmFilterUF')?.value || '';
+  const city  = document.getElementById('mmFilterCity')?.value || '';
+  const day   = document.getElementById('mmFilterDay')?.value;
+  const mando = document.getElementById('mmFilterMando')?.value || '';
+
+  let list = _mmAllTeams.filter(t => {
+    if (q && !(t.name.toLowerCase().includes(q) || (t.city||'').toLowerCase().includes(q) || (t.neighborhood||'').toLowerCase().includes(q))) return false;
+    if (uf   && t.state !== uf)   return false;
+    if (city && t.city  !== city) return false;
+    if (day  !== '' && day !== undefined) {
+      const d = parseInt(day);
+      if (!Array.isArray(t.available_days) || !t.available_days.includes(d)) return false;
+    }
+    if (mando) {
+      const m = (t.mando || 'ambos').toLowerCase();
+      if (m !== 'ambos' && m !== mando) return false;
+    }
+    return true;
+  });
+
+  const count = document.getElementById('mmCount');
+  if (count) count.textContent = list.length + ' TIME' + (list.length !== 1 ? 'S' : '');
+
+  _renderMmGrid(list);
+}
+
+function clearMmFilters() {
+  const ids = ['mmSearchQ','mmFilterUF','mmFilterCity','mmFilterDay','mmFilterMando'];
+  ids.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  applyMmFilters();
+}
+
+function _renderMmGrid(list) {
+  const grid = document.getElementById('mmGrid');
+  if (!grid) return;
+  const dias = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+
+  if (!list.length) {
+    grid.innerHTML = '<div class="mm-empty">'
+      + '<div style="font-size:48px;margin-bottom:16px;">🔍</div>'
+      + '<div style="font-family:Bebas Neue,sans-serif;font-size:22px;letter-spacing:3px;color:#F5F7F7;margin-bottom:8px;">NENHUM TIME ENCONTRADO</div>'
+      + '<div style="font-family:Barlow,sans-serif;font-size:14px;color:#555;">Tente outros filtros ou <a href="https://wa.me/5548996962910" target="_blank" style="color:#EDB518;text-decoration:none;">cadastre seu time gratuitamente</a>.</div>'
+      + '</div>';
+    return;
+  }
+
+  grid.innerHTML = list.map(t => {
+    const diasStr = Array.isArray(t.available_days) && t.available_days.length
+      ? t.available_days.map(d => dias[d] || d).join(' · ')
+      : null;
+    const timeStr = (t.time_from && t.time_to)
+      ? t.time_from + ' – ' + t.time_to
+      : null;
+    const loc = [t.neighborhood, t.city, t.state].filter(Boolean).join(' · ');
+    const mandoIcon = {casa:'🏠 Casa', visitante:'✈️ Visitante', ambos:'🏠✈️ Ambos'}[t.mando||'ambos'] || '';
+
+    const logoHtml = t.logo_url
+      ? '<div class="mm-card-logo"><img src="' + t.logo_url + '" alt="" style="width:100%;height:100%;border-radius:50%;object-fit:contain;"></div>'
+      : '<div class="mm-card-logo">' + (t.name||'?').substring(0,2).toUpperCase() + '</div>';
+
+    const typeBadge = t.type === 'active'
+      ? '<span class="mm-badge-active">ATIVO</span>'
+      : '<span class="mm-badge-base">BASE</span>';
+
+    const ctaBtns = [
+      t.whatsapp ? '<a class="mm-btn-wa" href="https://wa.me/' + t.whatsapp.replace(/\D/g,'') + '?text=Olá, vi o ' + encodeURIComponent(t.name) + ' no GestãoFC e quero marcar um jogo!" target="_blank">💬 WHATSAPP</a>' : '',
+      t.instagram ? '<a class="mm-btn-insta" href="https://instagram.com/' + t.instagram.replace(/^@/,'') + '" target="_blank">📸</a>' : '',
+      t.type === 'active' && t.slug ? '<a href="?team=' + t.slug + '" target="_blank" style="font-family:Oswald,sans-serif;font-size:11px;letter-spacing:2px;padding:8px 14px;background:rgba(200,150,62,0.08);border:1px solid rgba(200,150,62,0.25);color:rgba(200,150,62,0.7);text-decoration:none;transition:all .2s;">VER PORTAL</a>' : '',
+    ].filter(Boolean).join('');
+
+    return '<div class="mm-card">'
+      + '<div class="mm-card-top">'
+      + logoHtml
+      + '<div style="flex:1;min-width:0;">'
+      + '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:3px;">'
+      + '<span class="mm-card-name">' + t.name + '</span>'
+      + typeBadge
+      + '</div>'
+      + '<div class="mm-card-loc">' + (loc || 'Localização não informada') + '</div>'
+      + '</div></div>'
+      + '<div class="mm-card-avail">'
+      + (diasStr ? '<span class="mm-chip mm-chip-gold">📅 ' + diasStr + '</span>' : '')
+      + (timeStr ? '<span class="mm-chip">⏰ ' + timeStr + '</span>' : '')
+      + (mandoIcon ? '<span class="mm-chip">' + mandoIcon + '</span>' : '')
+      + '</div>'
+      + (ctaBtns ? '<div class="mm-card-cta">' + ctaBtns + '</div>' : '')
+      + '</div>';
+  }).join('');
+}
+
+
 </script>
 <!-- ══ SUPER ADMIN ══ -->
 <div id="view-superadmin" class="view sa-view">
@@ -7624,6 +8178,7 @@ function enviarCadastroInteresse() {
     <button class="sa-tab active" onclick="switchSaTab('times',this)">Times</button>
     <button class="sa-tab" onclick="switchSaTab('cobrancas',this)">Cobranças</button>
     <button class="sa-tab" onclick="switchSaTab('novo',this)">+ Cadastrar Time</button>
+    <button class="sa-tab" onclick="switchSaTab('adversarios',this)">⚔️ Base de Adversários</button>
     <button class="sa-tab" onclick="switchSaTab('stats',this)">Estatísticas</button>
 
   </div>
@@ -7631,8 +8186,107 @@ function enviarCadastroInteresse() {
     <div id="sa-pane-times"></div>
     <div id="sa-pane-cobrancas" style="display:none;"></div>
     <div id="sa-pane-novo" style="display:none;"></div>
+    <div id="sa-pane-adversarios" style="display:none;"></div>
     <div id="sa-pane-stats" style="display:none;"></div>
   </div>
+</div>
+
+
+<!-- ── MODAL BUSCA DE ADVERSÁRIO ── -->
+<div id="opponentSearchModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:99999;align-items:center;justify-content:center;">
+  <div style="background:#0d0d0d;border:1px solid #2a2a2a;width:min(600px,95vw);max-height:80vh;display:flex;flex-direction:column;">
+    <div style="padding:16px 20px;border-bottom:1px solid #1e1e1e;display:flex;align-items:center;justify-content:space-between;">
+      <span style="font-family:Bebas Neue,sans-serif;font-size:22px;letter-spacing:2px;color:#fff;">🔍 BUSCAR ADVERSÁRIO</span>
+      <button onclick="closeOpponentSearch()" style="background:none;border:none;color:#666;font-size:20px;cursor:pointer;">✕</button>
+    </div>
+    <div style="padding:14px 20px;border-bottom:1px solid #1a1a1a;">
+      <input type="text" id="oppSearchInput" placeholder="Digite o nome do time, cidade ou bairro..."
+        style="width:100%;background:#111;border:1px solid #444;color:#fff;padding:10px 14px;font-family:Oswald,sans-serif;font-size:14px;outline:none;box-sizing:border-box;"
+        oninput="filterOpponentSearch(this.value)">
+    </div>
+    <div id="oppSearchResults" style="overflow-y:auto;flex:1;padding:10px 20px;"></div>
+    <div style="padding:12px 20px;border-top:1px solid #1a1a1a;font-family:Oswald,sans-serif;font-size:10px;letter-spacing:2px;color:#444;text-align:center;">
+      ADVERSÁRIO NÃO ENCONTRADO? <span style="color:var(--gold);cursor:pointer;" onclick="closeOpponentSearch()">CADASTRE NO SUPER ADMIN → BASE DE ADVERSÁRIOS</span>
+    </div>
+  </div>
+</div>
+
+
+<!-- ── VIEW MATCHMAKING ── -->
+<div id="view-matchmaking" class="view mm-view">
+
+  <!-- Header fixo -->
+  <header class="mm-header">
+    <div class="mm-title" onclick="showViewRaw('landing');renderLanding();">GESTÃO<span>FC</span></div>
+    <div style="font-family:'Oswald',sans-serif;font-size:11px;letter-spacing:3px;color:#EDB518;">⚔️ ENCONTRE SEU PRÓXIMO ADVERSÁRIO</div>
+    <button onclick="showViewRaw('landing');renderLanding();"
+      style="font-family:'Oswald',sans-serif;font-size:10px;letter-spacing:2px;padding:6px 14px;background:transparent;border:1px solid #2a2a2a;color:#555;cursor:pointer;transition:all .2s;"
+      onmouseover="this.style.color='#F5F7F7';this.style.borderColor='#555'"
+      onmouseout="this.style.color='#555';this.style.borderColor='#2a2a2a'">← VOLTAR</button>
+  </header>
+
+  <!-- Filtros -->
+  <div class="mm-filters" id="mmFilters">
+    <div class="mm-filter-group">
+      <span class="mm-filter-label">BUSCAR</span>
+      <input type="text" class="mm-input" id="mmSearchQ" placeholder="Nome do time..." oninput="applyMmFilters()">
+    </div>
+    <div class="mm-filter-group">
+      <span class="mm-filter-label">UF</span>
+      <select class="mm-select" id="mmFilterUF" onchange="applyMmFilters()">
+        <option value="">Todos</option>
+      </select>
+    </div>
+    <div class="mm-filter-group">
+      <span class="mm-filter-label">CIDADE</span>
+      <select class="mm-select" id="mmFilterCity" onchange="applyMmFilters()">
+        <option value="">Todas</option>
+      </select>
+    </div>
+    <div class="mm-filter-group">
+      <span class="mm-filter-label">DIA DA SEMANA</span>
+      <select class="mm-select" id="mmFilterDay" onchange="applyMmFilters()">
+        <option value="">Qualquer dia</option>
+        <option value="0">Domingo</option>
+        <option value="1">Segunda</option>
+        <option value="2">Terça</option>
+        <option value="3">Quarta</option>
+        <option value="4">Quinta</option>
+        <option value="5">Sexta</option>
+        <option value="6">Sábado</option>
+      </select>
+    </div>
+    <div class="mm-filter-group">
+      <span class="mm-filter-label">MANDO</span>
+      <select class="mm-select" id="mmFilterMando" onchange="applyMmFilters()">
+        <option value="">Qualquer</option>
+        <option value="casa">Joga em Casa</option>
+        <option value="visitante">Joga Fora</option>
+        <option value="ambos">Casa e Fora</option>
+      </select>
+    </div>
+    <button class="mm-btn-clear" onclick="clearMmFilters()">✕ LIMPAR</button>
+    <div id="mmCount" style="font-family:'Oswald',sans-serif;font-size:11px;letter-spacing:2px;color:#555;align-self:center;margin-left:auto;white-space:nowrap;"></div>
+  </div>
+
+  <!-- Grid de times -->
+  <div class="mm-grid" id="mmGrid">
+    <div class="mm-empty">
+      <div style="font-size:48px;margin-bottom:16px;">⏳</div>
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:3px;color:#333;">CARREGANDO TIMES...</div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div style="text-align:center;padding:32px;border-top:1px solid rgba(237,181,24,0.06);">
+    <div style="font-family:'Oswald',sans-serif;font-size:9px;letter-spacing:3px;color:#1a1a1a;">
+      GESTAOFC.COM.BR · FUTEBOL AMADOR BRASILEIRO<br>
+      <span style="margin-top:6px;display:block;">
+        Não encontrou seu time? <a href="https://wa.me/5548996962910?text=Quero+cadastrar+meu+time+no+GestãoFC" target="_blank" style="color:rgba(237,181,24,0.3);text-decoration:none;">Cadastre gratuitamente →</a>
+      </span>
+    </div>
+  </div>
+
 </div>
 
 </body>
